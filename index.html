@@ -110,7 +110,7 @@
   </defs>
 </svg>
 
-<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v2.5</div>
+<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v2.6</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -484,8 +484,8 @@ function draw() {
     div.textContent = l;
     div.style.fontSize   = sz + 'px';
     div.style.fontWeight = '900';
-    div.style.color      = `rgba(0,0,0,${fo})`;
-    if (sw > 0) div.style.webkitTextStroke = `${sw}px black`;
+    div.style.color      = isInverted ? `rgba(255,255,255,${fo})` : `rgba(0,0,0,${fo})`;
+    if (sw > 0) div.style.webkitTextStroke = `${sw}px ${isInverted ? 'white' : 'black'}`;
     const maxDy = (SH * 0.5 - sz * 0.5) * vspread;
     const dy    = (seededRand(seed, i) - 0.5) * 2 * maxDy;
     const left  = curX;
@@ -506,6 +506,10 @@ function randomize() {
   wordTagOffsetX = 0; wordTagOffsetY = 0;
   zoomScale = 1.35; applyZoom();
   draw();
+  // Re-apply invert state on the background and word tag
+  document.getElementById('stageOuter').classList.toggle('inverted', isInverted);
+  const tag = document.getElementById('wordTag');
+  if (tag) tag.style.color = isInverted ? '#fff' : '#000';
   setTimeout(positionWordTag, 60);
 }
 
