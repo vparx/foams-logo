@@ -110,7 +110,7 @@
   </defs>
 </svg>
 
-<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v2.6</div>
+<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v2.7</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -653,26 +653,14 @@ function positionWordTag() {
   tag.style.top  = screenTop  + 'px';
 
   // Store in unscaled stage coords for export.
-  // Derive directly from letterPositions[0] (F) — same coords the export uses.
-  // anchorLeft in screen = fRect.left - outerRect.left - fRect.width*0.15
-  // In stage coords: fLeft = letterPositions[0].left, fWidth = measured
-  const mc = document.getElementById('measure');
-  mc.width = 400; mc.height = 100;
-  const mc2 = mc.getContext('2d');
-  const szVal = parseInt(document.getElementById('sz').value);
-  mc2.font = `900 ${szVal}px "Trebuchet MS", sans-serif`;
-  const fW = mc2.measureText('F').width;
-
-  const fPos = letterPositions[0];
-  if (fPos) {
-    // Tag anchor in stage coords (matches what positionWordTag renders visually)
-    const stageAnchorX = fPos.left - fW * 0.15;
-    const stageAnchorY = fPos.top  - 18 / zoomScale; // 18px screen offset → stage offset
-
-    // Add manual drag offset (screen pixels → stage coords)
-    wordTagStageX = stageAnchorX + wordTagOffsetX / zoomScale;
-    wordTagStageY = stageAnchorY + wordTagOffsetY / zoomScale;
-  }
+  // tag.style.left/top are already the final stageOuter-relative screen position.
+  // Invert the zoom+pan+centering transform to get stage coords.
+  const outerEl   = document.getElementById('stageOuter');
+  const oRect     = outerEl.getBoundingClientRect();
+  const oCX       = oRect.width  / 2;
+  const oCY       = oRect.height / 2;
+  wordTagStageX = (screenLeft - oCX) / zoomScale + SW/2 - panOffsetX;
+  wordTagStageY = (screenTop  - oCY) / zoomScale + SH/2 - panOffsetY;
   // Store font size in stage (unscaled) space
   const tagSzScreen = parseInt(document.getElementById('titleSz').value);
   wordTagStageSz = tagSzScreen / zoomScale;
