@@ -110,6 +110,7 @@
   </defs>
 </svg>
 
+<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v 2026-05-06 18:45 UTC</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -547,23 +548,14 @@ function exportLogo(logoColor, bgColor) {
     textEls += `<text x="${x}" y="${y}" font-family="'Trebuchet MS',sans-serif" font-size="${fsSVG}" font-weight="900" fill="${color}" ${strokeAttr}>${letters[i]}</text>\n`;
   });
 
-  // Title: NO position math — just skip it for now, logo exports correctly
+  // Title: wordTagStageX/Y/Sz stored by positionWordTag in unscaled stage coords
   let titleEl = '';
   const tagEl = document.getElementById('wordTag');
   if (tagEl && tagEl.style.display !== 'none' && currentLang !== 'none') {
-    const tagSzPx  = parseInt(document.getElementById('titleSz').value);
     const tagColor = logoColor === 'black' ? 'black' : 'white';
-    // Use style.left/top which are stageOuter-relative px.
-    // Convert: stageX = (left - outerW/2) / zoomScale + SW/2 - panOffsetX
-    const outer2     = document.getElementById('stageOuter');
-    const outerRect2 = outer2.getBoundingClientRect();
-    const tagLeft    = parseFloat(tagEl.style.left);
-    const tagTop     = parseFloat(tagEl.style.top);
-    const stageX = (tagLeft - outerRect2.width  / 2) / zoomScale + SW/2 - panOffsetX;
-    const stageY = (tagTop  - outerRect2.height / 2) / zoomScale + SH/2 - panOffsetY;
-    const tagSzSVG = tagSzPx * SCALE;
-    const tagX = (stageX + OX) * SCALE;
-    const tagY = (stageY + OY) * SCALE + tagSzSVG;
+    const tagSzSVG = wordTagStageSz * SCALE;
+    const tagX     = (wordTagStageX + OX) * SCALE;
+    const tagY     = (wordTagStageY + OY) * SCALE + tagSzSVG * 0.8;
     titleEl = `<text x="${tagX}" y="${tagY}" font-family="'Trebuchet MS',sans-serif" font-size="${tagSzSVG}" font-weight="700" fill="${tagColor}" letter-spacing="${tagSzSVG * 0.08}">${tagEl.textContent}</text>`;
   }
 
@@ -631,6 +623,9 @@ function exportLogo(logoColor, bgColor) {
 // ── Cycling word tag ─────────────────────────────────────────────────────────
 let wordTagOffsetX = 0;
 let wordTagOffsetY = 0;
+let wordTagStageX = 0;  // tag position in unscaled stage coords
+let wordTagStageY = 0;
+let wordTagStageSz = 12; // font size in unscaled stage px (= screen px / zoomScale)
 
 function positionWordTag() {
   const outer = document.getElementById('stageOuter');
@@ -647,8 +642,36 @@ function positionWordTag() {
   const anchorLeft = fRect.left - outerRect.left - fRect.width * 0.15;
   const anchorTop  = fRect.top  - outerRect.top  - 18;
 
-  tag.style.left = (anchorLeft + wordTagOffsetX) + 'px';
-  tag.style.top  = (anchorTop  + wordTagOffsetY) + 'px';
+  const screenLeft = anchorLeft + wordTagOffsetX;
+  const screenTop  = anchorTop  + wordTagOffsetY;
+
+  tag.style.left = screenLeft + 'px';
+  tag.style.top  = screenTop  + 'px';
+
+  // Store in unscaled stage coords for export.
+  // Derive directly from letterPositions[0] (F) — same coords the export uses.
+  // anchorLeft in screen = fRect.left - outerRect.left - fRect.width*0.15
+  // In stage coords: fLeft = letterPositions[0].left, fWidth = measured
+  const mc = document.getElementById('measure');
+  mc.width = 400; mc.height = 100;
+  const mc2 = mc.getContext('2d');
+  const szVal = parseInt(document.getElementById('sz').value);
+  mc2.font = `900 ${szVal}px "Trebuchet MS", sans-serif`;
+  const fW = mc2.measureText('F').width;
+
+  const fPos = letterPositions[0];
+  if (fPos) {
+    // Tag anchor in stage coords (matches what positionWordTag renders visually)
+    const stageAnchorX = fPos.left - fW * 0.15;
+    const stageAnchorY = fPos.top  - 18 / zoomScale; // 18px screen offset → stage offset
+
+    // Add manual drag offset (screen pixels → stage coords)
+    wordTagStageX = stageAnchorX + wordTagOffsetX / zoomScale;
+    wordTagStageY = stageAnchorY + wordTagOffsetY / zoomScale;
+  }
+  // Store font size in stage (unscaled) space
+  const tagSzScreen = parseInt(document.getElementById('titleSz').value);
+  wordTagStageSz = tagSzScreen / zoomScale;
 }
 
 function initWordTagDrag() {
