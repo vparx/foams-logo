@@ -110,7 +110,7 @@
   </defs>
 </svg>
 
-<canvas id="measure" style="display:none"></canvas>
+<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v 2026-05-06 17:40 UTC</div>
 
 <div class="stage-outer" id="stageOuter">
   <div id="zoomWrap" style="position:absolute; top:50%; left:50%; transform-origin: center center; transform: translate(-50%,-50%);">
@@ -547,13 +547,12 @@ function exportLogo(logoColor, bgColor) {
     textEls += `<text x="${x}" y="${y}" font-family="'Trebuchet MS',sans-serif" font-size="${fsSVG}" font-weight="900" fill="${color}" ${strokeAttr}>${letters[i]}</text>\n`;
   });
 
-  // Title: wordTagStageX/Y are stored by positionWordTag() in unscaled stage coords
+  // Title: wordTagStageX/Y/Sz stored by positionWordTag in unscaled stage coords
   let titleEl = '';
   const tagEl = document.getElementById('wordTag');
   if (tagEl && tagEl.style.display !== 'none' && currentLang !== 'none') {
-    const tagSzPx  = parseInt(document.getElementById('titleSz').value);
     const tagColor = logoColor === 'black' ? 'black' : 'white';
-    const tagSzSVG = tagSzPx * SCALE;
+    const tagSzSVG = wordTagStageSz * SCALE;
     const tagX     = (wordTagStageX + OX) * SCALE;
     const tagY     = (wordTagStageY + OY) * SCALE + tagSzSVG;
     titleEl = `<text x="${tagX}" y="${tagY}" font-family="'Trebuchet MS',sans-serif" font-size="${tagSzSVG}" font-weight="700" fill="${tagColor}" letter-spacing="${tagSzSVG * 0.08}">${tagEl.textContent}</text>`;
@@ -625,6 +624,7 @@ let wordTagOffsetX = 0;
 let wordTagOffsetY = 0;
 let wordTagStageX = 0;  // tag position in unscaled stage coords
 let wordTagStageY = 0;
+let wordTagStageSz = 12; // font size in unscaled stage px (= screen px / zoomScale)
 
 function positionWordTag() {
   const outer = document.getElementById('stageOuter');
@@ -647,13 +647,15 @@ function positionWordTag() {
   tag.style.left = screenLeft + 'px';
   tag.style.top  = screenTop  + 'px';
 
-  // Store in unscaled stage coords for export
-  // screen = outerCenter + (stage - SW/2 + panOffsetX) * zoom
-  // stage  = (screen - outerCenter) / zoom + SW/2 - panOffsetX
-  const outerCX = outerRect.width  / 2;
-  const outerCY = outerRect.height / 2;
+  // Store in unscaled stage coords for export (compute fresh every time)
+  const outerRectFresh = outer.getBoundingClientRect();
+  const outerCX = outerRectFresh.width  / 2;
+  const outerCY = outerRectFresh.height / 2;
   wordTagStageX = (screenLeft - outerCX) / zoomScale + SW/2 - panOffsetX;
   wordTagStageY = (screenTop  - outerCY) / zoomScale + SH/2 - panOffsetY;
+  // Store font size in stage (unscaled) space
+  const tagSzScreen = parseInt(document.getElementById('titleSz').value);
+  wordTagStageSz = tagSzScreen / zoomScale;
 }
 
 function initWordTagDrag() {
