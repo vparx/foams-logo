@@ -110,12 +110,17 @@
   </defs>
 </svg>
 
-<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v2.7</div>
+<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v5.1</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
   <div id="zoomWrap" style="position:absolute; top:50%; left:50%; transform-origin: center center; transform: translate(-50%,-50%);">
     <div class="stage" id="stage"></div>
+    <svg id="aHoleSvg" xmlns="http://www.w3.org/2000/svg"
+      style="position:absolute;top:0;left:0;width:580px;height:220px;pointer-events:none;overflow:visible;display:none;">
+      <path id="aHolePath" fill="white" filter="url(#blobonly)" style="cursor:grab;"
+        d="M 0 0" pointer-events="all"/>
+    </svg>
   </div>
   <button class="lamp-btn" id="lampBtn" onclick="toggleInvert()" title="Invert colours">
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -157,11 +162,18 @@
       <label>Fill opacity: <span id="fillOut">100</span>%</label>
       <input type="range" id="fillOp" min="0" max="100" value="100" step="5" oninput="document.getElementById('fillOut').textContent=this.value; updateLetterStyle()">
     </div>
-    <div class="ctrl-group full">
+    <div class="ctrl-group">
       <label>Edge defocus: <span id="defocusOut">0.0</span></label>
       <input type="range" id="defocus" min="0" max="12" value="0" step="0.5" oninput="document.getElementById('defocusOut').textContent=parseFloat(this.value).toFixed(1); updateFilters()">
     </div>
-  </div>
+    <div class="ctrl-group">
+      <label>A hole</label>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+        <button class="btn" id="aHoleToggle" onclick="toggleAHole()" style="padding:6px 14px;font-size:12px;">Show</button>
+        <input type="range" id="aHoleSize" min="10" max="80" value="20" step="1" style="flex:1;accent-color:#fff;" oninput="resizeAHole()">
+      </div>
+    </div>
+    </div>
 </div>
 
 <!-- Motion + Title side by side -->
@@ -248,6 +260,7 @@ function toggleInvert() {
   });
   // Update word tag color
   if (tag) tag.style.color = isInverted ? '#fff' : '#000';
+  updateAHoleColor();
 }
 
 function applyZoom() {
@@ -258,12 +271,171 @@ function applyZoom() {
 
 function initZoom() {
   const outer = document.getElementById('stageOuter');
+
+  // Desktop: scroll wheel
   outer.addEventListener('wheel', e => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? -0.06 : 0.06;
     zoomScale = Math.min(3.0, Math.max(0.2, zoomScale + delta));
     applyZoom();
   }, { passive: false });
+
+  // Mobile: pinch-to-zoom
+  let lastDist = null;
+  outer.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) {
+      lastDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+    }
+  }, { passive: true });
+
+  outer.addEventListener('touchmove', e => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      if (lastDist) {
+        const delta = (dist - lastDist) * 0.008;
+        zoomScale = Math.min(3.0, Math.max(0.2, zoomScale + delta));
+        applyZoom();
+      }
+      lastDist = dist;
+    }
+  }, { passive: false });
+
+  outer.addEventListener('touchend', () => { lastDist = null; });
+}
+
+// ── Responsive default zoom based on screen width ─────────────────────────
+function getDefaultZoom() {
+  const outerW = document.getElementById('stageOuter').getBoundingClientRect().width;
+  // Stage is 580px wide. Scale so it fits comfortably with a bit of margin.
+  const fit = (outerW / SW) * 0.9;
+  return Math.min(fit, 1.35); // cap at 1.35 for desktop
+}
+
+
+
+// ── A-hole draggable shape ───────────────────────────────────────────────────
+let aHoleVisible = false;
+let aHoleX = 290, aHoleY = 110; // position in stage coords
+let aHoleOffsetX = 0, aHoleOffsetY = 0; // offset from A letter center
+
+function aHolePathD(cx, cy, size) {
+  // Vertical egg: very narrow top, wider bottom, overall slimmer
+  const w = size * 0.30;
+  const h = size * 0.55;
+  return `M ${cx} ${cy - h}
+    C ${cx + w*0.15} ${cy - h}, ${cx + w} ${cy - h*0.1}, ${cx + w} ${cy + h*0.15}
+    C ${cx + w} ${cy + h*0.65}, ${cx + w*0.6} ${cy + h}, ${cx} ${cy + h}
+    C ${cx - w*0.6} ${cy + h}, ${cx - w} ${cy + h*0.65}, ${cx - w} ${cy + h*0.15}
+    C ${cx - w} ${cy - h*0.1}, ${cx - w*0.15} ${cy - h}, ${cx} ${cy - h} Z`;
+}
+
+function updateAHoleColor() {
+  const p = document.getElementById('aHolePath');
+  if (p) p.setAttribute('fill', isInverted ? '#000' : '#fff');
+}
+
+function renderAHole() {
+  const path = document.getElementById('aHolePath');
+  if (!path) return;
+  const size = parseInt(document.getElementById('aHoleSize').value);
+  path.setAttribute('d', aHolePathD(aHoleX, aHoleY, size));
+  // Use same filter as the logo so softness matches automatically
+  const defocus = parseFloat(document.getElementById('defocus').value);
+  path.setAttribute('filter', defocus > 0 ? 'url(#blobdefocus)' : 'url(#blobonly)');
+  updateAHoleColor();
+}
+
+function getACenter() {
+  const mc = document.getElementById('measure');
+  const sz = parseInt(document.getElementById('sz').value);
+  mc.width = 300; mc.height = 150;
+  const mctx = mc.getContext('2d');
+  mctx.font = `900 ${sz}px "Trebuchet MS", sans-serif`;
+  const aW = mctx.measureText('A').width;
+  const aPos = letterPositions[2]; // A is always index 2
+  if (!aPos) return null;
+  return { x: aPos.left + aW * 0.5, y: aPos.top + sz * 0.52 };
+}
+
+function toggleAHole() {
+  aHoleVisible = !aHoleVisible;
+  const svg = document.getElementById('aHoleSvg');
+  const btn = document.getElementById('aHoleToggle');
+  svg.style.display = aHoleVisible ? 'block' : 'none';
+  btn.textContent   = aHoleVisible ? 'Hide' : 'Show';
+  btn.classList.toggle('active', aHoleVisible);
+  if (aHoleVisible) {
+    // Snap hole to A letter center on first show
+    const ac = getACenter();
+    if (ac) { aHoleX = ac.x; aHoleY = ac.y; }
+    else { aHoleX = 290; aHoleY = 110; }
+    aHoleOffsetX = 0; aHoleOffsetY = 0;
+    renderAHole();
+    initAHoleDrag();
+  }
+}
+
+function resizeAHole() { renderAHole(); }
+
+function initAHoleDrag() {
+  const path = document.getElementById('aHolePath');
+  if (!path || path._dragInit) return;
+  path._dragInit = true;
+  path.style.cursor = 'grab';
+
+  let dragging = false, startX, startY, startHX, startHY;
+
+  path.addEventListener('mousedown', e => {
+    e.preventDefault(); e.stopPropagation();
+    dragging = true;
+    startX = e.clientX; startY = e.clientY;
+    startHX = aHoleX; startHY = aHoleY;
+    path.style.cursor = 'grabbing';
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+  path.addEventListener('touchstart', e => {
+    e.stopPropagation();
+    dragging = true;
+    startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+    startHX = aHoleX; startHY = aHoleY;
+    document.addEventListener('touchmove', onMoveT, { passive: false });
+    document.addEventListener('touchend', onUp);
+  }, { passive: true });
+
+  function onMove(e) {
+    if (!dragging) return;
+    aHoleX = startHX + (e.clientX - startX) / zoomScale;
+    aHoleY = startHY + (e.clientY - startY) / zoomScale;
+    // Update offset relative to A center
+    const ac = getACenter();
+    if (ac) { aHoleOffsetX = aHoleX - ac.x; aHoleOffsetY = aHoleY - ac.y; }
+    renderAHole();
+  }
+  function onMoveT(e) {
+    if (!dragging) return;
+    e.preventDefault();
+    aHoleX = startHX + (e.touches[0].clientX - startX) / zoomScale;
+    aHoleY = startHY + (e.touches[0].clientY - startY) / zoomScale;
+    const ac = getACenter();
+    if (ac) { aHoleOffsetX = aHoleX - ac.x; aHoleOffsetY = aHoleY - ac.y; }
+    renderAHole();
+  }
+  function onUp() {
+    dragging = false;
+    path.style.cursor = 'grab';
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    document.removeEventListener('touchmove', onMoveT);
+    document.removeEventListener('touchend', onUp);
+  }
 }
 
 function updateTitleSize() {
@@ -299,6 +471,7 @@ function updateFilters() {
   const defEl = document.querySelector('#svgfilters feGaussianBlur[result="defocused"]');
   if (defEl) defEl.setAttribute('stdDeviation', d);
   document.getElementById('stage').style.filter = d > 0 ? 'url(#blobdefocus)' : 'url(#blobonly)';
+  if (aHoleVisible) renderAHole();
 }
 
 function updateLetterStyle() {
@@ -364,6 +537,10 @@ function startAnimation() {
         letterPositions[i] = { left: basePositions[i].left + dx, top: basePositions[i].top + dy };
       });
       positionWordTag();
+      if (aHoleVisible) {
+        const ac = getACenter();
+        if (ac) { aHoleX = ac.x + aHoleOffsetX; aHoleY = ac.y + aHoleOffsetY; renderAHole(); }
+      }
     }
     animFrame = requestAnimationFrame(tick);
   })();
@@ -392,6 +569,10 @@ function makeDraggable(el, stageEl, idx) {
     const nt = Math.max(-60, Math.min(r.height + 20, st + cy - sy));
     el.style.left = nl + 'px'; el.style.top = nt + 'px';
     letterPositions[idx] = basePositions[idx] = { left: nl, top: nt };
+    if (idx === 2 && aHoleVisible) {
+      const ac = getACenter();
+      if (ac) { aHoleX = ac.x + aHoleOffsetX; aHoleY = ac.y + aHoleOffsetY; renderAHole(); }
+    }
   }
   function up() {
     document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up);
@@ -418,6 +599,7 @@ function initPan() {
 
   outer.addEventListener('touchstart', e => {
     if (e.target.classList.contains('letter')) return;
+    if (e.touches.length !== 1) return; // ignore pinch
     panning = true;
     psx = e.touches[0].clientX; psy = e.touches[0].clientY;
     document.addEventListener('touchmove', onPanMoveT, { passive: false });
@@ -445,6 +627,7 @@ function initPan() {
   }
   function onPanMoveT(e) {
     if (!panning) return;
+    if (e.touches.length !== 1) { panning = false; return; } // second finger = pinch, stop pan
     e.preventDefault();
     const dx = e.touches[0].clientX - psx; const dy = e.touches[0].clientY - psy;
     psx = e.touches[0].clientX; psy = e.touches[0].clientY;
@@ -504,7 +687,7 @@ function draw() {
 function randomize() {
   seed = Math.random() * 99999;
   wordTagOffsetX = 0; wordTagOffsetY = 0;
-  zoomScale = 1.35; applyZoom();
+  zoomScale = getDefaultZoom(); applyZoom();
   draw();
   // Re-apply invert state on the background and word tag
   document.getElementById('stageOuter').classList.toggle('inverted', isInverted);
@@ -793,6 +976,7 @@ function setLanguage(lang) {
 initPan();
 initZoom();
 draw();
+zoomScale = getDefaultZoom();
 applyZoom();
 initWordCycle();
 initWordTagDrag();
