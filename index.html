@@ -110,7 +110,7 @@
   </defs>
 </svg>
 
-<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v6.2</div>
+<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v6.3</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -732,19 +732,17 @@ function exportLogo(logoColor, bgColor) {
     textEls += `<text x="${x}" y="${y}" font-family="'Trebuchet MS',sans-serif" font-size="${fsSVG}" font-weight="900" fill="${color}" ${strokeAttr}>${letters[i]}</text>\n`;
   });
 
-  // Title: get position relative to stage element, divide by zoom to get stage coords
+  // Title: derive from letterPositions[0] + stored offset, same space as letters
   let titleEl = '';
   const tagEl = document.getElementById('wordTag');
   if (tagEl && tagEl.style.display !== 'none' && currentLang !== 'none') {
-    const tagColor = logoColor === 'black' ? 'black' : 'white';
-    const tagSzSVG = wordTagStageSz * SCALE;
-    const stageRect = document.getElementById('stage').getBoundingClientRect();
-    const tagRect   = tagEl.getBoundingClientRect();
-    // Tag position in stage coords = screen offset from stage / zoom
-    const tagStageX = (tagRect.left - stageRect.left) / zoomScale;
-    const tagStageY = (tagRect.top  - stageRect.top)  / zoomScale;
-    const tagX = (tagStageX + panOffsetX + OX) * SCALE;
-    const tagY = (tagStageY + panOffsetY + OY) * SCALE + tagSzSVG;
+    const tagColor  = logoColor === 'black' ? 'black' : 'white';
+    const tagSzSVG  = wordTagStageSz * SCALE;
+    // wordTagStageX/Y are computed in positionWordTag from fPos + offsets, no pan
+    const tagX = (wordTagStageX + panOffsetX + OX) * SCALE;
+    const tagY = (wordTagStageY + panOffsetY + OY) * SCALE + tagSzSVG;
+    const fExportY = (letterPositions[0].top + panOffsetY + OY) * SCALE + fsSVG * 0.75;
+    console.log(`TAG: stageY=${wordTagStageY.toFixed(1)} panY=${panOffsetY} => exportY=${tagY.toFixed(0)} | F: top=${letterPositions[0].top.toFixed(1)} => exportY=${fExportY.toFixed(0)} | fsSVG=${fsSVG} tagSzSVG=${tagSzSVG.toFixed(1)}`);
     titleEl = `<text x="${tagX}" y="${tagY}" font-family="'Trebuchet MS',sans-serif" font-size="${tagSzSVG}" font-weight="700" fill="${tagColor}" letter-spacing="${tagSzSVG * 0.08}">${tagEl.textContent}</text>`;
   }
 
