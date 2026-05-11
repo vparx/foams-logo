@@ -85,6 +85,9 @@
     .exp-white-black { background: #000; color: #fff; border-color: #444; }
     .exp-black-trans { background: repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 0 0/16px 16px; color: #111; border-color: #999; }
     .exp-white-trans { background: repeating-conic-gradient(#555 0% 25%, #333 0% 50%) 0 0/16px 16px; color: #fff; border-color: #555; }
+    .exp-pink-white  { background: #fff; color: #ff30ff; border-color: #ffaaff; }
+    .exp-pink-black  { background: #000; color: #ff30ff; border-color: #aa00aa; }
+    .exp-pink-trans  { background: repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 0 0/16px 16px; color: #ff30ff; border-color: #ffaaff; }
 
     @media (max-width: 640px) {
       body { padding: 0.75rem; padding-bottom: 3rem; }
@@ -115,7 +118,7 @@
   </defs>
 </svg>
 
-<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v7.4</div>
+<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v7.6</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -132,6 +135,9 @@
       <path d="M7 1.5a4 4 0 0 1 2.2 7.3c-.4.3-.7.8-.7 1.2v.5H5.5V10c0-.4-.3-.9-.7-1.2A4 4 0 0 1 7 1.5Z" stroke="#000" stroke-width="1.1" stroke-linejoin="round"/>
       <path d="M5.5 11.5h3M6 13h2" stroke="#000" stroke-width="1.1" stroke-linecap="round"/>
     </svg>
+  </button>
+  <button id="pinkBtn" onclick="togglePink()" title="Pink mode" style="position:absolute;bottom:10px;right:46px;width:28px;height:28px;background:none;border:1px solid rgba(0,0,0,0.15);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:20;opacity:0.4;transition:opacity 0.2s,border-color 0.2s;padding:0;">
+    <div style="width:14px;height:14px;border-radius:50%;background:#ff30ff;"></div>
   </button>
 </div>
 <div class="hint-row">
@@ -237,6 +243,21 @@
       <span class="exp-sub">PNG · alpha channel</span>
     </button>
   </div>
+  <hr style="border:none;border-top:1px solid #252525;margin:1rem 0;">
+  <div class="export-grid">
+    <button class="exp-btn exp-pink-white" onclick="exportLogo('pink','white')">
+      <span class="exp-title">↓ Pink on white</span>
+      <span class="exp-sub">PNG · white background</span>
+    </button>
+    <button class="exp-btn exp-pink-black" onclick="exportLogo('pink','black')">
+      <span class="exp-title">↓ Pink on black</span>
+      <span class="exp-sub">PNG · black background</span>
+    </button>
+    <button class="exp-btn exp-pink-trans" onclick="exportLogo('pink','transparent')">
+      <span class="exp-title">↓ Pink on transparent</span>
+      <span class="exp-sub">PNG · alpha channel</span>
+    </button>
+  </div>
 </div>
 
 <script>
@@ -249,22 +270,37 @@ let motionPaused = false;
 let panOffsetX = 0, panOffsetY = 0;
 let zoomScale = 1.35;
 let isInverted = false;
+let isPink = false;
+const PINK = '#ff30ff';
+
+function getLogoColor() {
+  if (isPink)     return `rgba(255,48,255,${parseInt(document.getElementById('fillOp').value)/100})`;
+  if (isInverted) return `rgba(255,255,255,${parseInt(document.getElementById('fillOp').value)/100})`;
+  return `rgba(0,0,0,${parseInt(document.getElementById('fillOp').value)/100})`;
+}
+function getStrokeColor() {
+  if (isPink) return PINK;
+  return isInverted ? 'white' : 'black';
+}
+
+function togglePink() {
+  isPink = !isPink;
+  const btn = document.getElementById('pinkBtn');
+  btn.style.opacity = isPink ? '1' : '0.4';
+  btn.style.borderColor = isPink ? '#ff30ff' : 'rgba(0,0,0,0.15)';
+  const tag = document.getElementById('wordTag');
+  if (tag) tag.style.color = isPink ? PINK : (isInverted ? '#fff' : '#000');
+  updateLetterStyle();
+  updateAHoleColor();
+}
 
 function toggleInvert() {
   isInverted = !isInverted;
   const outer = document.getElementById('stageOuter');
   const tag   = document.getElementById('wordTag');
   outer.classList.toggle('inverted', isInverted);
-  // Update letter colors
-  const fo = parseInt(document.getElementById('fillOp').value) / 100;
-  const sw = parseInt(document.getElementById('strokeW').value);
-  const letterColor = isInverted ? `rgba(255,255,255,${fo})` : `rgba(0,0,0,${fo})`;
-  document.querySelectorAll('.letter').forEach(el => {
-    el.style.color = letterColor;
-    el.style.webkitTextStroke = sw > 0 ? `${sw}px ${isInverted ? 'white' : 'black'}` : '0px';
-  });
-  // Update word tag color
-  if (tag) tag.style.color = isInverted ? '#fff' : '#000';
+  updateLetterStyle();
+  if (tag) tag.style.color = isPink ? PINK : (isInverted ? '#fff' : '#000');
   updateAHoleColor();
 }
 
@@ -356,7 +392,10 @@ function aHolePathD(cx, cy, size) {
 
 function updateAHoleColor() {
   const p = document.getElementById('aHolePath');
-  if (p) p.setAttribute('fill', isInverted ? '#000' : '#fff');
+  if (!p) return;
+  // Hole should always be the background color (punching through the logo)
+  if (isInverted) p.setAttribute('fill', '#000');
+  else p.setAttribute('fill', '#fff');
 }
 
 function renderAHole() {
@@ -494,12 +533,9 @@ function updateFilters() {
 
 function updateLetterStyle() {
   const sw = parseInt(document.getElementById('strokeW').value);
-  const fo = parseInt(document.getElementById('fillOp').value) / 100;
-  const c  = isInverted ? `rgba(255,255,255,${fo})` : `rgba(0,0,0,${fo})`;
-  const sc = isInverted ? 'white' : 'black';
   document.querySelectorAll('.letter').forEach(el => {
-    el.style.color = c;
-    el.style.webkitTextStroke = sw > 0 ? `${sw}px ${sc}` : '0px';
+    el.style.color = getLogoColor();
+    el.style.webkitTextStroke = sw > 0 ? `${sw}px ${getStrokeColor()}` : '0px';
   });
 }
 
@@ -685,7 +721,7 @@ function draw() {
     div.textContent = l;
     div.style.fontSize   = sz + 'px';
     div.style.fontWeight = '900';
-    div.style.color      = isInverted ? `rgba(255,255,255,${fo})` : `rgba(0,0,0,${fo})`;
+    div.style.color      = getLogoColor();
     if (sw > 0) div.style.webkitTextStroke = `${sw}px ${isInverted ? 'white' : 'black'}`;
     const maxDy = (SH * 0.5 - sz * 0.5) * vspread;
     const dy    = (seededRand(seed, i) - 0.5) * 2 * maxDy;
@@ -733,7 +769,7 @@ function exportLogo(logoColor, bgColor) {
   const blobBlur = parseInt(document.getElementById('blurR').value);
   const defocus  = parseFloat(document.getElementById('defocus').value);
   const baseSz   = parseInt(document.getElementById('sz').value);
-  const color    = logoColor === 'black' ? `rgba(0,0,0,${fo})` : `rgba(255,255,255,${fo})`;
+  const color    = logoColor === 'pink' ? `rgba(255,48,255,${fo})` : logoColor === 'black' ? `rgba(0,0,0,${fo})` : `rgba(255,255,255,${fo})`;
   const PAD      = 24 * SCALE;
 
   const margin = 300;
@@ -764,7 +800,7 @@ function exportLogo(logoColor, bgColor) {
   let titleEl = '';
   const tagEl = document.getElementById('wordTag');
   if (tagEl && tagEl.style.display !== 'none' && currentLang !== 'none') {
-    const tagColor  = logoColor === 'black' ? 'black' : 'white';
+    const tagColor  = logoColor === 'pink' ? '#ff30ff' : logoColor === 'black' ? 'black' : 'white';
     const tagSzSVG  = wordTagStageSz * SCALE;
     const fEl2      = document.querySelector('#stage .letter');
     const fRect2    = fEl2 ? fEl2.getBoundingClientRect() : null;
@@ -793,7 +829,7 @@ function exportLogo(logoColor, bgColor) {
       // For transparent: we'll cut the hole out using destination-out after rendering
       aHoleCutoutSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${BIGW}" height="${BIGH}"><defs><filter id="blob2" color-interpolation-filters="sRGB" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur in="SourceGraphic" stdDeviation="${blobSVG}" result="blur"/><feColorMatrix in="blur" mode="matrix" values="${vals}" result="sharp"/><feComposite in="SourceGraphic" in2="sharp" operator="atop" result="crisp"/>${defocusStep}</filter></defs><path d="${d}" fill="black" filter="url(#blob2)"/></svg>`;
     } else {
-      const ahColor = logoColor === 'black' ? 'white' : 'black';
+      const ahColor = bgColor === 'black' ? 'black' : 'white';
       aHoleEl = `<path d="${d}" fill="${ahColor}" filter="url(#blob)"/>`;
     }
   }
