@@ -110,7 +110,7 @@
   </defs>
 </svg>
 
-<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v5.5</div>
+<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v5.6</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -742,7 +742,7 @@ function exportLogo(logoColor, bgColor) {
     const tagColor = logoColor === 'black' ? 'black' : 'white';
     const tagSzSVG = wordTagStageSz * SCALE;
     const tagX     = (wordTagStageX + panOffsetX + OX) * SCALE;
-    const tagY     = (wordTagStageY + panOffsetY + OY) * SCALE;
+    const tagY     = (wordTagStageY + panOffsetY + OY) * SCALE + tagSzSVG * 0.75;
     titleEl = `<text x="${tagX}" y="${tagY}" font-family="'Trebuchet MS',sans-serif" font-size="${tagSzSVG}" font-weight="700" fill="${tagColor}" letter-spacing="${tagSzSVG * 0.08}">${tagEl.textContent}</text>`;
   }
 
@@ -752,7 +752,7 @@ function exportLogo(logoColor, bgColor) {
     const aHoleSz  = parseInt(document.getElementById('aHoleSize').value) * SCALE;
     const ahColor  = logoColor === 'black' ? 'white' : 'black';
     const ahCX     = (aHoleX + panOffsetX + OX) * SCALE;
-    const ahCY     = (aHoleY + panOffsetY + OY) * SCALE;
+    const ahCY     = (aHoleY + panOffsetY + OY - aHoleSz/SCALE * 0.1) * SCALE;
     // Same path formula as aHolePathD but scaled
     const w = aHoleSz * 0.30;
     const h = aHoleSz * 0.55;
