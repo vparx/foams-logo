@@ -110,7 +110,7 @@
   </defs>
 </svg>
 
-<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v6.8</div>
+<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v6.9</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -754,16 +754,20 @@ function exportLogo(logoColor, bgColor) {
 
   // A hole: same approach — measure screen offset from A letter
   let aHoleEl = '';
+  let aHoleCutoutSvg = null; // for transparent exports: separate SVG to cut with destination-out
   if (aHoleVisible) {
-    const aHoleSz  = parseInt(document.getElementById('aHoleSize').value) * SCALE;
-    const ahColor  = logoColor === 'black' ? 'white' : 'black';
-    const aPos2    = letterPositions[2];
-    // aHoleX/Y are stage coords (set from letterPositions, no pan)
+    const aHoleSz = parseInt(document.getElementById('aHoleSize').value) * SCALE;
     const ahCX = (aHoleX + panOffsetX + OX) * SCALE;
     const ahCY = (aHoleY + panOffsetY + OY) * SCALE - aHoleSz * 0.35;
     const w = aHoleSz * 0.30, h = aHoleSz * 0.55;
     const d = `M ${ahCX} ${ahCY-h} C ${ahCX+w*0.15} ${ahCY-h}, ${ahCX+w} ${ahCY-h*0.1}, ${ahCX+w} ${ahCY+h*0.15} C ${ahCX+w} ${ahCY+h*0.65}, ${ahCX+w*0.6} ${ahCY+h}, ${ahCX} ${ahCY+h} C ${ahCX-w*0.6} ${ahCY+h}, ${ahCX-w} ${ahCY+h*0.65}, ${ahCX-w} ${ahCY+h*0.15} C ${ahCX-w} ${ahCY-h*0.1}, ${ahCX-w*0.15} ${ahCY-h}, ${ahCX} ${ahCY-h} Z`;
-    aHoleEl = `<path d="${d}" fill="${ahColor}" filter="url(#blob)"/>`;
+    if (bgColor === 'transparent') {
+      // For transparent: we'll cut the hole out using destination-out after rendering
+      aHoleCutoutSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${BIGW}" height="${BIGH}"><defs><filter id="blob2" color-interpolation-filters="sRGB" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur in="SourceGraphic" stdDeviation="${blobSVG}" result="blur"/><feColorMatrix in="blur" mode="matrix" values="${vals}" result="sharp"/><feComposite in="SourceGraphic" in2="sharp" operator="atop" result="crisp"/>${defocusStep}</filter></defs><path d="${d}" fill="black" filter="url(#blob2)"/></svg>`;
+    } else {
+      const ahColor = logoColor === 'black' ? 'white' : 'black';
+      aHoleEl = `<path d="${d}" fill="${ahColor}" filter="url(#blob)"/>`;
+    }
   }
 
   const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${BIGW}" height="${BIGH}">
@@ -789,6 +793,27 @@ function exportLogo(logoColor, bgColor) {
     const bctx = bigCanvas.getContext('2d');
     bctx.drawImage(img, 0, 0);
     URL.revokeObjectURL(url);
+
+    // For transparent exports: cut the A hole out using destination-out
+    const applyHoleCutout = () => {
+      if (!aHoleCutoutSvg) return Promise.resolve();
+      return new Promise(resolve => {
+        const holeBlob = new Blob([aHoleCutoutSvg], { type: 'image/svg+xml;charset=utf-8' });
+        const holeUrl = URL.createObjectURL(holeBlob);
+        const holeImg = new Image();
+        holeImg.onload = () => {
+          bctx.globalCompositeOperation = 'destination-out';
+          bctx.drawImage(holeImg, 0, 0);
+          bctx.globalCompositeOperation = 'source-over';
+          URL.revokeObjectURL(holeUrl);
+          resolve();
+        };
+        holeImg.onerror = () => { URL.revokeObjectURL(holeUrl); resolve(); };
+        holeImg.src = holeUrl;
+      });
+    };
+
+    applyHoleCutout().then(() => {
     const id = bctx.getImageData(0, 0, BIGW, BIGH); const d2 = id.data;
     let minX=BIGW,maxX=0,minY=BIGH,maxY=0;
     for(let py=0;py<BIGH;py++) for(let px=0;px<BIGW;px++){const i=(py*BIGW+px)*4;if(d2[i+3]>10){if(px<minX)minX=px;if(px>maxX)maxX=px;if(py<minY)minY=py;if(py>maxY)maxY=py;}}
@@ -800,6 +825,7 @@ function exportLogo(logoColor, bgColor) {
     else if(bgColor==='black'){fctx.fillStyle='#000';fctx.fillRect(0,0,cropW,cropH);}
     fctx.drawImage(bigCanvas,minX,minY,cropW,cropH,0,0,cropW,cropH);
     const a=document.createElement('a');a.download=`foams-${logoColor}-on-${bgColor}.png`;a.href=fc.toDataURL('image/png');a.click();
+    }); // end applyHoleCutout
   };
   img.onerror=()=>{URL.revokeObjectURL(url);alert('Export failed — try Chrome.');};
   img.src=url;
