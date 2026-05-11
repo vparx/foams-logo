@@ -110,7 +110,7 @@
   </defs>
 </svg>
 
-<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v5.7</div>
+<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v5.8</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -361,7 +361,7 @@ function getACenter() {
   const aW = mctx.measureText('A').width;
   const aPos = letterPositions[2]; // A is always index 2
   if (!aPos) return null;
-  return { x: aPos.left + aW * 0.5, y: aPos.top + sz * 0.52 };
+  return { x: aPos.left + aW * 0.5, y: aPos.top + sz * 0.42 };
 }
 
 function toggleAHole() {
@@ -731,7 +731,6 @@ function exportLogo(logoColor, bgColor) {
   letterPositions.forEach((pos, i) => {
     const x = (pos.left + panOffsetX + OX) * SCALE;
     const y = (pos.top  + panOffsetY + OY) * SCALE + fsSVG * 0.75;
-    if (i === 0) console.log('EXPORT F letter: pos.top=', pos.top, 'panY=', panOffsetY, 'OY=', OY, '=> y=', y, 'fsSVG=', fsSVG);
     const strokeAttr = sw > 0 ? `stroke="${color}" stroke-width="${swSVG}" paint-order="stroke"` : '';
     textEls += `<text x="${x}" y="${y}" font-family="'Trebuchet MS',sans-serif" font-size="${fsSVG}" font-weight="900" fill="${color}" ${strokeAttr}>${letters[i]}</text>\n`;
   });
@@ -743,8 +742,7 @@ function exportLogo(logoColor, bgColor) {
     const tagColor = logoColor === 'black' ? 'black' : 'white';
     const tagSzSVG = wordTagStageSz * SCALE;
     const tagX     = (wordTagStageX + panOffsetX + OX) * SCALE;
-    const tagY     = (wordTagStageY + panOffsetY + OY) * SCALE;
-    console.log('EXPORT title: stageY=', wordTagStageY, 'panY=', panOffsetY, 'OY=', OY, 'tagSzSVG=', tagSzSVG, '=> tagY=', tagY);
+    const tagY     = (wordTagStageY + panOffsetY + OY) * SCALE + tagSzSVG;
     titleEl = `<text x="${tagX}" y="${tagY}" font-family="'Trebuchet MS',sans-serif" font-size="${tagSzSVG}" font-weight="700" fill="${tagColor}" letter-spacing="${tagSzSVG * 0.08}">${tagEl.textContent}</text>`;
   }
 
