@@ -12,7 +12,7 @@
     .stage-outer {
       border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
-      min-height: 320px; margin-bottom: 0.5rem;
+      min-height: 240px; margin-bottom: 0.5rem;
       overflow: hidden; background: #fff;
       cursor: default; position: relative;
       transition: background 0.3s ease;
@@ -110,7 +110,7 @@
   </defs>
 </svg>
 
-<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v7.1</div>
+<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v7.2</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -312,10 +312,23 @@ function initZoom() {
 
 // ── Responsive default zoom based on screen width ─────────────────────────
 function getDefaultZoom() {
-  const outerW = document.getElementById('stageOuter').getBoundingClientRect().width;
-  // Stage is 580px wide. Scale so it fits comfortably with a bit of margin.
-  const fit = (outerW / SW) * 0.9;
-  return Math.min(fit, 1.35); // cap at 1.35 for desktop
+  const outer = document.getElementById('stageOuter');
+  const outerW = outer.getBoundingClientRect().width || outer.offsetWidth || 300;
+  const fit = (outerW / SW) * 0.88;
+  return Math.min(fit, 1.35);
+}
+
+function applyDefaultZoom() {
+  zoomScale = getDefaultZoom();
+  applyZoom();
+}
+
+// Re-center when window resizes (orientation change on mobile)
+if (window.ResizeObserver) {
+  const ro = new ResizeObserver(() => {
+    if (letterPositions.length > 0) applyDefaultZoom();
+  });
+  ro.observe(document.getElementById('stageOuter'));
 }
 
 
@@ -689,7 +702,6 @@ function randomize() {
   wordTagOffsetX = 0; wordTagOffsetY = 0;
   zoomScale = getDefaultZoom(); applyZoom();
   draw();
-  // Re-apply invert state on the background and word tag
   document.getElementById('stageOuter').classList.toggle('inverted', isInverted);
   const tag = document.getElementById('wordTag');
   if (tag) tag.style.color = isInverted ? '#fff' : '#000';
@@ -1024,11 +1036,16 @@ function setLanguage(lang) {
 initPan();
 initZoom();
 draw();
-zoomScale = getDefaultZoom();
-applyZoom();
-initWordCycle();
-initWordTagDrag();
-setTimeout(positionWordTag, 80);
+// Wait for layout to complete before calculating zoom
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    zoomScale = getDefaultZoom();
+    applyZoom();
+    initWordCycle();
+    initWordTagDrag();
+    setTimeout(positionWordTag, 80);
+  });
+});
 </script>
 </body>
 </html>
