@@ -110,7 +110,7 @@
   </defs>
 </svg>
 
-<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v6.7</div>
+<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v6.8</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -747,7 +747,7 @@ function exportLogo(logoColor, bgColor) {
       const dxStage = (tagRect2.left - fRect2.left) / zoomScale;
       const dyStage = (tagRect2.top  - fRect2.top)  / zoomScale;
       const tagX = (fPos0.left + panOffsetX + dxStage + OX) * SCALE;
-      const tagY = (fPos0.top  + panOffsetY + dyStage + OY) * SCALE + tagSzSVG * 0.25;
+      const tagY = (fPos0.top  + panOffsetY + dyStage + OY) * SCALE + tagSzSVG * 0.55;
       titleEl = `<text x="${tagX}" y="${tagY}" font-family="'Trebuchet MS',sans-serif" font-size="${tagSzSVG}" font-weight="700" fill="${tagColor}" letter-spacing="${tagSzSVG * 0.08}">${tagEl.textContent}</text>`;
     }
   }
@@ -760,7 +760,7 @@ function exportLogo(logoColor, bgColor) {
     const aPos2    = letterPositions[2];
     // aHoleX/Y are stage coords (set from letterPositions, no pan)
     const ahCX = (aHoleX + panOffsetX + OX) * SCALE;
-    const ahCY = (aHoleY + panOffsetY + OY) * SCALE - aHoleSz * 0.15;
+    const ahCY = (aHoleY + panOffsetY + OY) * SCALE - aHoleSz * 0.35;
     const w = aHoleSz * 0.30, h = aHoleSz * 0.55;
     const d = `M ${ahCX} ${ahCY-h} C ${ahCX+w*0.15} ${ahCY-h}, ${ahCX+w} ${ahCY-h*0.1}, ${ahCX+w} ${ahCY+h*0.15} C ${ahCX+w} ${ahCY+h*0.65}, ${ahCX+w*0.6} ${ahCY+h}, ${ahCX} ${ahCY+h} C ${ahCX-w*0.6} ${ahCY+h}, ${ahCX-w} ${ahCY+h*0.65}, ${ahCX-w} ${ahCY+h*0.15} C ${ahCX-w} ${ahCY-h*0.1}, ${ahCX-w*0.15} ${ahCY-h}, ${ahCX} ${ahCY-h} Z`;
     aHoleEl = `<path d="${d}" fill="${ahColor}" filter="url(#blob)"/>`;
