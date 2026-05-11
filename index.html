@@ -110,7 +110,7 @@
   </defs>
 </svg>
 
-<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v6.4</div>
+<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v6.5</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -708,55 +708,51 @@ function exportLogo(logoColor, bgColor) {
   const color    = logoColor === 'black' ? `rgba(0,0,0,${fo})` : `rgba(255,255,255,${fo})`;
   const PAD      = 24 * SCALE;
 
+  // Export at unscaled stage coords + generous margin
   const margin = 300;
-  const BIGW = (SW + margin * 2) * SCALE;
-  const BIGH = (SH + margin * 2) * SCALE;
+  const BIGW = (SW + margin * 2) * zoomScale * SCALE;
+  const BIGH = (SH + margin * 2) * zoomScale * SCALE;
   const OX = margin, OY = margin;
 
-  const fsSVG   = baseSz * SCALE;
-  const swSVG   = sw * SCALE;
-  const blobSVG = blobBlur * SCALE;
-  const defSVG  = defocus  * SCALE;
+  const fsSVG   = baseSz   * zoomScale * SCALE;
+  const swSVG   = sw       * zoomScale * SCALE;
+  const blobSVG = blobBlur * zoomScale * SCALE;
+  const defSVG  = defocus  * zoomScale * SCALE;
 
   const threshold = 22 - (blobBlur - 4) * 0.3;
   const cutoff    = -9  + (blobBlur - 4) * 0.1;
   const vals = `1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${threshold.toFixed(1)} ${cutoff.toFixed(1)}`;
   const defocusStep = defSVG > 0 ? `<feGaussianBlur in="crisp" stdDeviation="${defSVG}"/>` : '';
 
-  // Letters: letterPositions are in stage coords, pan included
+  // Letters: multiply by zoomScale so export matches preview zoom
   let textEls = '';
   letterPositions.forEach((pos, i) => {
-    const x = (pos.left + panOffsetX + OX) * SCALE;
-    const y = (pos.top  + panOffsetY + OY) * SCALE + fsSVG * 0.75;
+    const x = (pos.left + panOffsetX + OX) * zoomScale * SCALE;
+    const y = (pos.top  + panOffsetY + OY) * zoomScale * SCALE + fsSVG * 0.75;
     const strokeAttr = sw > 0 ? `stroke="${color}" stroke-width="${swSVG}" paint-order="stroke"` : '';
     textEls += `<text x="${x}" y="${y}" font-family="'Trebuchet MS',sans-serif" font-size="${fsSVG}" font-weight="900" fill="${color}" ${strokeAttr}>${letters[i]}</text>\n`;
   });
 
-  // Title: derive from letterPositions[0] + stored offset, same space as letters
+  // Title
   let titleEl = '';
   const tagEl = document.getElementById('wordTag');
   if (tagEl && tagEl.style.display !== 'none' && currentLang !== 'none') {
     const tagColor  = logoColor === 'black' ? 'black' : 'white';
-    const tagSzSVG  = wordTagStageSz * SCALE;
-    // wordTagStageX/Y are computed in positionWordTag from fPos + offsets, no pan
-    const tagX = (wordTagStageX + panOffsetX + OX) * SCALE;
-    const tagY = (wordTagStageY + panOffsetY + OY) * SCALE + tagSzSVG;
+    const tagSzSVG  = wordTagStageSz * zoomScale * SCALE;
+    const tagX      = (wordTagStageX + panOffsetX + OX) * zoomScale * SCALE;
+    const tagY      = (wordTagStageY + panOffsetY + OY) * zoomScale * SCALE + tagSzSVG;
     titleEl = `<text x="${tagX}" y="${tagY}" font-family="'Trebuchet MS',sans-serif" font-size="${tagSzSVG}" font-weight="700" fill="${tagColor}" letter-spacing="${tagSzSVG * 0.08}">${tagEl.textContent}</text>`;
   }
 
-  // A hole: aHoleX/Y are in stage coords (from letterPositions, no pan)
+  // A hole
   let aHoleEl = '';
   if (aHoleVisible) {
-    const aHoleSz = parseInt(document.getElementById('aHoleSize').value) * SCALE;
+    const aHoleSz = parseInt(document.getElementById('aHoleSize').value) * zoomScale * SCALE;
     const ahColor = logoColor === 'black' ? 'white' : 'black';
-    const ahCX    = (aHoleX + panOffsetX + OX) * SCALE;
-    const ahCY    = (aHoleY + panOffsetY + OY) * SCALE;
+    const ahCX    = (aHoleX + panOffsetX + OX) * zoomScale * SCALE;
+    const ahCY    = (aHoleY + panOffsetY + OY) * zoomScale * SCALE;
     const w = aHoleSz * 0.30, h = aHoleSz * 0.55;
-    const d = `M ${ahCX} ${ahCY - h}
-      C ${ahCX+w*0.15} ${ahCY-h}, ${ahCX+w} ${ahCY-h*0.1}, ${ahCX+w} ${ahCY+h*0.15}
-      C ${ahCX+w} ${ahCY+h*0.65}, ${ahCX+w*0.6} ${ahCY+h}, ${ahCX} ${ahCY+h}
-      C ${ahCX-w*0.6} ${ahCY+h}, ${ahCX-w} ${ahCY+h*0.65}, ${ahCX-w} ${ahCY+h*0.15}
-      C ${ahCX-w} ${ahCY-h*0.1}, ${ahCX-w*0.15} ${ahCY-h}, ${ahCX} ${ahCY-h} Z`;
+    const d = `M ${ahCX} ${ahCY-h} C ${ahCX+w*0.15} ${ahCY-h}, ${ahCX+w} ${ahCY-h*0.1}, ${ahCX+w} ${ahCY+h*0.15} C ${ahCX+w} ${ahCY+h*0.65}, ${ahCX+w*0.6} ${ahCY+h}, ${ahCX} ${ahCY+h} C ${ahCX-w*0.6} ${ahCY+h}, ${ahCX-w} ${ahCY+h*0.65}, ${ahCX-w} ${ahCY+h*0.15} C ${ahCX-w} ${ahCY-h*0.1}, ${ahCX-w*0.15} ${ahCY-h}, ${ahCX} ${ahCY-h} Z`;
     aHoleEl = `<path d="${d}" fill="${ahColor}" filter="url(#blob)"/>`;
   }
 
@@ -783,35 +779,22 @@ function exportLogo(logoColor, bgColor) {
     const bctx = bigCanvas.getContext('2d');
     bctx.drawImage(img, 0, 0);
     URL.revokeObjectURL(url);
-    const imgData = bctx.getImageData(0, 0, BIGW, BIGH);
-    const d2 = imgData.data;
-    let minX = BIGW, maxX = 0, minY = BIGH, maxY = 0;
-    for (let py = 0; py < BIGH; py++) {
-      for (let px = 0; px < BIGW; px++) {
-        const idx = (py * BIGW + px) * 4;
-        if (d2[idx+3] > 10) {
-          if (px < minX) minX = px; if (px > maxX) maxX = px;
-          if (py < minY) minY = py; if (py > maxY) maxY = py;
-        }
-      }
-    }
-    minX = Math.max(0, minX-PAD); minY = Math.max(0, minY-PAD);
-    maxX = Math.min(BIGW, maxX+PAD); maxY = Math.min(BIGH, maxY+PAD);
-    const cropW = maxX-minX, cropH = maxY-minY;
-    const finalCanvas = document.createElement('canvas');
-    finalCanvas.width = cropW; finalCanvas.height = cropH;
-    const fctx = finalCanvas.getContext('2d');
-    if (bgColor === 'white') { fctx.fillStyle = '#fff'; fctx.fillRect(0,0,cropW,cropH); }
-    else if (bgColor === 'black') { fctx.fillStyle = '#000'; fctx.fillRect(0,0,cropW,cropH); }
-    fctx.drawImage(bigCanvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
-    const a = document.createElement('a');
-    a.download = `foams-${logoColor}-on-${bgColor}.png`;
-    a.href = finalCanvas.toDataURL('image/png');
-    a.click();
+    const id = bctx.getImageData(0, 0, BIGW, BIGH); const d2 = id.data;
+    let minX=BIGW,maxX=0,minY=BIGH,maxY=0;
+    for(let py=0;py<BIGH;py++) for(let px=0;px<BIGW;px++){const i=(py*BIGW+px)*4;if(d2[i+3]>10){if(px<minX)minX=px;if(px>maxX)maxX=px;if(py<minY)minY=py;if(py>maxY)maxY=py;}}
+    minX=Math.max(0,minX-PAD);minY=Math.max(0,minY-PAD);maxX=Math.min(BIGW,maxX+PAD);maxY=Math.min(BIGH,maxY+PAD);
+    const cropW=maxX-minX,cropH=maxY-minY;
+    const fc=document.createElement('canvas');fc.width=cropW;fc.height=cropH;
+    const fctx=fc.getContext('2d');
+    if(bgColor==='white'){fctx.fillStyle='#fff';fctx.fillRect(0,0,cropW,cropH);}
+    else if(bgColor==='black'){fctx.fillStyle='#000';fctx.fillRect(0,0,cropW,cropH);}
+    fctx.drawImage(bigCanvas,minX,minY,cropW,cropH,0,0,cropW,cropH);
+    const a=document.createElement('a');a.download=`foams-${logoColor}-on-${bgColor}.png`;a.href=fc.toDataURL('image/png');a.click();
   };
-  img.onerror = () => { URL.revokeObjectURL(url); alert('Export failed — try Chrome.'); };
-  img.src = url;
+  img.onerror=()=>{URL.revokeObjectURL(url);alert('Export failed — try Chrome.');};
+  img.src=url;
 }
+
 
 
 
