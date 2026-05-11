@@ -6,7 +6,7 @@
   <title>FOAMS Logo Generator</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: sans-serif; background: #111; min-height: 100vh; padding: 1.5rem; }
+    body { font-family: sans-serif; background: #111; min-height: 100vh; padding: 1.5rem; padding-bottom: 3rem; }
 
     /* ── Play area ── */
     .stage-outer {
@@ -87,12 +87,13 @@
     .exp-white-trans { background: repeating-conic-gradient(#555 0% 25%, #333 0% 50%) 0 0/16px 16px; color: #fff; border-color: #555; }
 
     @media (max-width: 640px) {
-      body { padding: 0.75rem; }
+      body { padding: 0.75rem; padding-bottom: 3rem; }
       .stage-outer { height: 55vw; max-height: 280px; }
       .ctrl-grid { grid-template-columns: 1fr; }
       .ctrl-group.full { grid-column: 1; }
       .section-row { grid-template-columns: 1fr; }
       .hint-row { flex-direction: column; gap: 8px; align-items: flex-start; }
+      .export-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -114,7 +115,7 @@
   </defs>
 </svg>
 
-<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v7.3</div>
+<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v7.4</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
