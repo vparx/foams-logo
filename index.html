@@ -110,7 +110,7 @@
   </defs>
 </svg>
 
-<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v6.3</div>
+<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v6.4</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -741,8 +741,6 @@ function exportLogo(logoColor, bgColor) {
     // wordTagStageX/Y are computed in positionWordTag from fPos + offsets, no pan
     const tagX = (wordTagStageX + panOffsetX + OX) * SCALE;
     const tagY = (wordTagStageY + panOffsetY + OY) * SCALE + tagSzSVG;
-    const fExportY = (letterPositions[0].top + panOffsetY + OY) * SCALE + fsSVG * 0.75;
-    console.log(`TAG: stageY=${wordTagStageY.toFixed(1)} panY=${panOffsetY} => exportY=${tagY.toFixed(0)} | F: top=${letterPositions[0].top.toFixed(1)} => exportY=${fExportY.toFixed(0)} | fsSVG=${fsSVG} tagSzSVG=${tagSzSVG.toFixed(1)}`);
     titleEl = `<text x="${tagX}" y="${tagY}" font-family="'Trebuchet MS',sans-serif" font-size="${tagSzSVG}" font-weight="700" fill="${tagColor}" letter-spacing="${tagSzSVG * 0.08}">${tagEl.textContent}</text>`;
   }
 
@@ -849,15 +847,21 @@ function positionWordTag() {
   tag.style.left = screenLeft + 'px';
   tag.style.top  = screenTop  + 'px';
 
-  // Store in stage coords for export — derive from F's letterPosition
-  // (same coordinate space as the export SVG uses for letters)
-  const fPos = letterPositions[0]; // F is always index 0
+  // Store in stage coords for export.
+  // screenLeft/Top are stageOuter-relative screen pixels.
+  // Stage origin on screen = stageOuter center + (-SW/2 + panOffsetX) * zoom, etc.
+  // So: stageCoord = (screenPixel - stageOriginOnScreen) / zoom
+  // stageOriginX on screen = outerW/2 + panOffsetX * zoom - SW/2 * zoom... 
+  // Simpler: we know F is at fPos.left in stage coords, and at (anchorLeft + fRect.width*0.15) on screen.
+  // So: stageCoord = fPos.left + (screenLeft - anchorLeft - fRect.width*0.15 + fRect.width*0.15) / zoom... 
+  // Even simpler: tag screen position relative to F screen position, converted to stage offset from F stage position.
+  const fScreenLeft = fRect.left - outerRect.left;
+  const fScreenTop  = fRect.top  - outerRect.top;
+  const fPos = letterPositions[0];
   if (fPos) {
-    const fW = (fRect.width / zoomScale); // F width in stage coords
-    wordTagStageX = fPos.left - fW * 0.15 + wordTagOffsetX / zoomScale;
-    wordTagStageY = fPos.top  - 18 / zoomScale + wordTagOffsetY / zoomScale;
+    wordTagStageX = fPos.left + (screenLeft - fScreenLeft) / zoomScale;
+    wordTagStageY = fPos.top  + (screenTop  - fScreenTop)  / zoomScale;
   }
-  // Store font size in stage (unscaled) space
   const tagSzScreen = parseInt(document.getElementById('titleSz').value);
   wordTagStageSz = tagSzScreen / zoomScale;
 }
