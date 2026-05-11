@@ -110,7 +110,7 @@
   </defs>
 </svg>
 
-<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v5.3</div>
+<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v5.4</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -741,8 +741,8 @@ function exportLogo(logoColor, bgColor) {
   if (tagEl && tagEl.style.display !== 'none' && currentLang !== 'none') {
     const tagColor = logoColor === 'black' ? 'black' : 'white';
     const tagSzSVG = wordTagStageSz * SCALE;
-    const tagX     = (wordTagStageX + OX) * SCALE;
-    const tagY     = (wordTagStageY + OY) * SCALE + tagSzSVG * 0.85;
+    const tagX     = (wordTagStageX + panOffsetX + OX) * SCALE;
+    const tagY     = (wordTagStageY + panOffsetY + OY) * SCALE + tagSzSVG * 0.85;
     titleEl = `<text x="${tagX}" y="${tagY}" font-family="'Trebuchet MS',sans-serif" font-size="${tagSzSVG}" font-weight="700" fill="${tagColor}" letter-spacing="${tagSzSVG * 0.08}">${tagEl.textContent}</text>`;
   }
 
@@ -751,8 +751,8 @@ function exportLogo(logoColor, bgColor) {
   if (aHoleVisible) {
     const aHoleSz  = parseInt(document.getElementById('aHoleSize').value) * SCALE;
     const ahColor  = logoColor === 'black' ? 'white' : 'black';
-    const ahCX     = (aHoleX + OX) * SCALE;
-    const ahCY     = (aHoleY + OY) * SCALE;
+    const ahCX     = (aHoleX + panOffsetX + OX) * SCALE;
+    const ahCY     = (aHoleY + panOffsetY + OY) * SCALE;
     // Same path formula as aHolePathD but scaled
     const w = aHoleSz * 0.30;
     const h = aHoleSz * 0.55;
