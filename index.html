@@ -110,7 +110,7 @@
   </defs>
 </svg>
 
-<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v6.9</div>
+<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v7.0</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -693,7 +693,18 @@ function randomize() {
   document.getElementById('stageOuter').classList.toggle('inverted', isInverted);
   const tag = document.getElementById('wordTag');
   if (tag) tag.style.color = isInverted ? '#fff' : '#000';
-  setTimeout(positionWordTag, 60);
+  setTimeout(() => {
+    positionWordTag();
+    // Reposition A hole to new A center + preserved offset
+    if (aHoleVisible) {
+      const ac = getACenter();
+      if (ac) {
+        aHoleX = ac.x + aHoleOffsetX;
+        aHoleY = ac.y + aHoleOffsetY;
+        renderAHole();
+      }
+    }
+  }, 60);
 }
 
 // ── Export ───────────────────────────────────────────────────────────────────
