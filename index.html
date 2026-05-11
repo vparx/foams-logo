@@ -110,7 +110,7 @@
   </defs>
 </svg>
 
-<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v7.0</div>
+<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v7.1</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -729,8 +729,8 @@ function exportLogo(logoColor, bgColor) {
   const blobSVG = blobBlur * SCALE;
   const defSVG  = defocus  * SCALE;
 
-  const threshold = 22 - (blobBlur - 4) * 0.3;
-  const cutoff    = -9  + (blobBlur - 4) * 0.1;
+  const threshold = (22 - (blobBlur - 4) * 0.3) * SCALE;
+  const cutoff    = (-9  + (blobBlur - 4) * 0.1) * SCALE;
   const vals = `1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${threshold.toFixed(1)} ${cutoff.toFixed(1)}`;
   const defocusStep = defSVG > 0 ? `<feGaussianBlur in="crisp" stdDeviation="${defSVG}"/>` : '';
 
