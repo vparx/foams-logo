@@ -110,7 +110,7 @@
   </defs>
 </svg>
 
-<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v5.2</div>
+<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v5.3</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -854,15 +854,14 @@ function positionWordTag() {
   tag.style.left = screenLeft + 'px';
   tag.style.top  = screenTop  + 'px';
 
-  // Store in unscaled stage coords for export.
-  // tag.style.left/top are already the final stageOuter-relative screen position.
-  // Invert the zoom+pan+centering transform to get stage coords.
-  const outerEl   = document.getElementById('stageOuter');
-  const oRect     = outerEl.getBoundingClientRect();
-  const oCX       = oRect.width  / 2;
-  const oCY       = oRect.height / 2;
-  wordTagStageX = (screenLeft - oCX) / zoomScale + SW/2 - panOffsetX;
-  wordTagStageY = (screenTop  - oCY) / zoomScale + SH/2 - panOffsetY;
+  // Store in stage coords for export — derive from F's letterPosition
+  // (same coordinate space as the export SVG uses for letters)
+  const fPos = letterPositions[0]; // F is always index 0
+  if (fPos) {
+    const fW = (fRect.width / zoomScale); // F width in stage coords
+    wordTagStageX = fPos.left - fW * 0.15 + wordTagOffsetX / zoomScale;
+    wordTagStageY = fPos.top  - 18 / zoomScale + wordTagOffsetY / zoomScale;
+  }
   // Store font size in stage (unscaled) space
   const tagSzScreen = parseInt(document.getElementById('titleSz').value);
   wordTagStageSz = tagSzScreen / zoomScale;
