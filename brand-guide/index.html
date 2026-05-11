@@ -15,8 +15,7 @@
       --white: #ffffff;
       --light: #F5F5F5;
       --border: #e0e0e0;
-      --sidebar-width: 220px;
-      --header-height: 64px;
+      --sidebar-width: 240px;
       --font-sans: 'Trebuchet MS', sans-serif;
     }
 
@@ -30,31 +29,10 @@
       line-height: 1.6;
     }
 
-    /* ── HEADER ── */
-    header {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: var(--header-height);
-      background: var(--black);
-      display: flex;
-      align-items: center;
-      padding: 0 2rem;
-      z-index: 100;
-    }
-
-    .logo {
-      font-size: 1.4rem;
-      font-weight: 900;
-      color: var(--brand);
-      letter-spacing: -0.02em;
-      text-decoration: none;
-    }
-
     /* ── LAYOUT ── */
     .layout {
       display: flex;
-      margin-top: var(--header-height);
-      min-height: calc(100vh - var(--header-height));
+      min-height: 100vh;
     }
 
     /* ── SIDEBAR ── */
@@ -62,81 +40,91 @@
       width: var(--sidebar-width);
       flex-shrink: 0;
       position: sticky;
-      top: var(--header-height);
-      height: calc(100vh - var(--header-height));
+      top: 0;
+      height: 100vh;
       overflow-y: auto;
       background: var(--white);
       border-right: 1px solid var(--border);
-      padding: 2rem 0;
+      padding: 2.5rem 0;
+    }
+
+    .sidebar-title {
+      font-family: 'Averia Serif Libre', serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: #aaa;
+      padding: 0 1.5rem 1rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0.5rem;
     }
 
     .sidebar nav a {
       display: block;
-      padding: 0.75rem 1.5rem;
-      font-size: 0.95rem;
+      padding: 0.85rem 1.5rem;
+      font-size: 0.9rem;
       font-weight: 500;
-      color: #555;
+      color: #666;
       text-decoration: none;
-      border-bottom: 1px solid var(--border);
-      transition: color 0.2s, background 0.2s;
+      transition: color 0.15s, background 0.15s;
+      border-left: 3px solid transparent;
     }
 
-    .sidebar nav a:first-child {
-      font-weight: 700;
-      color: var(--black);
-      font-size: 1rem;
-    }
-
-    .sidebar nav a:hover,
-    .sidebar nav a.active {
+    .sidebar nav a:hover {
       color: var(--black);
       background: var(--light);
     }
 
     .sidebar nav a.active {
-      border-left: 3px solid #FF30FF;
-      padding-left: calc(1.5rem - 3px);
+      color: var(--black);
+      font-weight: 700;
+      border-left: 3px solid var(--brand);
+      background: var(--light);
     }
 
     /* ── MAIN CONTENT ── */
     main {
       flex: 1;
-      max-width: 920px;
-      padding: 4rem 4rem 6rem;
+      min-width: 0;
+      padding: 5rem 5rem 8rem;
     }
 
     /* ── SECTIONS ── */
     .section {
-      padding-bottom: 6rem;
-      margin-bottom: 0;
+      padding-top: 4rem;
+      padding-bottom: 5rem;
       border-bottom: 1px solid var(--border);
+    }
+
+    .section:first-child {
+      padding-top: 3rem;
     }
 
     .section:last-child {
       border-bottom: none;
-      padding-bottom: 4rem;
+      padding-bottom: 3rem;
     }
 
     .section-header {
       margin-bottom: 2.5rem;
-      padding-bottom: 2rem;
-      border-bottom: 1px solid var(--border);
     }
 
     .section-header h2 {
-      font-size: 2.5rem;
+      font-size: 3rem;
       font-weight: 700;
       font-family: 'Averia Serif Libre', serif;
-      letter-spacing: -0.01em;
-      line-height: 1.1;
+      letter-spacing: -0.02em;
+      line-height: 1.05;
       margin-bottom: 0.75rem;
+      color: var(--black);
     }
 
     .section-header p {
       color: #555;
-      max-width: 560px;
-      font-size: 0.95rem;
-      line-height: 1.7;
+      max-width: 640px;
+      font-size: 1rem;
+      line-height: 1.75;
     }
 
     /* ── TWO-COL ROW ── */
@@ -187,29 +175,6 @@
       font-weight: 700;
       color: var(--black);
       letter-spacing: -0.03em;
-    }
-
-    /* ── BUTTON ── */
-    .btn {
-      display: inline-block;
-      margin-top: 1.5rem;
-      padding: 0.85rem 2rem;
-      background: var(--black);
-      color: var(--white);
-      font-family: var(--font-sans);
-      font-weight: 700;
-      font-size: 0.85rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      text-decoration: none;
-      border: none;
-      cursor: pointer;
-      transition: background 0.2s, color 0.2s;
-    }
-
-    .btn:hover {
-      background: var(--brand);
-      color: var(--black);
     }
 
     /* ── COLOR SWATCHES ── */
@@ -376,117 +341,18 @@
     }
 
     /* Photo/illus images when added */
-    .photo-grid img, .illustration-grid img {
-      width: 100%;
-      aspect-ratio: 4/3;
-      object-fit: cover;
-      border-radius: 10px;
-      display: block;
-    }
+    /* ── EXAMPLES (kept for reference) ── */
 
-    .illustration-grid img {
-      aspect-ratio: 1;
-    }
-
-    /* ── EXAMPLES GRID ── */
-    .examples-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      margin-top: 1.5rem;
-    }
-
-    .example-card {
-      border-radius: 10px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-    }
-
-    .example-card .preview {
-      height: 140px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 900;
-      font-size: 1.2rem;
-      letter-spacing: -0.02em;
-    }
-
-    .example-card .preview.bg-brand { background: var(--brand); color: var(--black); }
-    .example-card .preview.bg-black { background: var(--black); color: var(--brand); }
-    .example-card .preview.bg-light { background: var(--light); color: var(--black); }
-
-    .example-card .caption {
-      padding: 0.75rem 1rem;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: #555;
-      border-top: 1px solid var(--border);
-    }
-
-    /* ── LOGO SECTION ── */
-    .logo-display {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.5rem;
-      background: var(--light);
-      border-radius: 12px;
-      padding: 2rem;
-      margin-top: 1.5rem;
-    }
-
-    .logo-variant {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .logo-box {
-      width: 160px;
-      height: 90px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.8rem;
-      font-weight: 900;
-      letter-spacing: -0.04em;
-    }
-
-    .logo-box.on-white { background: var(--white); border: 1px solid var(--border); }
-    .logo-box.on-black { background: var(--black); }
-    .logo-box.on-transparent {
-      background: repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 0 0 / 12px 12px;
-    }
-
-    .logo-box img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      padding: 0.75rem;
-    }
-
-    .logo-variant small {
-      font-size: 0.75rem;
-      color: #888;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
+    /* ── LOGO VARIANT ── */
+    /* (logo-display, logo-variant, logo-box defined later in full CSS) */
 
     /* ── SUBSECTION ── */
     .subsection {
-      margin-top: 2.5rem;
-    }
-
-    /* ── SUBSECTION ── */
-    .subsection {
-      margin-top: 3rem;
+      margin-top: 3.5rem;
     }
 
     .subsection h3 {
-      font-size: 1.15rem;
+      font-size: 1.35rem;
       font-weight: 700;
       font-family: 'Averia Serif Libre', serif;
       margin-bottom: 0.5rem;
@@ -502,6 +368,177 @@
 
     .generator-block h3 {
       font-family: 'Averia Serif Libre', serif;
+      font-size: 1.35rem;
+    }
+
+    /* ── BUTTON ── */
+    .btn {
+      display: inline-block;
+      margin-top: 1.5rem;
+      padding: 0.9rem 2.25rem;
+      background: var(--black);
+      color: var(--white);
+      font-family: var(--font-sans);
+      font-weight: 700;
+      font-size: 0.82rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      border-radius: 2px;
+    }
+
+    .btn:hover {
+      background: var(--brand);
+      color: var(--black);
+    }
+
+    /* ── PHOTOS ── */
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .photo-grid img {
+      width: 100%;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+      border-radius: 8px;
+      display: block;
+    }
+
+    /* ── ELEMENTS GRID ── */
+    .elements-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.6rem;
+    }
+
+    .element-item {
+      background: #111;
+      border-radius: 8px;
+      overflow: hidden;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .element-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .element-item--light {
+      background: var(--light);
+    }
+
+    /* ── LOGO DISPLAY ── */
+    .logo-display {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      background: var(--light);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .logo-variant {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-box {
+      width: 100%;
+      height: 110px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-box.on-white { background: var(--white); border: 1px solid var(--border); }
+    .logo-box.on-black { background: var(--black); }
+    .logo-box.on-transparent {
+      background-color: #fff;
+      background-image:
+        linear-gradient(45deg, #ccc 25%, transparent 25%),
+        linear-gradient(-45deg, #ccc 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #ccc 75%),
+        linear-gradient(-45deg, transparent 75%, #ccc 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+    }
+
+    /* White-on-transparent needs dark checkerboard so white logo shows */
+    .logo-box.on-transparent-dark {
+      background-color: #444;
+      background-image:
+        linear-gradient(45deg, #333 25%, transparent 25%),
+        linear-gradient(-45deg, #333 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #333 75%),
+        linear-gradient(-45deg, transparent 75%, #333 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+    }
+
+    .logo-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 0.75rem;
+    }
+
+    .logo-variant small {
+      font-size: 0.72rem;
+      color: #888;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      text-align: center;
+    }
+
+    /* ── BACK TO TOP ── */
+    #back-to-top {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 44px;
+      height: 44px;
+      background: var(--black);
+      color: var(--white);
+      border: none;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s, background 0.2s;
+      text-decoration: none;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    }
+
+    #back-to-top.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    #back-to-top:hover {
+      background: var(--brand);
+      color: var(--black);
     }
 
     /* ── GENERATOR BLOCK ── */
@@ -725,153 +762,115 @@
     /* ── PAIRING RULES ── */
     .pairing-rules {
       margin-top: 3rem;
-      border: 2px solid var(--border);
-      border-radius: 14px;
-      overflow: hidden;
-    }
-
-    .pairing-rules-header {
-      background: var(--black);
-      padding: 1.25rem 1.75rem;
       display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .pairing-rules-header h3 {
-      font-family: 'Averia Serif Libre', serif;
-      font-size: 1rem;
-      font-weight: 700;
-      color: var(--white);
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      margin: 0;
-    }
-
-    .pairing-rules-header .rule-icon {
-      font-size: 1rem;
-    }
-
-    .pairing-row {
-      display: grid;
-      grid-template-columns: 1fr 48px 1fr;
-      align-items: center;
-      padding: 1.5rem 1.75rem;
-      border-bottom: 1px solid var(--border);
+      flex-direction: column;
       gap: 1rem;
     }
 
-    .pairing-row:last-child {
-      border-bottom: none;
-    }
-
-    .pairing-row.allowed {
-      background: var(--white);
-    }
-
-    .pairing-row.forbidden {
-      background: #fff8f8;
-    }
-
-    .pairing-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 1rem;
-      border-radius: 999px;
-      font-size: 0.8rem;
+    .pairing-rules-title {
+      font-family: 'Averia Serif Libre', serif;
+      font-size: 1.35rem;
       font-weight: 700;
-      letter-spacing: 0.04em;
+      color: var(--black);
+      margin-bottom: 0.25rem;
     }
 
-    .pairing-pill.pink {
-      background: #FF30FF;
-      color: var(--black);
+    .pairing-rules-intro {
+      font-size: 0.95rem;
+      color: #555;
+      margin-bottom: 0.5rem;
+      line-height: 1.6;
     }
 
-    .pairing-pill.light {
-      background: var(--light);
-      color: var(--black);
+    .pairing-combo {
+      border-radius: 12px;
+      overflow: hidden;
       border: 1px solid var(--border);
     }
 
-    .pairing-pill.dark {
-      background: var(--black);
-      color: var(--white);
-    }
-
-    .pairing-connector {
+    .pairing-combo-header {
       display: flex;
       align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-      font-weight: 900;
-    }
-
-    .pairing-connector.yes { color: #22c55e; }
-    .pairing-connector.no  { color: #ef4444; }
-
-    .pairing-label {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-    }
-
-    .pairing-label strong {
-      font-size: 0.9rem;
+      gap: 0.75rem;
+      padding: 1rem 1.5rem;
       font-weight: 700;
-      color: var(--black);
+      font-size: 0.95rem;
     }
 
-    .pairing-label span {
-      font-size: 0.78rem;
-      color: #888;
+    .pairing-combo-header.allowed { background: #f0fdf4; color: #166534; border-bottom: 1px solid #bbf7d0; }
+    .pairing-combo-header.forbidden { background: #fef2f2; color: #991b1b; border-bottom: 1px solid #fecaca; }
+    .pairing-combo-header.conditional { background: #fffbeb; color: #92400e; border-bottom: 1px solid #fde68a; }
+
+    .pairing-combo-header .badge {
+      font-size: 1rem;
     }
 
-    .pairing-body-note {
-      background: #fffbea;
-      border-top: 1px solid #f0e06a;
-      padding: 1rem 1.75rem;
-      font-size: 0.82rem;
-      color: #7a6200;
+    .pairing-combo-body {
+      padding: 1.25rem 1.5rem;
       display: flex;
-      align-items: flex-start;
-      gap: 0.5rem;
-      line-height: 1.5;
+      align-items: center;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+      background: var(--white);
+    }
+
+    .pairing-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 1rem;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+
+    .pairing-tag.pink { background: #FF30FF; color: #000; }
+    .pairing-tag.dark { background: #111; color: #fff; }
+    .pairing-tag.grey { background: #eee; color: #333; border: 1px solid #ddd; }
+
+    .pairing-arrow {
+      font-size: 1.1rem;
+      color: #aaa;
+      font-weight: 700;
+    }
+
+    .pairing-note {
+      padding: 0.85rem 1.5rem;
+      font-size: 0.82rem;
+      color: #666;
+      background: var(--light);
+      border-top: 1px solid var(--border);
+      font-style: italic;
     }
 
     /* ── SCROLLSPY ── */
-    @media (max-width: 768px) {
+    @media (max-width: 900px) {
       .sidebar { display: none; }
-      main { padding: 2rem 1.5rem; }
-      .two-col, .two-col.wide-right { grid-template-columns: 1fr; }
-      .examples-grid, .photo-grid { grid-template-columns: 1fr 1fr; }
-      .pattern-grid { grid-template-columns: 1fr 1fr; }
-      .illustration-grid { grid-template-columns: 1fr 1fr; }
-      .graphic-grid { grid-template-columns: repeat(3, 1fr); }
+      main { padding: 2.5rem 1.5rem 5rem; }
       .logo-display { grid-template-columns: repeat(2, 1fr) !important; }
+      .elements-grid { grid-template-columns: repeat(3, 1fr); }
+      .photo-grid { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
 <body>
 
-  <!-- HEADER -->
-  <header>
-    <a href="#" class="logo">FOAMS</a>
-  </header>
-
   <div class="layout">
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
+      <div class="sidebar-title">Brand Guidelines</div>
       <nav>
-        <a href="#brand-guidelines" class="active">Brand Guidelines</a>
+        <a href="#brand-guidelines">Overview</a>
         <a href="#logo">Logo</a>
         <a href="#color">Color</a>
         <a href="#typography">Typography</a>
         <a href="#graphic-elements">Graphic Elements</a>
         <a href="#photos-images">Photos &amp; Images</a>
         <a href="#examples-of-usage">Examples of Usage</a>
+        <a href="#closing">↓ Keep it fluid</a>
       </nav>
     </aside>
 
@@ -882,9 +881,8 @@
       <section class="section" id="brand-guidelines">
         <div class="section-header">
           <h2>FOAMS Brand Guidelines</h2>
-          <p>We've created a set of guidelines to help you bring our brand to life consistently across every touchpoint.</p>
+          <p>We've created a set of guidelines to help you bring our brand to life consistently across every touchpoint. On this page you'll find our high-level guidelines and the assets you'll need.</p>
         </div>
-        <p style="color:#444;">On this page you'll find our high-level guidelines and the assets you'll need.</p>
       </section>
 
       <!-- LOGO -->
@@ -894,10 +892,10 @@
           <p>Our logo is the cornerstone of our identity. Use it consistently and give it room to breathe. Ideally you should use the <strong>FOAMS LOGO GENERATOR</strong> tool every time you need a logo, to make it fluid. Our logo is always changing.</p>
         </div>
 
-        <a href="foams-logo-options.zip" download class="btn" style="margin-top:0.5rem; margin-bottom:0.5rem;">Download Base Logo</a>
+        <a href="foams-logo-options.zip" download class="btn">Download Base Logo</a>
 
         <!-- Primary Logo -->
-        <div class="subsection" style="margin-top:0;">
+        <div class="subsection">
           <h3>Primary Logo</h3>
           <div class="logo-display" style="grid-template-columns: repeat(4, 1fr);">
             <div class="logo-variant">
@@ -919,7 +917,7 @@
               <small>Black on Transparent</small>
             </div>
             <div class="logo-variant">
-              <div class="logo-box on-transparent">
+              <div class="logo-box on-transparent-dark">
                 <img src="foams-white-on-transparent.png" alt="FOAMS white on transparent">
               </div>
               <small>White on Transparent</small>
@@ -1134,7 +1132,8 @@
         <!-- Pink Vectors -->
         <div class="subsection" style="margin-top:0;">
           <h3>Pink Vectors</h3>
-          <p style="color:#666; font-size:0.9rem; margin-bottom:1.25rem;">Bold magenta lines, curves, and geometric forms. Use on dark backgrounds for maximum impact.</p>
+          <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;">Bold magenta lines, curves, and geometric forms. Use on dark backgrounds for maximum impact.</p>
+          <p style="margin-bottom:1.25rem;"><span class="pairing-tag pink" style="font-size:0.72rem;">✅ Pair with: Water images only</span></p>
           <div class="elements-grid">
             <div class="element-item"><img src="pink-vectors__14_.png" alt="Pink vector element"></div>
             <div class="element-item"><img src="pink-vectors__13_.png" alt="Pink vector element"></div>
@@ -1156,7 +1155,8 @@
         <!-- Focus Light -->
         <div class="subsection">
           <h3>Focus Light</h3>
-          <p style="color:#666; font-size:0.9rem; margin-bottom:1.25rem;">Concentrated light effects, glows, and radial highlights creating depth and drama.</p>
+          <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;">Concentrated light effects, glows, and radial highlights creating depth and drama.</p>
+          <p style="margin-bottom:1.25rem;"><span class="pairing-tag grey" style="font-size:0.72rem;">✅ Pair with: Tropical images only</span></p>
           <div class="elements-grid">
             <div class="element-item"><img src="focus-light__1_.png" alt="Focus light element"></div>
             <div class="element-item"><img src="focus-light__2_.png" alt="Focus light element"></div>
@@ -1176,87 +1176,58 @@
 
         <!-- PAIRING RULES -->
         <div class="pairing-rules">
-          <div class="pairing-rules-header">
-            <span class="rule-icon">⚡</span>
-            <h3>Element + Image Pairing Rules</h3>
+          <h3 class="pairing-rules-title">How to Combine Elements + Images</h3>
+          <p class="pairing-rules-intro">Each graphic element style is designed to pair with a specific image category. Follow these rules for a consistent and intentional visual result.</p>
+
+          <!-- Pink Vectors → Water only -->
+          <div class="pairing-combo">
+            <div class="pairing-combo-header allowed">
+              <span class="badge">✅</span> Pink Vectors pair exclusively with Water images
+            </div>
+            <div class="pairing-combo-body">
+              <span class="pairing-tag pink">Pink Vectors</span>
+              <span class="pairing-arrow">→</span>
+              <span class="pairing-tag dark">Water</span>
+            </div>
+            <div class="pairing-note">The electric energy of Pink Vectors matches the raw movement of water. Never use Pink Vectors with Tropical or Body images.</div>
           </div>
 
-          <div class="pairing-row allowed">
-            <div class="pairing-label">
-              <span class="pairing-pill pink">Pink Vectors</span>
+          <!-- Focus Light → Tropical only -->
+          <div class="pairing-combo">
+            <div class="pairing-combo-header allowed">
+              <span class="badge">✅</span> Focus Light pairs exclusively with Tropical images
             </div>
-            <div class="pairing-connector yes">✓</div>
-            <div class="pairing-label">
-              <span class="pairing-pill dark">Water</span>
-              <span>Only with water images</span>
+            <div class="pairing-combo-body">
+              <span class="pairing-tag grey">Focus Light</span>
+              <span class="pairing-arrow">→</span>
+              <span class="pairing-tag grey">Tropical</span>
             </div>
+            <div class="pairing-note">The soft glows of Focus Light complement the organic textures of tropical nature. Never use Focus Light with Water or Body images.</div>
           </div>
 
-          <div class="pairing-row forbidden">
-            <div class="pairing-label">
-              <span class="pairing-pill pink">Pink Vectors</span>
+          <!-- Both → Body, but not together -->
+          <div class="pairing-combo">
+            <div class="pairing-combo-header conditional">
+              <span class="badge">⚠️</span> Both can be used with Body images — but never at the same time
             </div>
-            <div class="pairing-connector no">✕</div>
-            <div class="pairing-label">
-              <span class="pairing-pill light">Tropical</span>
-              <span>Never with tropical images</span>
+            <div class="pairing-combo-body">
+              <span class="pairing-tag pink">Pink Vectors</span>
+              <span style="font-size:0.8rem; color:#aaa; font-weight:700;">or</span>
+              <span class="pairing-tag grey">Focus Light</span>
+              <span class="pairing-arrow">→</span>
+              <span class="pairing-tag dark">Body</span>
             </div>
+            <div class="pairing-note">Choose one or the other — never mix Pink Vectors and Focus Light in the same composition.</div>
           </div>
 
-          <div class="pairing-row allowed">
-            <div class="pairing-label">
-              <span class="pairing-pill light">Focus Light</span>
+          <!-- One element rule -->
+          <div class="pairing-combo">
+            <div class="pairing-combo-header conditional">
+              <span class="badge">💡</span> Recommended: use only ONE graphic element per image
             </div>
-            <div class="pairing-connector yes">✓</div>
-            <div class="pairing-label">
-              <span class="pairing-pill light">Tropical</span>
-              <span>Only with tropical images</span>
+            <div class="pairing-combo-body" style="font-size:0.9rem; color:#555; padding-top:1rem; padding-bottom:1rem;">
+              More than one element is possible, but use it sparingly and with intention. Too many elements in one composition quickly becomes overwhelming.
             </div>
-          </div>
-
-          <div class="pairing-row forbidden">
-            <div class="pairing-label">
-              <span class="pairing-pill light">Focus Light</span>
-            </div>
-            <div class="pairing-connector no">✕</div>
-            <div class="pairing-label">
-              <span class="pairing-pill dark">Water</span>
-              <span>Never with water images</span>
-            </div>
-          </div>
-
-          <div class="pairing-row allowed">
-            <div class="pairing-label" style="display:flex; flex-direction:column; gap:0.4rem;">
-              <span class="pairing-pill pink">Pink Vectors</span>
-              <span class="pairing-pill light">Focus Light</span>
-            </div>
-            <div class="pairing-connector yes">✓</div>
-            <div class="pairing-label">
-              <span class="pairing-pill dark">Body</span>
-              <span>Both can be used with body — but separately, never together</span>
-            </div>
-          </div>
-
-          <div class="pairing-row forbidden">
-            <div class="pairing-label" style="display:flex; flex-direction:column; gap:0.4rem;">
-              <span class="pairing-pill pink">Pink Vectors</span>
-              <span style="font-size:0.75rem; font-weight:700; color:#ef4444; padding-left:0.25rem;">+ at the same time</span>
-              <span class="pairing-pill light">Focus Light</span>
-            </div>
-            <div class="pairing-connector no">✕</div>
-            <div class="pairing-label">
-              <span style="font-size:0.85rem; font-weight:700; color:#ef4444;">Never together</span>
-              <span>Pink Vectors and Focus Light must never appear in the same composition</span>
-            </div>
-          </div>
-
-          <div class="pairing-body-note">
-            <span>⚠️</span>
-            <span>When working with Body images, choose <strong>either</strong> Pink Vectors or Focus Light — never both in the same piece.</span>
-          </div>
-          <div class="pairing-body-note" style="border-top: 1px solid #e0d080; background:#fffff0;">
-            <span>💡</span>
-            <span>It is <strong>highly recommended to use just ONE graphic element per image.</strong> You may combine more than one, but be intentional and careful — too many elements in the same composition can quickly become visually overwhelming.</span>
           </div>
         </div>
 
@@ -1272,7 +1243,7 @@
         <div class="subsection">
           <h3>Tropical</h3>
           <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;">Images of plants, forest, lush natural environments.</p>
-          <p style="margin-bottom:1rem;"><span class="pairing-pill light" style="font-size:0.72rem;">Use with: Focus Light only</span></p>
+          <p style="margin-bottom:1rem;"><span class="pairing-tag grey" style="font-size:0.72rem;">✅ Use with: Focus Light only</span></p>
           <div class="photo-grid">
             <img src="Foams-Brand-Images-Tropical__1_.jpg" alt="Tropical">
             <img src="Foams-Brand-Images-Tropical__2_.jpg" alt="Tropical">
@@ -1287,7 +1258,7 @@
         <div class="subsection">
           <h3>Water</h3>
           <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;">Foaming waves, water in motion, aquatic textures.</p>
-          <p style="margin-bottom:1rem;"><span class="pairing-pill pink" style="font-size:0.72rem;">Use with: Pink Vectors only</span></p>
+          <p style="margin-bottom:1rem;"><span class="pairing-tag pink" style="font-size:0.72rem;">✅ Use with: Pink Vectors only</span></p>
           <div class="photo-grid">
             <img src="Foams-Brand-Images-Water__1_.jpg" alt="Water">
             <img src="Foams-Brand-Images-Water__2_.jpg" alt="Water">
@@ -1302,7 +1273,7 @@
         <div class="subsection">
           <h3>Body</h3>
           <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;">People, performers, human presence and movement.</p>
-          <p style="margin-bottom:1rem;"><span class="pairing-pill dark" style="font-size:0.72rem;">Use with: Pink Vectors OR Focus Light — never both</span></p>
+          <p style="margin-bottom:1rem;"><span class="pairing-tag dark" style="font-size:0.72rem;">⚠️ Use with: Pink Vectors OR Focus Light — never both</span></p>
           <div class="photo-grid">
             <img src="Foams-Brand-Images-Body__1_.jpg" alt="Body">
             <img src="Foams-Brand-Images-Body__2_.jpg" alt="Body">
@@ -1321,7 +1292,7 @@
           <p>See the brand in action across different formats and contexts — combining logo, graphic elements, and photography.</p>
         </div>
 
-        <div class="subsection" style="margin-top:0;">
+        <div class="subsection">
           <h3>Landscape</h3>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top:1rem;">
             <img src="foams-example-usage-landscape-01.png" alt="Example of usage landscape" style="width:100%; border-radius:8px; display:block;">
@@ -1342,11 +1313,36 @@
         </div>
       </section>
 
+      <!-- CLOSING -->
+      <section class="section" id="closing" style="padding-bottom:5rem;">
+        <div style="max-width:600px; padding-top:1rem;">
+          <h2 style="font-family:'Averia Serif Libre',serif; font-size:2.5rem; font-weight:700; margin-bottom:1.25rem; line-height:1.1;">Keep it fluid.</h2>
+          <p style="font-size:1.05rem; color:#444; line-height:1.8; margin-bottom:1rem;">
+            FOAMS is a living brand. The logo shifts, the images breathe, and the elements flow. These guidelines exist not to constrain but to give you a foundation to explore from.
+          </p>
+          <p style="font-size:1.05rem; color:#444; line-height:1.8; margin-bottom:2rem;">
+            When in doubt: stay bold, stay fluid, and use the generator.
+          </p>
+          <a href="http://casafoams.com/foams-logo" target="_blank" class="btn-generator">Open Logo Generator</a>
+          <a href="foams-logo-options.zip" download class="btn" style="margin-left:1rem;">Download Base Logo</a>
+        </div>
+
+        <div style="margin-top:4rem; padding-top:2rem; border-top:1px solid var(--border); display:flex; align-items:center; gap:1rem;">
+          <img src="foams-pink-on-black.png" alt="FOAMS" style="height:48px; object-fit:contain;">
+          <span style="font-size:0.8rem; color:#aaa; line-height:1.6;">FOAMS Brand Guidelines<br>casafoams.com</span>
+        </div>
+      </section>
+
     </main>
   </div>
 
+  </div><!-- end layout -->
+
+  <!-- BACK TO TOP -->
+  <a href="#brand-guidelines" id="back-to-top" title="Back to top">↑</a>
+
   <script>
-    // Scrollspy — highlights the active sidebar link as you scroll
+    // Scrollspy
     const sections = document.querySelectorAll('.section');
     const navLinks = document.querySelectorAll('.sidebar nav a');
 
@@ -1354,13 +1350,42 @@
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           navLinks.forEach(link => link.classList.remove('active'));
-          const active = document.querySelector(`.sidebar nav a[href="#${entry.target.id}"]`);
+          const id = entry.target.id;
+          const active = document.querySelector(`.sidebar nav a[href="#${id}"]`);
           if (active) active.classList.add('active');
         }
       });
-    }, { rootMargin: '-20% 0px -70% 0px' });
+    }, { rootMargin: '-10% 0px -80% 0px' });
 
     sections.forEach(s => observer.observe(s));
+
+    // Back to top visibility
+    const backToTop = document.getElementById('back-to-top');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 400) {
+        backToTop.classList.add('visible');
+      } else {
+        backToTop.classList.remove('visible');
+      }
+    });
+
+    // Sidebar nav smooth scroll (fixes iframe anchor issues)
+    navLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetId = link.getAttribute('href').replace('#', '');
+        const target = document.getElementById(targetId);
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+
+    // Back to top smooth scroll
+    backToTop.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
   </script>
 
 </body>
