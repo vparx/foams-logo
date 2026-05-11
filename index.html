@@ -91,7 +91,6 @@
       .section-row { grid-template-columns: 1fr; }
     }
   </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -111,7 +110,7 @@
   </defs>
 </svg>
 
-<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v6.1</div>
+<div style="position:fixed;top:6px;left:8px;font-size:10px;color:#444;font-family:monospace;z-index:9999;pointer-events:none;">v6.2</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -699,74 +698,125 @@ function randomize() {
 
 // ── Export ───────────────────────────────────────────────────────────────────
 function exportLogo(logoColor, bgColor) {
-  // Use html2canvas to screenshot the play area exactly as shown
-  const outer = document.getElementById('stageOuter');
+  const SCALE    = 4;
+  const letters  = ['F','O','A','M','S'];
+  const fo       = parseInt(document.getElementById('fillOp').value) / 100;
+  const sw       = parseInt(document.getElementById('strokeW').value);
+  const blobBlur = parseInt(document.getElementById('blurR').value);
+  const defocus  = parseFloat(document.getElementById('defocus').value);
+  const baseSz   = parseInt(document.getElementById('sz').value);
+  const color    = logoColor === 'black' ? `rgba(0,0,0,${fo})` : `rgba(255,255,255,${fo})`;
+  const PAD      = 24 * SCALE;
 
-  // Temporarily set background for export
-  const origBg = outer.style.background;
-  if (bgColor === 'white') outer.style.background = '#fff';
-  else if (bgColor === 'black') outer.style.background = '#000';
-  else outer.style.background = 'transparent';
+  const margin = 300;
+  const BIGW = (SW + margin * 2) * SCALE;
+  const BIGH = (SH + margin * 2) * SCALE;
+  const OX = margin, OY = margin;
 
-  // If logoColor doesn't match current invert state, warn (best effort)
-  html2canvas(outer, {
-    scale: 4,
-    useCORS: true,
-    backgroundColor: bgColor === 'transparent' ? null : (bgColor === 'black' ? '#000' : '#fff'),
-    logging: false
-  }).then(canvas => {
-    outer.style.background = origBg;
+  const fsSVG   = baseSz * SCALE;
+  const swSVG   = sw * SCALE;
+  const blobSVG = blobBlur * SCALE;
+  const defSVG  = defocus  * SCALE;
 
-    // Auto-crop to content + 24px padding
-    const PAD = 24 * 4;
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width, H = canvas.height;
-    const d = ctx.getImageData(0, 0, W, H).data;
-    let minX = W, maxX = 0, minY = H, maxY = 0;
+  const threshold = 22 - (blobBlur - 4) * 0.3;
+  const cutoff    = -9  + (blobBlur - 4) * 0.1;
+  const vals = `1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${threshold.toFixed(1)} ${cutoff.toFixed(1)}`;
+  const defocusStep = defSVG > 0 ? `<feGaussianBlur in="crisp" stdDeviation="${defSVG}"/>` : '';
 
-    // For transparent export, look for non-transparent pixels
-    // For solid bg, look for pixels that differ from bg color
-    const isBgWhite = bgColor !== 'black';
-    for (let y = 0; y < H; y++) {
-      for (let x = 0; x < W; x++) {
-        const i = (y * W + x) * 4;
-        const r = d[i], g = d[i+1], b = d[i+2], a = d[i+3];
-        let isContent = false;
-        if (bgColor === 'transparent') {
-          isContent = a > 10;
-        } else if (bgColor === 'white') {
-          isContent = r < 240 || g < 240 || b < 240;
-        } else {
-          isContent = r > 15 || g > 15 || b > 15;
-        }
-        if (isContent) {
-          if (x < minX) minX = x; if (x > maxX) maxX = x;
-          if (y < minY) minY = y; if (y > maxY) maxY = y;
+  // Letters: letterPositions are in stage coords, pan included
+  let textEls = '';
+  letterPositions.forEach((pos, i) => {
+    const x = (pos.left + panOffsetX + OX) * SCALE;
+    const y = (pos.top  + panOffsetY + OY) * SCALE + fsSVG * 0.75;
+    const strokeAttr = sw > 0 ? `stroke="${color}" stroke-width="${swSVG}" paint-order="stroke"` : '';
+    textEls += `<text x="${x}" y="${y}" font-family="'Trebuchet MS',sans-serif" font-size="${fsSVG}" font-weight="900" fill="${color}" ${strokeAttr}>${letters[i]}</text>\n`;
+  });
+
+  // Title: get position relative to stage element, divide by zoom to get stage coords
+  let titleEl = '';
+  const tagEl = document.getElementById('wordTag');
+  if (tagEl && tagEl.style.display !== 'none' && currentLang !== 'none') {
+    const tagColor = logoColor === 'black' ? 'black' : 'white';
+    const tagSzSVG = wordTagStageSz * SCALE;
+    const stageRect = document.getElementById('stage').getBoundingClientRect();
+    const tagRect   = tagEl.getBoundingClientRect();
+    // Tag position in stage coords = screen offset from stage / zoom
+    const tagStageX = (tagRect.left - stageRect.left) / zoomScale;
+    const tagStageY = (tagRect.top  - stageRect.top)  / zoomScale;
+    const tagX = (tagStageX + panOffsetX + OX) * SCALE;
+    const tagY = (tagStageY + panOffsetY + OY) * SCALE + tagSzSVG;
+    titleEl = `<text x="${tagX}" y="${tagY}" font-family="'Trebuchet MS',sans-serif" font-size="${tagSzSVG}" font-weight="700" fill="${tagColor}" letter-spacing="${tagSzSVG * 0.08}">${tagEl.textContent}</text>`;
+  }
+
+  // A hole: aHoleX/Y are in stage coords (from letterPositions, no pan)
+  let aHoleEl = '';
+  if (aHoleVisible) {
+    const aHoleSz = parseInt(document.getElementById('aHoleSize').value) * SCALE;
+    const ahColor = logoColor === 'black' ? 'white' : 'black';
+    const ahCX    = (aHoleX + panOffsetX + OX) * SCALE;
+    const ahCY    = (aHoleY + panOffsetY + OY) * SCALE;
+    const w = aHoleSz * 0.30, h = aHoleSz * 0.55;
+    const d = `M ${ahCX} ${ahCY - h}
+      C ${ahCX+w*0.15} ${ahCY-h}, ${ahCX+w} ${ahCY-h*0.1}, ${ahCX+w} ${ahCY+h*0.15}
+      C ${ahCX+w} ${ahCY+h*0.65}, ${ahCX+w*0.6} ${ahCY+h}, ${ahCX} ${ahCY+h}
+      C ${ahCX-w*0.6} ${ahCY+h}, ${ahCX-w} ${ahCY+h*0.65}, ${ahCX-w} ${ahCY+h*0.15}
+      C ${ahCX-w} ${ahCY-h*0.1}, ${ahCX-w*0.15} ${ahCY-h}, ${ahCX} ${ahCY-h} Z`;
+    aHoleEl = `<path d="${d}" fill="${ahColor}" filter="url(#blob)"/>`;
+  }
+
+  const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${BIGW}" height="${BIGH}">
+  <defs>
+    <filter id="blob" color-interpolation-filters="sRGB" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="${blobSVG}" result="blur"/>
+      <feColorMatrix in="blur" mode="matrix" values="${vals}" result="sharp"/>
+      <feComposite in="SourceGraphic" in2="sharp" operator="atop" result="crisp"/>
+      ${defocusStep}
+    </filter>
+  </defs>
+  <g filter="url(#blob)">${textEls}</g>
+  ${aHoleEl}
+  ${titleEl}
+</svg>`;
+
+  const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const img  = new Image();
+  img.onload = () => {
+    const bigCanvas = document.createElement('canvas');
+    bigCanvas.width = BIGW; bigCanvas.height = BIGH;
+    const bctx = bigCanvas.getContext('2d');
+    bctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(url);
+    const imgData = bctx.getImageData(0, 0, BIGW, BIGH);
+    const d2 = imgData.data;
+    let minX = BIGW, maxX = 0, minY = BIGH, maxY = 0;
+    for (let py = 0; py < BIGH; py++) {
+      for (let px = 0; px < BIGW; px++) {
+        const idx = (py * BIGW + px) * 4;
+        if (d2[idx+3] > 10) {
+          if (px < minX) minX = px; if (px > maxX) maxX = px;
+          if (py < minY) minY = py; if (py > maxY) maxY = py;
         }
       }
     }
-
-    if (maxX === 0) { alert('Nothing to export!'); return; }
-    minX = Math.max(0, minX - PAD); minY = Math.max(0, minY - PAD);
-    maxX = Math.min(W, maxX + PAD); maxY = Math.min(H, maxY + PAD);
-    const cropW = maxX - minX, cropH = maxY - minY;
-
-    const final = document.createElement('canvas');
-    final.width = cropW; final.height = cropH;
-    const fctx = final.getContext('2d');
+    minX = Math.max(0, minX-PAD); minY = Math.max(0, minY-PAD);
+    maxX = Math.min(BIGW, maxX+PAD); maxY = Math.min(BIGH, maxY+PAD);
+    const cropW = maxX-minX, cropH = maxY-minY;
+    const finalCanvas = document.createElement('canvas');
+    finalCanvas.width = cropW; finalCanvas.height = cropH;
+    const fctx = finalCanvas.getContext('2d');
     if (bgColor === 'white') { fctx.fillStyle = '#fff'; fctx.fillRect(0,0,cropW,cropH); }
     else if (bgColor === 'black') { fctx.fillStyle = '#000'; fctx.fillRect(0,0,cropW,cropH); }
-    fctx.drawImage(canvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
-
+    fctx.drawImage(bigCanvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
     const a = document.createElement('a');
     a.download = `foams-${logoColor}-on-${bgColor}.png`;
-    a.href = final.toDataURL('image/png');
+    a.href = finalCanvas.toDataURL('image/png');
     a.click();
-  }).catch(err => {
-    outer.style.background = origBg;
-    alert('Export failed: ' + err.message);
-  });
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); alert('Export failed — try Chrome.'); };
+  img.src = url;
 }
+
 
 
 
