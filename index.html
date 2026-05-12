@@ -119,7 +119,7 @@
   </defs>
 </svg>
 
-<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v8.7</div>
+<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v8.8</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -1123,12 +1123,11 @@ function exportGif(logoColor) {
   const letters  = ['F','O','A','M','S'];
   const SCALE    = 3;
 
-  // Match live speed: live runs at ~60fps, t advances 0.022/frame
-  // GIF at 20fps: t advances 0.022 * (60/20) = 0.066 per frame
-  const GIF_FPS          = 20;
-  const FRAME_MS         = Math.round(1000 / GIF_FPS);
-  const T_PER_FRAME      = 0.022 * (60 / GIF_FPS);
-  const MOTION_FRAMES    = Math.round((Math.PI * 2) / T_PER_FRAME);
+  // Live: 60fps, t += 0.022 per frame → t advances 0.022/16.67ms = 0.00132 per ms
+  // GIF at 25fps (40ms/frame): t should advance 0.00132 * 40 = 0.0528 per frame
+  const FRAME_MS      = 40;
+  const T_PER_GIF     = 0.022 * (40 / (1000/60)); // = 0.0528
+  const MOTION_FRAMES = Math.round((Math.PI * 2) / T_PER_GIF);
 
   const logoFill  = logoColor === 'pink'  ? `rgba(255,48,255,${fo})`
                   : logoColor === 'white' ? `rgba(255,255,255,${fo})`
@@ -1301,7 +1300,7 @@ function exportGif(logoColor) {
     if (hasMotion && !hasTitle) {
       for (let f = 0; f < MOTION_FRAMES; f++) {
         if (f % 5 === 0) progress.textContent = `Frame ${f+1}/${MOTION_FRAMES}…`;
-        const c = await svgToCanvas(buildSVG(getPositions(f * T_PER_FRAME), null, 0));
+        const c = await svgToCanvas(buildSVG(getPositions(f * T_PER_GIF), null, 0));
         addFrame(c, FRAME_MS);
       }
 
@@ -1352,7 +1351,7 @@ function exportGif(logoColor) {
         }
         const c = await svgToCanvas(buildSVG(pos, displayWord, op));
         addFrame(c, FRAME_MS);
-        tVal += T_PER_FRAME;
+        tVal += T_PER_GIF;
       }
     }
 
