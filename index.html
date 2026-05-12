@@ -119,7 +119,7 @@
   </defs>
 </svg>
 
-<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v8.3</div>
+<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v8.4</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -281,7 +281,7 @@
 <script>
 const FONT = 'Trebuchet MS';
 const SW = 580, SH = 220;
-let seed = 37475;
+let seed = 132435;
 let letterPositions = [], basePositions = [], motionPhases = [];
 let motionMode = 'none', animFrame = null, t = 0;
 let motionPaused = false;
@@ -1107,48 +1107,32 @@ requestAnimationFrame(() => {
 });
 
 // ── GIF Export ───────────────────────────────────────────────────────────────
-// Renders each frame as SVG (preserving blob filter), assembles into GIF
-
 function exportGif(logoColor) {
   const hasMotion = motionMode !== 'none' && !motionPaused;
   const hasTitle  = currentLang !== 'none';
-
-  if (!hasMotion && !hasTitle) {
-    alert('Please enable Motion or Title animation first.');
-    return;
-  }
 
   const progress = document.getElementById('gifProgress');
   progress.style.display = 'block';
   progress.textContent = 'Preparing…';
 
-  // GIF dimensions match stageOuter
-  const outer    = document.getElementById('stageOuter');
-  const oRect    = outer.getBoundingClientRect();
-  const GW       = Math.round(oRect.width);
-  const GH       = Math.round(oRect.height);
-
-  const SCALE    = 3;
-  const FRAME_MS = 80;
-
-  // SVG canvas uses margin-based coordinate system
-  const margin = 300;
-  const BIGW   = (SW + margin * 2) * SCALE;
-  const BIGH   = (SH + margin * 2) * SCALE;
-  const OX = margin, OY = margin;
-
+  // Read all current settings
   const blobBlur = parseInt(document.getElementById('blurR').value);
   const defocus  = parseFloat(document.getElementById('defocus').value);
   const baseSz   = parseInt(document.getElementById('sz').value);
   const fo       = parseInt(document.getElementById('fillOp').value) / 100;
   const sw       = parseInt(document.getElementById('strokeW').value);
   const letters  = ['F','O','A','M','S'];
+  const SCALE    = 3;
+  const FRAME_MS = 50; // match live animation speed
 
-  const logoFill = logoColor === 'pink'  ? `rgba(255,48,255,${fo})`
-                 : logoColor === 'white' ? `rgba(255,255,255,${fo})`
-                 :                         `rgba(0,0,0,${fo})`;
+  const logoFill  = logoColor === 'pink'  ? `rgba(255,48,255,${fo})`
+                  : logoColor === 'white' ? `rgba(255,255,255,${fo})`
+                  :                         `rgba(0,0,0,${fo})`;
   const titleFill = logoColor === 'pink' ? '#ff30ff' : logoColor === 'white' ? '#fff' : '#000';
-  const bgFill    = logoColor === 'white' ? '#000000' : '#ffffff';
+
+  // SVG coordinate system
+  const margin = 300;
+  const OX = margin, OY = margin;
 
   const threshold = (22 - (blobBlur - 4) * 0.3) * SCALE;
   const cutoff    = (-9  + (blobBlur - 4) * 0.1) * SCALE;
@@ -1159,51 +1143,40 @@ function exportGif(logoColor) {
   const defSVG    = defocus * SCALE;
   const defocusStep = defSVG > 0 ? `<feGaussianBlur in="crisp" stdDeviation="${defSVG}"/>` : '';
 
-  const gif = new GIF({
-    workers: 2,
-    quality: 6,
-    width: GW,
-    height: GH,
-    workerScript: URL.createObjectURL(new Blob(
-      [`importScripts('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js')`],
-      {type:'application/javascript'}
-    ))
-  });
+  // --- Determine GIF crop bounds from first static frame ---
+  // We render a probe frame to measure content bounds, then lock that for all frames
+  let cropBounds = null;
 
-  // Build letter SVG text elements from given positions + pan
-  function buildLetterEls(positions, pan) {
-    let els = '';
+  function buildSVG(positions, word, wordOpacity) {
+    let textEls = '';
     positions.forEach((pos, i) => {
-      const x = (pos.left + pan.x + OX) * SCALE;
-      const y = (pos.top  + pan.y + OY) * SCALE + fsSVG * 0.75;
+      const x = (pos.left + panOffsetX + OX) * SCALE;
+      const y = (pos.top  + panOffsetY + OY) * SCALE + fsSVG * 0.75;
       const sa = sw > 0 ? `stroke="${logoFill}" stroke-width="${swSVG}" paint-order="stroke"` : '';
-      els += `<text x="${x}" y="${y}" font-family="'Trebuchet MS',sans-serif" font-size="${fsSVG}" font-weight="900" fill="${logoFill}" ${sa}>${letters[i]}</text>\n`;
+      textEls += `<text x="${x}" y="${y}" font-family="'Trebuchet MS',sans-serif" font-size="${fsSVG}" font-weight="900" fill="${logoFill}" ${sa}>${letters[i]}</text>\n`;
     });
-    return els;
-  }
 
-  // Build title SVG text element with given opacity
-  function buildTitleEl(word, opacity) {
-    if (!word || opacity <= 0) return '';
-    const tagEl  = document.getElementById('wordTag');
-    const fEl    = document.querySelector('#stage .letter');
-    if (!tagEl || !fEl) return '';
-    const fRect  = fEl.getBoundingClientRect();
-    const tagRect= tagEl.getBoundingClientRect();
-    const fPos0  = letterPositions[0];
-    if (!fPos0) return '';
-    const dxStage = (tagRect.left - fRect.left) / zoomScale;
-    const dyStage = (tagRect.top  - fRect.top)  / zoomScale;
-    const tagSzSVG = wordTagStageSz * SCALE;
-    const tagX = (fPos0.left + panOffsetX + dxStage + OX) * SCALE;
-    const tagY = (fPos0.top  + panOffsetY + dyStage + OY) * SCALE + tagSzSVG * 0.55;
-    return `<text x="${tagX}" y="${tagY}" font-family="'Trebuchet MS',sans-serif" font-size="${tagSzSVG}" font-weight="700" fill="${titleFill}" opacity="${opacity.toFixed(3)}" letter-spacing="${tagSzSVG * 0.08}">${word}</text>`;
-  }
+    let titleEl = '';
+    if (word && wordOpacity > 0) {
+      const fEl    = document.querySelector('#stage .letter');
+      const tagEl  = document.getElementById('wordTag');
+      const fPos0  = positions[0];
+      if (fEl && tagEl && fPos0) {
+        const fRect   = fEl.getBoundingClientRect();
+        const tagRect = tagEl.getBoundingClientRect();
+        const dxStage = (tagRect.left - fRect.left) / zoomScale;
+        const dyStage = (tagRect.top  - fRect.top)  / zoomScale;
+        const tagSzSVG = wordTagStageSz * SCALE;
+        const tagX = (fPos0.left + panOffsetX + dxStage + OX) * SCALE;
+        const tagY = (fPos0.top  + panOffsetY + dyStage + OY) * SCALE + tagSzSVG * 0.55;
+        titleEl = `<text x="${tagX}" y="${tagY}" font-family="'Trebuchet MS',sans-serif" font-size="${tagSzSVG}" font-weight="700" fill="${titleFill}" opacity="${wordOpacity.toFixed(3)}" letter-spacing="${tagSzSVG * 0.08}">${word}</text>`;
+      }
+    }
 
-  // Render one SVG frame to a canvas frame and add to GIF
-  function addFrame(textEls, titleEl, delay) {
-    return new Promise(resolve => {
-      const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${BIGW}" height="${BIGH}">
+    const BIGW = (SW + margin * 2) * SCALE;
+    const BIGH = (SH + margin * 2) * SCALE;
+    return {
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" width="${BIGW}" height="${BIGH}">
   <defs><filter id="blob" color-interpolation-filters="sRGB" x="-30%" y="-30%" width="160%" height="160%">
     <feGaussianBlur in="SourceGraphic" stdDeviation="${blobSVG}" result="blur"/>
     <feColorMatrix in="blur" mode="matrix" values="${vals}" result="sharp"/>
@@ -1212,127 +1185,186 @@ function exportGif(logoColor) {
   </filter></defs>
   <g filter="url(#blob)">${textEls}</g>
   ${titleEl}
-</svg>`;
+</svg>`,
+      BIGW,
+      BIGH
+    };
+  }
+
+  function svgToCanvas(svgStr, BIGW, BIGH) {
+    return new Promise((resolve, reject) => {
       const blob = new Blob([svgStr], {type:'image/svg+xml;charset=utf-8'});
       const url  = URL.createObjectURL(blob);
       const img  = new Image();
       img.onload = () => {
-        // Render SVG to big canvas
         const tmp = document.createElement('canvas');
         tmp.width = BIGW; tmp.height = BIGH;
-        const tctx = tmp.getContext('2d');
-        tctx.drawImage(img, 0, 0);
+        tmp.getContext('2d').drawImage(img, 0, 0);
         URL.revokeObjectURL(url);
-
-        // Find content bounds (first frame locks bounds)
-        if (!addFrame._bounds) {
-          const PAD = 30 * SCALE;
-          const id = tctx.getImageData(0, 0, BIGW, BIGH); const d = id.data;
-          let mnX=BIGW,mxX=0,mnY=BIGH,mxY=0;
-          for (let py=0;py<BIGH;py++) for (let px=0;px<BIGW;px++) {
-            const i=(py*BIGW+px)*4;
-            if (d[i+3] > 20) { if(px<mnX)mnX=px;if(px>mxX)mxX=px;if(py<mnY)mnY=py;if(py>mxY)mxY=py; }
-          }
-          addFrame._bounds = {
-            minX: Math.max(0,mnX-PAD), minY: Math.max(0,mnY-PAD),
-            maxX: Math.min(BIGW,mxX+PAD), maxY: Math.min(BIGH,mxY+PAD)
-          };
-        }
-        const {minX,minY,maxX,maxY} = addFrame._bounds;
-        const cw = maxX-minX, ch = maxY-minY;
-
-        // Scale down to GIF size
-        const fc = document.createElement('canvas');
-        fc.width = GW; fc.height = GH;
-        const fctx = fc.getContext('2d');
-        fctx.fillStyle = bgFill;
-        fctx.fillRect(0,0,GW,GH);
-        fctx.drawImage(tmp, minX, minY, cw, ch, 0, 0, GW, GH);
-        gif.addFrame(fc, {delay, copy: true});
-        resolve();
+        resolve(tmp);
       };
-      img.onerror = () => { URL.revokeObjectURL(url); resolve(); };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('SVG render failed')); };
       img.src = url;
     });
   }
 
-  // Animate motion manually by advancing t
-  function getMotionPositions(tVal) {
-    const amt = parseInt(document.getElementById('motionAmt') ? document.getElementById('motionAmt').value : 6);
-    return letterPositions.map((pos, i) => {
-      if (!basePositions[i]) return pos;
+  function getCropBounds(canvas, BIGW, BIGH) {
+    const PAD = 28 * SCALE;
+    const ctx = canvas.getContext('2d');
+    const id  = ctx.getImageData(0, 0, BIGW, BIGH);
+    const d   = id.data;
+    let mnX=BIGW, mxX=0, mnY=BIGH, mxY=0;
+    for (let py=0; py<BIGH; py++) {
+      for (let px=0; px<BIGW; px++) {
+        const i = (py*BIGW+px)*4;
+        if (d[i+3] > 20) {
+          if(px<mnX)mnX=px; if(px>mxX)mxX=px;
+          if(py<mnY)mnY=py; if(py>mxY)mxY=py;
+        }
+      }
+    }
+    return {
+      minX: Math.max(0, mnX-PAD), minY: Math.max(0, mnY-PAD),
+      maxX: Math.min(BIGW, mxX+PAD), maxY: Math.min(BIGH, mxY+PAD)
+    };
+  }
+
+  // GIF size based on aspect ratio of crop (determined from first frame)
+  // Use 800px wide max for good quality
+  const GIF_MAX_W = 800;
+  let gif = null;
+  let gifW = GIF_MAX_W, gifH = 400;
+
+  function addFrameToGif(canvas, BIGW, BIGH, delay) {
+    const {minX, minY, maxX, maxY} = cropBounds;
+    const cw = maxX - minX, ch = maxY - minY;
+    const fc = document.createElement('canvas');
+    fc.width = gifW; fc.height = gifH;
+    const fctx = fc.getContext('2d');
+    // Transparent background - don't fill
+    fctx.drawImage(canvas, minX, minY, cw, ch, 0, 0, gifW, gifH);
+    gif.addFrame(fc, {delay, copy: true});
+  }
+
+  // Compute motion positions at time t
+  const motionAmtEl = document.getElementById('motionAmt');
+  const motionAmtV  = motionAmtEl ? parseInt(motionAmtEl.value) : 6;
+
+  function getPositions(tVal) {
+    if (motionMode === 'none' || !hasMotion) return letterPositions;
+    return basePositions.map((base, i) => {
+      if (!base) return letterPositions[i];
       const ph = motionPhases[i] || 0;
       let dx = 0, dy = 0;
-      if (motionMode === 'side')   dx = Math.sin(tVal + ph * 0.4) * amt * 1.4;
-      if (motionMode === 'random') { dx = Math.sin(tVal*1.1+ph*2.3)*amt*1.3; dy = Math.cos(tVal*0.8+ph*1.7)*amt*1.3; }
-      return { left: basePositions[i].left + dx, top: basePositions[i].top + dy };
+      if (motionMode === 'side')   dx = Math.sin(tVal + ph * 0.4) * motionAmtV * 1.4;
+      if (motionMode === 'random') { dx = Math.sin(tVal*1.1+ph*2.3)*motionAmtV*1.3; dy = Math.cos(tVal*0.8+ph*1.7)*motionAmtV*1.3; }
+      return { left: base.left + dx, top: base.top + dy };
     });
   }
 
+  // Build frame sequence
+  // Motion loop: t advances by 0.022 per frame (same as live).
+  // One full cycle of sin = 2*PI frames at step 0.022 → ~285 frames = ~14s
+  // Use shorter loop: enough for smooth loop = LCM of motion period
+  // Motion period = 2*PI / 0.022 ≈ 285 frames. Use 1 period.
+  const T_STEP    = 0.022;
+  const MOTION_FRAMES = Math.round(Math.PI * 2 / T_STEP); // ~286 frames, one full loop
+
+  // Title timing (in frames at FRAME_MS each)
+  const HOLD_F = Math.round(1800 / FRAME_MS);
+  const FADE_F = Math.round(450  / FRAME_MS);
+
   async function runCapture() {
-    addFrame._bounds = null;
+    // Step 1: render probe frame to get crop bounds
+    progress.textContent = 'Measuring bounds…';
+    const {svg: probeSvg, BIGW, BIGH} = buildSVG(letterPositions, null, 0);
+    const probeCanvas = await svgToCanvas(probeSvg, BIGW, BIGH);
+    cropBounds = getCropBounds(probeCanvas, BIGW, BIGH);
+
+    const cw = cropBounds.maxX - cropBounds.minX;
+    const ch = cropBounds.maxY - cropBounds.minY;
+    gifW = Math.min(GIF_MAX_W, cw);
+    gifH = Math.round(ch * (gifW / cw));
+
+    gif = new GIF({
+      workers: 2,
+      quality: 6,
+      width:  gifW,
+      height: gifH,
+      transparent: 0x000000,
+      background: 0x000000,
+      workerScript: URL.createObjectURL(new Blob(
+        [`importScripts('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js')`],
+        {type:'application/javascript'}
+      ))
+    });
+
+    const words = hasTitle ? WORD_SETS[currentLang] : null;
 
     if (hasMotion && !hasTitle) {
-      // Pure motion: 3 second loop
-      const TOTAL = Math.round(3000 / FRAME_MS);
-      const tStep = 0.022;
-      for (let f = 0; f < TOTAL; f++) {
-        progress.textContent = `Frame ${f+1}/${TOTAL}…`;
-        const tVal = f * tStep;
-        const pos  = motionMode !== 'none' ? getMotionPositions(tVal) : letterPositions;
-        const textEls = buildLetterEls(pos, {x: panOffsetX, y: panOffsetY});
-        const word = document.getElementById('wordTag') ? document.getElementById('wordTag').textContent : '';
-        await addFrame(textEls, '', FRAME_MS);
+      // Motion only — one full loop
+      for (let f = 0; f < MOTION_FRAMES; f++) {
+        if (f % 10 === 0) progress.textContent = `Frame ${f+1}/${MOTION_FRAMES}…`;
+        const pos = getPositions(f * T_STEP);
+        const {svg, BIGW, BIGH} = buildSVG(pos, null, 0);
+        const c = await svgToCanvas(svg, BIGW, BIGH);
+        addFrameToGif(c, BIGW, BIGH, FRAME_MS);
       }
 
-    } else if (hasTitle && !hasMotion) {
-      // Title only: cycle through all words with fade
-      const words = WORD_SETS[currentLang];
-      const HOLD  = 1800, FADE = 450;
-      const holdF = Math.round(HOLD / FRAME_MS);
-      const fadeF = Math.round(FADE / FRAME_MS);
-      const textEls = buildLetterEls(letterPositions, {x: panOffsetX, y: panOffsetY});
+    } else if (!hasMotion && hasTitle) {
+      // Title only — one pass through all words
+      const pos = letterPositions;
+      const currentWord = wordCyclePaused
+        ? [document.getElementById('wordTag').textContent]
+        : words;
 
-      for (let w = 0; w < words.length; w++) {
-        progress.textContent = `Word ${w+1}/${words.length}: ${words[w]}`;
+      for (let w = 0; w < currentWord.length; w++) {
+        progress.textContent = `Word ${w+1}/${currentWord.length}: ${currentWord[w]}`;
         // Hold
-        for (let f = 0; f < holdF; f++) {
-          await addFrame(textEls, buildTitleEl(words[w], 1.0), FRAME_MS);
+        for (let f = 0; f < HOLD_F; f++) {
+          const {svg, BIGW, BIGH} = buildSVG(pos, currentWord[w], 1.0);
+          const c = await svgToCanvas(svg, BIGW, BIGH);
+          addFrameToGif(c, BIGW, BIGH, FRAME_MS);
         }
+        if (currentWord.length === 1) continue; // paused, just one word
         // Fade out
-        for (let f = 0; f < fadeF; f++) {
-          const op = 1 - f / fadeF;
-          await addFrame(textEls, buildTitleEl(words[w], op), FRAME_MS);
+        for (let f = 0; f < FADE_F; f++) {
+          const op = 1 - f / FADE_F;
+          const {svg, BIGW, BIGH} = buildSVG(pos, currentWord[w], op);
+          const c = await svgToCanvas(svg, BIGW, BIGH);
+          addFrameToGif(c, BIGW, BIGH, FRAME_MS);
         }
         // Fade in next
-        const next = words[(w+1) % words.length];
-        for (let f = 0; f < fadeF; f++) {
-          const op = f / fadeF;
-          await addFrame(textEls, buildTitleEl(next, op), FRAME_MS);
+        const next = currentWord[(w+1) % currentWord.length];
+        for (let f = 0; f < FADE_F; f++) {
+          const op = f / FADE_F;
+          const {svg, BIGW, BIGH} = buildSVG(pos, next, op);
+          const c = await svgToCanvas(svg, BIGW, BIGH);
+          addFrameToGif(c, BIGW, BIGH, FRAME_MS);
         }
       }
 
     } else {
-      // Both motion + title
-      const words  = WORD_SETS[currentLang];
-      const HOLD   = 1800, FADE = 450;
-      const holdF  = Math.round(HOLD / FRAME_MS);
-      const fadeF  = Math.round(FADE / FRAME_MS);
-      const tStep  = 0.022;
-      let tVal = 0, frame = 0;
+      // Both motion + title — run for enough frames to show all words
+      const totalFrames = hasTitle ? words.length * (HOLD_F + FADE_F * 2) : MOTION_FRAMES;
+      let tVal = 0;
+      let wordIdx = 0;
+      let wordFrame = 0;
+      const framesPerWord = HOLD_F + FADE_F * 2;
 
-      for (let w = 0; w < words.length; w++) {
-        progress.textContent = `Word ${w+1}/${words.length}…`;
-        for (let f = 0; f < holdF + fadeF * 2; f++) {
-          const pos = getMotionPositions(tVal);
-          const textEls = buildLetterEls(pos, {x: panOffsetX, y: panOffsetY});
-          let op = 1.0;
-          if (f < fadeF) op = f / fadeF;
-          else if (f >= holdF + fadeF) op = 1 - (f - holdF - fadeF) / fadeF;
-          const word = f < holdF + fadeF ? words[w] : words[(w+1)%words.length];
-          await addFrame(textEls, buildTitleEl(word, op), FRAME_MS);
-          tVal += tStep;
-        }
+      for (let f = 0; f < totalFrames; f++) {
+        if (f % 10 === 0) progress.textContent = `Frame ${f+1}/${totalFrames}…`;
+        const pos = getPositions(tVal);
+        wordIdx = Math.floor(f / framesPerWord) % words.length;
+        const wf  = f % framesPerWord;
+        let word = words[wordIdx];
+        let op   = 1.0;
+        if (wf < FADE_F) { op = wf / FADE_F; word = words[wordIdx]; }
+        else if (wf >= HOLD_F + FADE_F) { op = 1 - (wf - HOLD_F - FADE_F) / FADE_F; word = words[(wordIdx+1)%words.length]; }
+        const {svg, BIGW, BIGH} = buildSVG(pos, word, op);
+        const c = await svgToCanvas(svg, BIGW, BIGH);
+        addFrameToGif(c, BIGW, BIGH, FRAME_MS);
+        tVal += T_STEP;
       }
     }
 
