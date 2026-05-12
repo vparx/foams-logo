@@ -143,38 +143,34 @@
       background: var(--bg-light);
     }
 
-    /* Top link in sidebar — always pink, separated */
-    .sidebar nav a.nav-top-link {
-      color: var(--brand);
-      font-size: 0.78rem;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      border-bottom: 1px solid var(--border-color);
-      margin-bottom: 0.25rem;
-      padding-bottom: 1rem;
-    }
-    .sidebar nav a.nav-top-link:hover {
-      background: transparent;
-      color: #fff;
-    }
-
-    /* Section back-to-top text link */
+    /* Section back-to-top circle button */
     .section-top-link {
-      display: block;
-      text-align: right;
+      display: flex;
+      justify-content: flex-end;
       margin-top: 2.5rem;
       padding-top: 1rem;
       border-top: 1px solid var(--border-color);
-      font-size: 0.78rem;
-      font-weight: 700;
-      letter-spacing: 0.06em;
+    }
+    .section-top-link a {
+      width: 40px;
+      height: 40px;
+      background: var(--bg);
       color: var(--brand);
+      border: 2px solid var(--brand);
+      border-radius: 50%;
+      font-size: 1.2rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       text-decoration: none;
-      text-transform: uppercase;
+      transition: background 0.2s, color 0.2s;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
       cursor: pointer;
     }
-    .section-top-link:hover {
-      color: var(--text);
+    .section-top-link a:hover {
+      background: var(--brand);
+      color: #000;
     }
 
     /* ── MAIN CONTENT ── */
@@ -1074,7 +1070,6 @@
     <aside class="sidebar">
       <div class="sidebar-title">Brand Guidelines</div>
       <nav>
-        <a href="#brand-guidelines" class="nav-top-link" data-i18n="nav-top">↑ Início</a>
         <a href="#brand-guidelines" data-i18n="nav-overview">Overview</a>
         <a href="#logo" data-i18n="nav-logo">Logo</a>
         <a href="#color" data-i18n="nav-color">Color</a>
@@ -1084,7 +1079,7 @@
         <a href="#examples-of-usage" data-i18n="nav-examples">Examples of Usage</a>
         <a href="#closing" data-i18n="nav-closing">↓ Keep it fluid</a>
       </nav>
-      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v2.4</div>
+      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v2.6</div>
 
       <!-- BACK TO TOP — inside sticky sidebar so it's always in viewport -->
       <div id="back-to-top-wrap">
@@ -1201,7 +1196,7 @@
           <p style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#888; margin-top:1.5rem; margin-bottom:0.75rem;" data-i18n="logo-en-label">English — bottom right</p>
           <div class="logo-display" style="grid-template-columns: repeat(3, 1fr);">
             <div class="logo-variant">
-              <div class="logo-box on-white" style="height:120px;">
+              <div class="logo-box on-black" style="height:120px;">
                 <img src="with-title-english-03.png" alt="FOAMS House">
               </div>
               <small>House</small>
@@ -1927,17 +1922,19 @@
     topLinkSections.forEach(id => {
       const sec = document.getElementById(id);
       if (!sec) return;
-      const link = document.createElement('a');
-      link.className = 'section-top-link';
-      link.href = '#brand-guidelines';
-      link.setAttribute('data-i18n', 'section-top');
-      link.textContent = currentLang === 'pt' ? '↑ Início' : '↑ Back to top';
-      link.addEventListener('click', (e) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'section-top-link';
+      const btn = document.createElement('a');
+      btn.href = '#brand-guidelines';
+      btn.title = currentLang === 'pt' ? 'Voltar ao início' : 'Back to top';
+      btn.textContent = '↑';
+      btn.addEventListener('click', (e) => {
         e.preventDefault();
         const top = document.getElementById('brand-guidelines');
         if (top) top.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
-      sec.appendChild(link);
+      wrap.appendChild(btn);
+      sec.appendChild(wrap);
     });
   </script>
 
