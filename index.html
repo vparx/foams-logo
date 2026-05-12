@@ -119,7 +119,7 @@
   </defs>
 </svg>
 
-<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v8.8</div>
+<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v8.9</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -270,9 +270,13 @@
       <span class="exp-title">↓ White · animated</span>
       <span class="exp-sub">GIF · black background</span>
     </button>
-    <button class="exp-btn exp-pink-white" onclick="exportGif('pink')">
+    <button class="exp-btn exp-pink-white" onclick="exportGif('pink','white')">
       <span class="exp-title">↓ Pink · animated</span>
       <span class="exp-sub">GIF · white background</span>
+    </button>
+    <button class="exp-btn exp-pink-black" onclick="exportGif('pink','black')">
+      <span class="exp-title">↓ Pink on black · animated</span>
+      <span class="exp-sub">GIF · black background</span>
     </button>
   </div>
   <div id="gifProgress" style="display:none;margin-top:8px;font-size:12px;color:#aaa;text-align:center;"></div>
@@ -1107,7 +1111,8 @@ requestAnimationFrame(() => {
 });
 
 // ── GIF Export ───────────────────────────────────────────────────────────────
-function exportGif(logoColor) {
+function exportGif(logoColor, bgColor) {
+  bgColor = bgColor || (logoColor === 'white' ? 'black' : 'white');
   const hasMotion = motionMode !== 'none' && !motionPaused;
   const hasTitle  = currentLang !== 'none';
 
@@ -1125,15 +1130,16 @@ function exportGif(logoColor) {
 
   // Live: 60fps, t += 0.022 per frame → t advances 0.022/16.67ms = 0.00132 per ms
   // GIF at 25fps (40ms/frame): t should advance 0.00132 * 40 = 0.0528 per frame
-  const FRAME_MS      = 40;
-  const T_PER_GIF     = 0.022 * (40 / (1000/60)); // = 0.0528
+  const FRAME_MS      = 33; // ~30fps
+  // Live: t += 0.022 per frame at 60fps. Multiply by 3x to match visual speed in GIF.
+  const T_PER_GIF     = 0.022 * (60 / 30) * 2.5; // ~0.11 per frame
   const MOTION_FRAMES = Math.round((Math.PI * 2) / T_PER_GIF);
 
   const logoFill  = logoColor === 'pink'  ? `rgba(255,48,255,${fo})`
                   : logoColor === 'white' ? `rgba(255,255,255,${fo})`
                   :                         `rgba(0,0,0,${fo})`;
   const titleFill = logoColor === 'pink' ? '#ff30ff' : logoColor === 'white' ? '#fff' : '#000';
-  const bgFill    = logoColor === 'white' ? '#000000' : '#ffffff';
+  const bgFill    = bgColor === 'black' ? '#000000' : '#ffffff';
 
   const margin = 300;
   const OX = margin, OY = margin;
@@ -1163,12 +1169,25 @@ function exportGif(logoColor) {
     });
   }
 
-  function buildAHoleEl() {
+  function buildAHoleEl(positions) {
     if (!aHoleVisible) return '';
     const aHoleSz = parseInt(document.getElementById('aHoleSize').value) * SCALE;
-    const ahColor = logoColor === 'black' ? 'white' : logoColor === 'white' ? 'black' : '#ff30ff';
-    const ahCX    = (aHoleX + panOffsetX + OX) * SCALE;
-    const ahCY    = (aHoleY + panOffsetY + OY) * SCALE - aHoleSz * 0.35;
+    const ahColor = logoColor === 'black' ? 'white' : logoColor === 'white' ? 'black' : 'white';
+
+    // Compute A hole position tracking the animated A letter
+    const aPos2 = positions[2]; // A is index 2
+    const mc2 = document.getElementById('measure');
+    mc2.width = 300; mc2.height = 150;
+    const mc2ctx = mc2.getContext('2d');
+    mc2ctx.font = `900 ${baseSz}px "Trebuchet MS", sans-serif`;
+    const aW = mc2ctx.measureText('A').width;
+    const aCenterX = aPos2.left + aW * 0.5;
+    const aCenterY = aPos2.top  + baseSz * 0.42;
+
+    const ahX = aCenterX + aHoleOffsetX;
+    const ahY = aCenterY + aHoleOffsetY;
+    const ahCX = (ahX + panOffsetX + OX) * SCALE;
+    const ahCY = (ahY + panOffsetY + OY) * SCALE - aHoleSz * 0.35;
     const w = aHoleSz * 0.30, h = aHoleSz * 0.55;
     const d = `M ${ahCX} ${ahCY-h} C ${ahCX+w*0.15} ${ahCY-h}, ${ahCX+w} ${ahCY-h*0.1}, ${ahCX+w} ${ahCY+h*0.15} C ${ahCX+w} ${ahCY+h*0.65}, ${ahCX+w*0.6} ${ahCY+h}, ${ahCX} ${ahCY+h} C ${ahCX-w*0.6} ${ahCY+h}, ${ahCX-w} ${ahCY+h*0.65}, ${ahCX-w} ${ahCY+h*0.15} C ${ahCX-w} ${ahCY-h*0.1}, ${ahCX-w*0.15} ${ahCY-h}, ${ahCX} ${ahCY-h} Z`;
     return `<path d="${d}" fill="${ahColor}" filter="url(#blob)"/>`;
@@ -1200,7 +1219,7 @@ function exportGif(logoColor) {
       }
     }
 
-    const aHoleEl = buildAHoleEl();
+    const aHoleEl = buildAHoleEl(positions);
 
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${BIGW}" height="${BIGH}">
   <defs><filter id="blob" color-interpolation-filters="sRGB" x="-30%" y="-30%" width="160%" height="160%">
