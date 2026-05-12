@@ -1031,7 +1031,7 @@
   <div class="control-bar">
     <button class="ctrl-btn active" id="btn-pt" onclick="setLang('pt')">PT</button>
     <button class="ctrl-btn" id="btn-en" onclick="setLang('en')">EN</button>
-    <button class="ctrl-btn" id="btn-dark" onclick="toggleDark()">◐ Dark</button>
+    <button class="ctrl-btn" id="btn-dark" onclick="toggleDark()">◑ Light</button>
   </div>
 
   <div class="layout">
@@ -1049,7 +1049,7 @@
         <a href="#examples-of-usage" data-i18n="nav-examples">Examples of Usage</a>
         <a href="#closing" data-i18n="nav-closing">↓ Keep it fluid</a>
       </nav>
-      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v2.2</div>
+      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v2.3</div>
 
       <!-- BACK TO TOP — inside sticky sidebar so it's always in viewport -->
       <div id="back-to-top-wrap">
@@ -1086,13 +1086,13 @@
           <div class="logo-display" style="grid-template-columns: repeat(4, 1fr);">
             <div class="logo-variant">
               <div class="logo-box on-white">
-                <img src="foams-black-on-white.png" alt="FOAMS black on white">
+                <img src="foams-black-on-transparent.png" alt="FOAMS black on white">
               </div>
               <small>On White</small>
             </div>
             <div class="logo-variant">
               <div class="logo-box on-black">
-                <img src="foams-white-on-black.png" alt="FOAMS white on black">
+                <img src="foams-white-on-transparent.png" alt="FOAMS white on black">
               </div>
               <small>On Black</small>
             </div>
@@ -1117,18 +1117,18 @@
           <div class="logo-display" style="grid-template-columns: repeat(3, 1fr);">
             <div class="logo-variant">
               <div class="logo-box on-white">
-                <img src="foams-pink-on-white.png" alt="FOAMS pink on white">
+                <img src="foams-pink-on-transparent.png" alt="FOAMS pink on white">
               </div>
               <small>Pink on White</small>
             </div>
             <div class="logo-variant">
               <div class="logo-box on-black">
-                <img src="foams-pink-on-black.png" alt="FOAMS pink on black">
+                <img src="foams-pink-on-transparent.png" alt="FOAMS pink on black">
               </div>
               <small>Pink on Black</small>
             </div>
             <div class="logo-variant">
-              <div class="logo-box on-transparent pink-logo">
+              <div class="logo-box on-transparent">
                 <img src="foams-pink-on-transparent.png" alt="FOAMS pink on transparent">
               </div>
               <small>Pink on Transparent</small>
@@ -1144,38 +1144,44 @@
           <p style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#888; margin-bottom:0.75rem;" data-i18n="logo-pt-label">Portuguese — top left</p>
           <div class="logo-display" style="grid-template-columns: repeat(3, 1fr);">
             <div class="logo-variant">
-              <div class="logo-box on-white" style="height:120px;">
-                <img src="p1.png" alt="Logo with Portuguese title 1">
+              <div class="logo-box on-black" style="height:120px;">
+                <img src="with-title-01.png" alt="Casa FOAMS">
               </div>
+              <small>Casa</small>
             </div>
             <div class="logo-variant">
               <div class="logo-box on-black" style="height:120px;">
-                <img src="p2.png" alt="Logo with Portuguese title 2">
+                <img src="with-title-03.png" alt="Espaço FOAMS">
               </div>
+              <small>Espaço</small>
             </div>
             <div class="logo-variant">
               <div class="logo-box on-black" style="height:120px;">
-                <img src="p3.png" alt="Logo with Portuguese title 3">
+                <img src="with-title-02.png" alt="Coletivo FOAMS">
               </div>
+              <small>Coletivo</small>
             </div>
           </div>
 
           <p style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#888; margin-top:1.5rem; margin-bottom:0.75rem;" data-i18n="logo-en-label">English — bottom right</p>
           <div class="logo-display" style="grid-template-columns: repeat(3, 1fr);">
             <div class="logo-variant">
-              <div class="logo-box on-white" style="height:120px;">
-                <img src="e1.png" alt="Logo with English title 1">
+              <div class="logo-box on-black" style="height:120px;">
+                <img src="with-title-english-01.png" alt="FOAMS Space">
               </div>
+              <small>Space</small>
             </div>
             <div class="logo-variant">
               <div class="logo-box on-black" style="height:120px;">
-                <img src="e2.png" alt="Logo with English title 2">
+                <img src="with-title-english-03.png" alt="FOAMS House">
               </div>
+              <small>House</small>
             </div>
             <div class="logo-variant">
               <div class="logo-box on-black" style="height:120px;">
-                <img src="e3.png" alt="Logo with English title 3">
+                <img src="with-title-english-02.png" alt="FOAMS Collective">
               </div>
+              <small>Collective</small>
             </div>
           </div>
         </div>
@@ -1523,7 +1529,7 @@
       localStorage.setItem('foams-dark', isDark ? '1' : '0');
       updateFooterLogo(isDark);
     }
-    if (localStorage.getItem('foams-dark') === '1') {
+    if (localStorage.getItem('foams-dark') !== '0') {
       document.body.classList.add('dark-mode');
       document.getElementById('btn-dark').textContent = '◑ Light';
       updateFooterLogo(true);
