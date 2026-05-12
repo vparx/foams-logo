@@ -120,7 +120,7 @@
   </defs>
 </svg>
 
-<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v10.1</div>
+<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v10.2</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -1323,8 +1323,9 @@ function exportGif(logoColor, bgColor) {
     // Measure bounds across full motion cycle
     progress.textContent = 'Measuring…';
     const probeTs = hasMotion ? [0, 0.25, 0.5, 0.75].map(f => f * Math.PI * 2) : [0];
+    const probeWord = hasTitle ? (WORD_SETS[currentLang]||[])[0] || null : null;
     for (const tProbe of probeTs) {
-      const svg = buildSVG(getPositions(tProbe), null, 0);
+      const svg = buildSVG(getPositions(tProbe), probeWord, 1.0);
       const c   = await svgToCanvas(svg);
       const b   = getCropBounds(c);
       if (!cropBounds) cropBounds = {...b};
@@ -1557,8 +1558,10 @@ async function exportAPNG(logoColor) {
   progress.textContent='Measuring…';
   let cropBounds=null;
   const probeTs = hasMotion?[0,0.25,0.5,0.75].map(f=>f*Math.PI*2):[0];
+  // Include title word in probe so its position is included in crop bounds
+  const probeWord = hasTitle ? (WORD_SETS[currentLang]||[])[0] || null : null;
   for(const tP of probeTs){
-    const c=await svgToCanvasTransparent(buildSVGFrame(getPos(tP),null,0));
+    const c=await svgToCanvasTransparent(buildSVGFrame(getPos(tP), probeWord, 1.0));
     const ctx=c.getContext('2d'),id=ctx.getImageData(0,0,BIGW,BIGH),d=id.data;
     const PAD=32*SCALE; let mnX=BIGW,mxX=0,mnY=BIGH,mxY=0;
     for(let py=0;py<BIGH;py++) for(let px=0;px<BIGW;px++){const i=(py*BIGW+px)*4;if(d[i+3]>20){if(px<mnX)mnX=px;if(px>mxX)mxX=px;if(py<mnY)mnY=py;if(py>mxY)mxY=py;}}
