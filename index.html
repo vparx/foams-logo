@@ -120,7 +120,7 @@
   </defs>
 </svg>
 
-<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v10.0</div>
+<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v10.1</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -284,6 +284,14 @@
   <div id="gifProgress" style="display:none;margin-top:8px;font-size:12px;color:#aaa;text-align:center;"></div>
   <hr style="border:none;border-top:1px solid #252525;margin:1rem 0;">
   <p class="section-title" style="margin-bottom:0.85rem;">Animated PNG — transparent</p>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+    <label style="font-size:12px;color:#aaa;">Quality:</label>
+    <select id="apngQuality" style="background:#1a1a1a;color:#eee;border:1px solid #333;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;">
+      <option value="small">Small file — 400px · 12fps</option>
+      <option value="medium" selected>Balanced — 600px · 18fps</option>
+      <option value="high">High quality — 800px · 25fps</option>
+    </select>
+  </div>
   <div class="export-grid">
     <button class="exp-btn exp-black-trans" onclick="exportAPNG('black')">
       <span class="exp-title">↓ Black · transparent</span>
@@ -1436,8 +1444,15 @@ async function exportAPNG(logoColor) {
   const sw       = parseInt(document.getElementById('strokeW').value);
   const letters  = ['F','O','A','M','S'];
   const SCALE    = 3;
-  const FRAME_MS = 33;
-  const T_PER_FRAME = 0.022 * (60/30) * 2.5;
+  const quality = (document.getElementById('apngQuality')||{}).value || 'medium';
+  const qualSettings = {
+    small:  { maxW: 400, fps: 12, compress: 9 },
+    medium: { maxW: 600, fps: 18, compress: 8 },
+    high:   { maxW: 800, fps: 25, compress: 6 },
+  }[quality];
+
+  const FRAME_MS = Math.round(1000 / qualSettings.fps);
+  const T_PER_FRAME = 0.022 * (60 / qualSettings.fps) * 2.5;
   const MOTION_FRAMES = Math.round((Math.PI * 2) / T_PER_FRAME);
 
   const logoFill  = logoColor === 'pink'  ? `rgba(255,48,255,${fo})`
@@ -1553,7 +1568,7 @@ async function exportAPNG(logoColor) {
   }
 
   const cw=cropBounds.maxX-cropBounds.minX, ch=cropBounds.maxY-cropBounds.minY;
-  const outW=Math.min(800,cw), outH=Math.round(ch*(outW/cw));
+  const outW=Math.min(qualSettings.maxW,cw), outH=Math.round(ch*(outW/cw));
 
   const frameBuffers=[], frameDelays=[];
   const HOLD_F=Math.round(1800/FRAME_MS), FADE_F=Math.round(450/FRAME_MS);
@@ -1684,7 +1699,7 @@ async function exportAPNG(logoColor) {
       filtered[r*(outW*4+1)]=0; // None filter
       filtered.set(raw.subarray(r*outW*4,(r+1)*outW*4), r*(outW*4+1)+1);
     }
-    const compressed = pako.deflate(filtered, {level:6});
+    const compressed = pako.deflate(filtered, {level: qualSettings.compress});
 
     if(fi===0){
       frameChunks.push(chunk('IDAT',compressed));
