@@ -490,9 +490,9 @@
     }
 
     .btn:hover {
-      background: var(--brand);
-      color: var(--black);
-      border-color: var(--brand);
+      background: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
     }
 
     .btn-row {
@@ -792,6 +792,29 @@
       color: var(--black);
     }
 
+    .btn-generator-blue {
+      display: inline-block;
+      padding: 0.85rem 2rem;
+      background: var(--black);
+      color: var(--white);
+      font-family: 'Trebuchet MS', sans-serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: 2px solid #1a8cff;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: background 0.2s, color 0.2s;
+      align-self: flex-start;
+    }
+
+    .btn-generator-blue:hover {
+      background: #1a8cff;
+      color: #fff;
+    }
+
     .guidelines-note {
       margin-top: 1rem;
       padding: 1rem 1.25rem;
@@ -1082,7 +1105,7 @@
         <a href="#generative-examples" data-i18n="nav-gen-examples">Exemplos Generativos</a>
         <a href="#closing" data-i18n="nav-closing">↓ Keep it fluid</a>
       </nav>
-      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v3.2</div>
+      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v3.5</div>
 
       <!-- BACK TO TOP — inside sticky sidebar so it's always in viewport -->
       <div id="back-to-top-wrap">
@@ -1111,7 +1134,7 @@
         <div class="btn-row">
           <a href="foams-logo-options.zip" download class="btn" data-i18n="logo-dl">Download Base Logo</a>
           <a href="http://casafoams.com/foams-logo" target="_blank" class="btn-generator" data-i18n="generator-btn">Open Logo Generator</a>
-          <a href="https://www.casafoams.com/brand-image" target="_blank" class="btn-generator" data-i18n="brand-image-btn">Brand Image Generator</a>
+          <a href="https://www.casafoams.com/brand-image" target="_blank" class="btn-generator-blue" data-i18n="brand-image-btn">Brand Image Generator</a>
         </div>
 
         <!-- Primary Logo -->
@@ -1542,16 +1565,16 @@
           <p data-i18n="gen-examples-p">Pode-se também usar ferramentas generativas para criar imagens facilmente utilizando os diferentes elementos, sempre seguindo as regras de uso. Abaixo estão exemplos generativos, incluindo uma ferramenta para criar diferentes imagens para usar em rede sociais e divulgações.</p>
         </div>
 
-        <a href="https://www.casafoams.com/brand-image" target="_blank" class="btn-generator" style="margin-bottom: 2.5rem; display: inline-block;" data-i18n="brand-image-btn">Brand Image Generator</a>
+        <a href="https://www.casafoams.com/brand-image" target="_blank" class="btn-generator-blue" style="margin-bottom: 2.5rem; display: inline-block;" data-i18n="brand-image-btn">Brand Image Generator</a>
 
         <!-- Generative example images — landscape 2-col -->
         <div class="subsection" style="margin-top: 1.5rem;">
           <h3 data-i18n="gen-landscape-h3">Paisagem</h3>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top:1rem;">
-            <img src="foams-generative-landscape-01.png" alt="Generative example landscape" style="width:100%; border-radius:8px; display:block;">
-            <img src="foams-generative-landscape-02.png" alt="Generative example landscape" style="width:100%; border-radius:8px; display:block;">
-            <img src="foams-generative-landscape-03.png" alt="Generative example landscape" style="width:100%; border-radius:8px; display:block;">
-            <img src="foams-generative-landscape-04.png" alt="Generative example landscape" style="width:100%; border-radius:8px; display:block;">
+            <img src="foams-image-generated-landscape-01.png" alt="Generative example landscape" style="width:100%; border-radius:8px; display:block;">
+            <img src="foams-image-generated-landscape-02.png" alt="Generative example landscape" style="width:100%; border-radius:8px; display:block;">
+            <img src="foams-image-generated-landscape-03.png" alt="Generative example landscape" style="width:100%; border-radius:8px; display:block;">
+            <img src="foams-image-generated-landscape-04.png" alt="Generative example landscape" style="width:100%; border-radius:8px; display:block;">
           </div>
         </div>
 
@@ -1559,10 +1582,10 @@
         <div class="subsection">
           <h3 data-i18n="gen-portrait-h3">Retrato</h3>
           <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top:1rem;">
-            <img src="foams-generative-portrait-01.png" alt="Generative example portrait" style="width:100%; border-radius:8px; display:block;">
-            <img src="foams-generative-portrait-02.png" alt="Generative example portrait" style="width:100%; border-radius:8px; display:block;">
-            <img src="foams-generative-portrait-03.png" alt="Generative example portrait" style="width:100%; border-radius:8px; display:block;">
-            <img src="foams-generative-portrait-04.png" alt="Generative example portrait" style="width:100%; border-radius:8px; display:block;">
+            <img src="foams-image-generated-portrait-01.png" alt="Generative example portrait" style="width:100%; border-radius:8px; display:block;">
+            <img src="foams-image-generated-portrait-02.png" alt="Generative example portrait" style="width:100%; border-radius:8px; display:block;">
+            <img src="foams-image-generated-portrait-03.png" alt="Generative example portrait" style="width:100%; border-radius:8px; display:block;">
+            <img src="foams-image-generated-portrait-04.png" alt="Generative example portrait" style="width:100%; border-radius:8px; display:block;">
           </div>
         </div>
 
@@ -1595,8 +1618,11 @@
           <p style="font-size:1.05rem; color:var(--text-muted); line-height:1.8; margin-bottom:2rem;" data-i18n="closing-p2">
             When in doubt: stay bold, stay fluid, and use the generator.
           </p>
-          <a href="http://casafoams.com/foams-logo" target="_blank" class="btn-generator" data-i18n="closing-btn-gen">Open Logo Generator</a>
-          <a href="foams-logo-options.zip" download class="btn" style="margin-left:1rem;" data-i18n="closing-btn-dl">Download Base Logo</a>
+          <div style="display:flex; flex-wrap:wrap; gap:1rem; align-items:center; margin-top:0.5rem;">
+            <a href="http://casafoams.com/foams-logo" target="_blank" class="btn-generator" data-i18n="closing-btn-gen">Open Logo Generator</a>
+            <a href="https://www.casafoams.com/brand-image" target="_blank" class="btn-generator-blue" data-i18n="brand-image-btn">Brand Image Generator</a>
+            <a href="foams-logo-options.zip" download class="btn" data-i18n="closing-btn-dl">Download Base Logo</a>
+          </div>
         </div>
 
         <div style="margin-top:4rem; padding-top:2rem; border-top:1px solid var(--border-color); display:flex; align-items:center; gap:1rem;">
