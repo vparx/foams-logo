@@ -526,6 +526,8 @@
     /* Dark mode inversion for "Different Usage" logo items */
     body.dark-mode .element-item--light {
       background: #000000;
+    }
+    body.dark-mode .element-item--light img {
       filter: invert(1);
     }
 
@@ -598,10 +600,19 @@
     }
 
     /* ── BACK TO TOP ── */
-    #back-to-top {
-      position: fixed;
+    #back-to-top-wrap {
+      position: sticky;
       bottom: 2rem;
-      right: 2rem;
+      height: 0;
+      overflow: visible;
+      display: flex;
+      justify-content: flex-end;
+      pointer-events: none;
+      z-index: 9999;
+      margin-right: 2rem;
+    }
+
+    #back-to-top {
       width: 48px;
       height: 48px;
       background: var(--bg);
@@ -614,12 +625,14 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 9999;
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.3s, background 0.2s, color 0.2s;
       text-decoration: none;
       box-shadow: 0 2px 16px rgba(0,0,0,0.35);
+      align-self: flex-end;
+      position: relative;
+      top: -48px;
     }
 
     #back-to-top.visible {
@@ -1011,8 +1024,8 @@
 
   <!-- CONTROL BAR -->
   <div class="control-bar">
-    <button class="ctrl-btn active" id="btn-en" onclick="setLang('en')">EN</button>
-    <button class="ctrl-btn" id="btn-pt" onclick="setLang('pt')">PT</button>
+    <button class="ctrl-btn active" id="btn-pt" onclick="setLang('pt')">PT</button>
+    <button class="ctrl-btn" id="btn-en" onclick="setLang('en')">EN</button>
     <button class="ctrl-btn" id="btn-dark" onclick="toggleDark()">◐ Dark</button>
   </div>
 
@@ -1031,7 +1044,7 @@
         <a href="#examples-of-usage" data-i18n="nav-examples">Examples of Usage</a>
         <a href="#closing" data-i18n="nav-closing">↓ Keep it fluid</a>
       </nav>
-      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v1.8</div>
+      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v2.0</div>
     </aside>
 
     <!-- MAIN -->
@@ -1482,13 +1495,15 @@
         </div>
       </section>
 
+      <!-- BACK TO TOP — sticky, works inside Squarespace iframe -->
+      <div id="back-to-top-wrap">
+        <a id="back-to-top" title="Back to top">↑</a>
+      </div>
+
     </main>
   </div>
 
   </div><!-- end layout -->
-
-  <!-- BACK TO TOP -->
-  <a href="#brand-guidelines" id="back-to-top" title="Back to top">↑</a>
 
   <script>
     // ── DARK MODE ──
@@ -1661,7 +1676,7 @@
       }
     };
 
-    let currentLang = localStorage.getItem('foams-lang') || 'en';
+    let currentLang = localStorage.getItem('foams-lang') || 'pt';
 
     function setLang(lang) {
       currentLang = lang;
@@ -1693,11 +1708,17 @@
     const sections = document.querySelectorAll('.section');
     const navLinks = document.querySelectorAll('.sidebar nav a');
 
-    // Set Overview as active on load
+    // Set Overview as active immediately on load
+    navLinks.forEach(l => l.classList.remove('active'));
     const overviewLink = document.querySelector('.sidebar nav a[href="#brand-guidelines"]');
     if (overviewLink) overviewLink.classList.add('active');
 
+    // Delay starting the observer so it doesn't instantly override Overview on load
+    let observerActive = false;
+    setTimeout(() => { observerActive = true; }, 800);
+
     const observer = new IntersectionObserver((entries) => {
+      if (!observerActive) return;
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           navLinks.forEach(link => link.classList.remove('active'));
@@ -1710,31 +1731,19 @@
 
     sections.forEach(s => observer.observe(s));
 
-    // ── BACK TO TOP — iframe-safe ──
+    // ── BACK TO TOP — iframe-safe via IntersectionObserver ──
+    // Works even when the iframe itself doesn't scroll (Squarespace embeds)
     const backToTop = document.getElementById('back-to-top');
-    const scrollRoot = document.scrollingElement || document.documentElement;
+    const firstSection = document.getElementById('brand-guidelines');
 
-    function getScrollTop() {
-      return Math.max(
-        window.scrollY || 0,
-        scrollRoot.scrollTop || 0,
-        document.body.scrollTop || 0
-      );
-    }
+    // Show button when first section leaves view (user has scrolled past it)
+    const topObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        backToTop.classList.toggle('visible', !entry.isIntersecting);
+      });
+    }, { threshold: 0, rootMargin: '0px' });
 
-    function updateBackToTop() {
-      const show = getScrollTop() > 300;
-      backToTop.classList.toggle('visible', show);
-    }
-
-    // Listen on every possible scroll target
-    window.addEventListener('scroll', updateBackToTop, { passive: true });
-    document.addEventListener('scroll', updateBackToTop, { passive: true });
-    document.documentElement.addEventListener('scroll', updateBackToTop, { passive: true });
-    document.body.addEventListener('scroll', updateBackToTop, { passive: true });
-
-    // Polling fallback for iframes that swallow scroll events
-    setInterval(updateBackToTop, 300);
+    if (firstSection) topObserver.observe(firstSection);
 
     // Sidebar nav smooth scroll
     navLinks.forEach(link => {
@@ -1748,18 +1757,15 @@
       });
     });
 
-    // Back to top — scroll to very top, all methods
+    // Back to top — scrollIntoView works inside iframes
     backToTop.addEventListener('click', (e) => {
       e.preventDefault();
-      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(err) {}
-      try { scrollRoot.scrollTo({ top: 0, behavior: 'smooth' }); } catch(err) {}
-      try { document.body.scrollTo({ top: 0, behavior: 'smooth' }); } catch(err) {}
-      // Hard fallback
-      setTimeout(() => {
-        scrollRoot.scrollTop = 0;
-        document.body.scrollTop = 0;
-        window.scrollY && (window.scrollY = 0);
-      }, 50);
+      if (firstSection) {
+        firstSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(err) {}
+        try { document.documentElement.scrollTop = 0; } catch(err) {}
+      }
     });
 
     // ── DOWNLOAD ICON OVERLAYS ──
