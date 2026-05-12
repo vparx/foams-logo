@@ -99,7 +99,6 @@
       .export-grid { grid-template-columns: 1fr; }
     }
   </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
 </head>
 <body>
@@ -120,7 +119,7 @@
   </defs>
 </svg>
 
-<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v8.2</div>
+<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v8.3</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -1108,8 +1107,7 @@ requestAnimationFrame(() => {
 });
 
 // ── GIF Export ───────────────────────────────────────────────────────────────
-// Uses html2canvas to capture the play area exactly as shown,
-// then assembles frames into a GIF with gif.js
+// Renders each frame as SVG (preserving blob filter), assembles into GIF
 
 function exportGif(logoColor) {
   const hasMotion = motionMode !== 'none' && !motionPaused;
@@ -1124,137 +1122,221 @@ function exportGif(logoColor) {
   progress.style.display = 'block';
   progress.textContent = 'Preparing…';
 
-  // Temporarily set logo color for the GIF
-  const wasInverted = isInverted;
-  const wasPink = isPink;
-  isInverted = logoColor === 'white';
-  isPink = logoColor === 'pink';
-  updateLetterStyle();
-  const outer = document.getElementById('stageOuter');
-  outer.classList.toggle('inverted', isInverted);
-  const tag = document.getElementById('wordTag');
-  if (tag) tag.style.color = isPink ? PINK : isInverted ? '#fff' : '#000';
+  // GIF dimensions match stageOuter
+  const outer    = document.getElementById('stageOuter');
+  const oRect    = outer.getBoundingClientRect();
+  const GW       = Math.round(oRect.width);
+  const GH       = Math.round(oRect.height);
 
-  const outerRect = outer.getBoundingClientRect();
-  const GW = Math.round(outerRect.width);
-  const GH = Math.round(outerRect.height);
+  const SCALE    = 3;
+  const FRAME_MS = 80;
+
+  // SVG canvas uses margin-based coordinate system
+  const margin = 300;
+  const BIGW   = (SW + margin * 2) * SCALE;
+  const BIGH   = (SH + margin * 2) * SCALE;
+  const OX = margin, OY = margin;
+
+  const blobBlur = parseInt(document.getElementById('blurR').value);
+  const defocus  = parseFloat(document.getElementById('defocus').value);
+  const baseSz   = parseInt(document.getElementById('sz').value);
+  const fo       = parseInt(document.getElementById('fillOp').value) / 100;
+  const sw       = parseInt(document.getElementById('strokeW').value);
+  const letters  = ['F','O','A','M','S'];
+
+  const logoFill = logoColor === 'pink'  ? `rgba(255,48,255,${fo})`
+                 : logoColor === 'white' ? `rgba(255,255,255,${fo})`
+                 :                         `rgba(0,0,0,${fo})`;
+  const titleFill = logoColor === 'pink' ? '#ff30ff' : logoColor === 'white' ? '#fff' : '#000';
+  const bgFill    = logoColor === 'white' ? '#000000' : '#ffffff';
+
+  const threshold = (22 - (blobBlur - 4) * 0.3) * SCALE;
+  const cutoff    = (-9  + (blobBlur - 4) * 0.1) * SCALE;
+  const vals      = `1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${threshold.toFixed(1)} ${cutoff.toFixed(1)}`;
+  const blobSVG   = blobBlur * SCALE;
+  const fsSVG     = baseSz * SCALE;
+  const swSVG     = sw * SCALE;
+  const defSVG    = defocus * SCALE;
+  const defocusStep = defSVG > 0 ? `<feGaussianBlur in="crisp" stdDeviation="${defSVG}"/>` : '';
 
   const gif = new GIF({
     workers: 2,
     quality: 6,
-    width:   GW,
-    height:  GH,
-    transparent: 0x00ff00, // chroma key green for transparency
-    workerScript: URL.createObjectURL(new Blob([`importScripts('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js')`], {type:'application/javascript'}))
+    width: GW,
+    height: GH,
+    workerScript: URL.createObjectURL(new Blob(
+      [`importScripts('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js')`],
+      {type:'application/javascript'}
+    ))
   });
 
-  // Figure out what to capture
-  // For title: cycle through all words, capture fade-out + word change + fade-in
-  // For motion: capture one full cycle (~3s)
-  const FRAME_MS = 80; // ms per frame
-  let frames = [];
-
-  function restoreColors() {
-    isInverted = wasInverted;
-    isPink = wasPink;
-    updateLetterStyle();
-    outer.classList.toggle('inverted', isInverted);
-    if (tag) tag.style.color = isPink ? PINK : isInverted ? '#fff' : '#000';
+  // Build letter SVG text elements from given positions + pan
+  function buildLetterEls(positions, pan) {
+    let els = '';
+    positions.forEach((pos, i) => {
+      const x = (pos.left + pan.x + OX) * SCALE;
+      const y = (pos.top  + pan.y + OY) * SCALE + fsSVG * 0.75;
+      const sa = sw > 0 ? `stroke="${logoFill}" stroke-width="${swSVG}" paint-order="stroke"` : '';
+      els += `<text x="${x}" y="${y}" font-family="'Trebuchet MS',sans-serif" font-size="${fsSVG}" font-weight="900" fill="${logoFill}" ${sa}>${letters[i]}</text>\n`;
+    });
+    return els;
   }
 
-  function captureCurrentFrame(delay) {
+  // Build title SVG text element with given opacity
+  function buildTitleEl(word, opacity) {
+    if (!word || opacity <= 0) return '';
+    const tagEl  = document.getElementById('wordTag');
+    const fEl    = document.querySelector('#stage .letter');
+    if (!tagEl || !fEl) return '';
+    const fRect  = fEl.getBoundingClientRect();
+    const tagRect= tagEl.getBoundingClientRect();
+    const fPos0  = letterPositions[0];
+    if (!fPos0) return '';
+    const dxStage = (tagRect.left - fRect.left) / zoomScale;
+    const dyStage = (tagRect.top  - fRect.top)  / zoomScale;
+    const tagSzSVG = wordTagStageSz * SCALE;
+    const tagX = (fPos0.left + panOffsetX + dxStage + OX) * SCALE;
+    const tagY = (fPos0.top  + panOffsetY + dyStage + OY) * SCALE + tagSzSVG * 0.55;
+    return `<text x="${tagX}" y="${tagY}" font-family="'Trebuchet MS',sans-serif" font-size="${tagSzSVG}" font-weight="700" fill="${titleFill}" opacity="${opacity.toFixed(3)}" letter-spacing="${tagSzSVG * 0.08}">${word}</text>`;
+  }
+
+  // Render one SVG frame to a canvas frame and add to GIF
+  function addFrame(textEls, titleEl, delay) {
     return new Promise(resolve => {
-      const bgColor = isInverted ? '#000000' : '#ffffff';
-      html2canvas(outer, {
-        scale: 2,
-        backgroundColor: bgColor,
-        useCORS: true,
-        logging: false
-      }).then(canvas => {
-        // Convert background to transparent (chroma key the bg color)
-        const ctx = canvas.getContext('2d');
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const d = imgData.data;
-        const bgR = isInverted ? 0 : 255;
-        const bgG = isInverted ? 0 : 255;
-        const bgB = isInverted ? 0 : 255;
-        for (let i = 0; i < d.length; i += 4) {
-          // Make bg pixels transparent (pure black or pure white)
-          if (Math.abs(d[i]-bgR) < 8 && Math.abs(d[i+1]-bgG) < 8 && Math.abs(d[i+2]-bgB) < 8) {
-            d[i] = 0; d[i+1] = 255; d[i+2] = 0; // chroma green = transparent in gif
+      const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${BIGW}" height="${BIGH}">
+  <defs><filter id="blob" color-interpolation-filters="sRGB" x="-30%" y="-30%" width="160%" height="160%">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="${blobSVG}" result="blur"/>
+    <feColorMatrix in="blur" mode="matrix" values="${vals}" result="sharp"/>
+    <feComposite in="SourceGraphic" in2="sharp" operator="atop" result="crisp"/>
+    ${defocusStep}
+  </filter></defs>
+  <g filter="url(#blob)">${textEls}</g>
+  ${titleEl}
+</svg>`;
+      const blob = new Blob([svgStr], {type:'image/svg+xml;charset=utf-8'});
+      const url  = URL.createObjectURL(blob);
+      const img  = new Image();
+      img.onload = () => {
+        // Render SVG to big canvas
+        const tmp = document.createElement('canvas');
+        tmp.width = BIGW; tmp.height = BIGH;
+        const tctx = tmp.getContext('2d');
+        tctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(url);
+
+        // Find content bounds (first frame locks bounds)
+        if (!addFrame._bounds) {
+          const PAD = 30 * SCALE;
+          const id = tctx.getImageData(0, 0, BIGW, BIGH); const d = id.data;
+          let mnX=BIGW,mxX=0,mnY=BIGH,mxY=0;
+          for (let py=0;py<BIGH;py++) for (let px=0;px<BIGW;px++) {
+            const i=(py*BIGW+px)*4;
+            if (d[i+3] > 20) { if(px<mnX)mnX=px;if(px>mxX)mxX=px;if(py<mnY)mnY=py;if(py>mxY)mxY=py; }
           }
+          addFrame._bounds = {
+            minX: Math.max(0,mnX-PAD), minY: Math.max(0,mnY-PAD),
+            maxX: Math.min(BIGW,mxX+PAD), maxY: Math.min(BIGH,mxY+PAD)
+          };
         }
-        ctx.putImageData(imgData, 0, 0);
-        gif.addFrame(canvas, { delay, copy: true });
+        const {minX,minY,maxX,maxY} = addFrame._bounds;
+        const cw = maxX-minX, ch = maxY-minY;
+
+        // Scale down to GIF size
+        const fc = document.createElement('canvas');
+        fc.width = GW; fc.height = GH;
+        const fctx = fc.getContext('2d');
+        fctx.fillStyle = bgFill;
+        fctx.fillRect(0,0,GW,GH);
+        fctx.drawImage(tmp, minX, minY, cw, ch, 0, 0, GW, GH);
+        gif.addFrame(fc, {delay, copy: true});
         resolve();
-      });
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(); };
+      img.src = url;
     });
   }
 
-  async function recordMotion() {
-    const DURATION = 3000; // 3 second loop
-    const steps = Math.round(DURATION / FRAME_MS);
-    for (let i = 0; i < steps; i++) {
-      progress.textContent = `Capturing motion frame ${i+1}/${steps}…`;
-      await captureCurrentFrame(FRAME_MS);
-      await new Promise(r => setTimeout(r, FRAME_MS));
-    }
-  }
-
-  async function recordTitle() {
-    const words = WORD_SETS[currentLang];
-    const FADE_MS = 450;   // fade duration (matches CSS transition)
-    const HOLD_MS = 1800;  // hold duration per word
-    const FADE_STEPS = Math.round(FADE_MS / FRAME_MS);
-    const HOLD_STEPS = Math.round(HOLD_MS / FRAME_MS);
-
-    for (let w = 0; w < words.length; w++) {
-      // Show word
-      if (tag) {
-        tag.classList.remove('fade');
-        tag.textContent = words[w];
-      }
-      progress.textContent = `Word ${w+1}/${words.length}: ${words[w]}`;
-
-      // Hold
-      for (let h = 0; h < HOLD_STEPS; h++) {
-        await captureCurrentFrame(FRAME_MS);
-        await new Promise(r => setTimeout(r, FRAME_MS));
-      }
-
-      // Fade out
-      if (tag) tag.classList.add('fade');
-      for (let f = 0; f < FADE_STEPS; f++) {
-        await captureCurrentFrame(FRAME_MS);
-        await new Promise(r => setTimeout(r, FRAME_MS));
-      }
-
-      // Change word (invisible during fade)
-      const nextWord = words[(w + 1) % words.length];
-      if (tag) tag.textContent = nextWord;
-
-      // Fade in
-      if (tag) tag.classList.remove('fade');
-      for (let f = 0; f < FADE_STEPS; f++) {
-        await captureCurrentFrame(FRAME_MS);
-        await new Promise(r => setTimeout(r, FRAME_MS));
-      }
-    }
+  // Animate motion manually by advancing t
+  function getMotionPositions(tVal) {
+    const amt = parseInt(document.getElementById('motionAmt') ? document.getElementById('motionAmt').value : 6);
+    return letterPositions.map((pos, i) => {
+      if (!basePositions[i]) return pos;
+      const ph = motionPhases[i] || 0;
+      let dx = 0, dy = 0;
+      if (motionMode === 'side')   dx = Math.sin(tVal + ph * 0.4) * amt * 1.4;
+      if (motionMode === 'random') { dx = Math.sin(tVal*1.1+ph*2.3)*amt*1.3; dy = Math.cos(tVal*0.8+ph*1.7)*amt*1.3; }
+      return { left: basePositions[i].left + dx, top: basePositions[i].top + dy };
+    });
   }
 
   async function runCapture() {
-    if (hasMotion && hasTitle) {
-      // Capture both together — motion drives timing, title cycles naturally
-      await recordMotion();
-    } else if (hasMotion) {
-      await recordMotion();
+    addFrame._bounds = null;
+
+    if (hasMotion && !hasTitle) {
+      // Pure motion: 3 second loop
+      const TOTAL = Math.round(3000 / FRAME_MS);
+      const tStep = 0.022;
+      for (let f = 0; f < TOTAL; f++) {
+        progress.textContent = `Frame ${f+1}/${TOTAL}…`;
+        const tVal = f * tStep;
+        const pos  = motionMode !== 'none' ? getMotionPositions(tVal) : letterPositions;
+        const textEls = buildLetterEls(pos, {x: panOffsetX, y: panOffsetY});
+        const word = document.getElementById('wordTag') ? document.getElementById('wordTag').textContent : '';
+        await addFrame(textEls, '', FRAME_MS);
+      }
+
+    } else if (hasTitle && !hasMotion) {
+      // Title only: cycle through all words with fade
+      const words = WORD_SETS[currentLang];
+      const HOLD  = 1800, FADE = 450;
+      const holdF = Math.round(HOLD / FRAME_MS);
+      const fadeF = Math.round(FADE / FRAME_MS);
+      const textEls = buildLetterEls(letterPositions, {x: panOffsetX, y: panOffsetY});
+
+      for (let w = 0; w < words.length; w++) {
+        progress.textContent = `Word ${w+1}/${words.length}: ${words[w]}`;
+        // Hold
+        for (let f = 0; f < holdF; f++) {
+          await addFrame(textEls, buildTitleEl(words[w], 1.0), FRAME_MS);
+        }
+        // Fade out
+        for (let f = 0; f < fadeF; f++) {
+          const op = 1 - f / fadeF;
+          await addFrame(textEls, buildTitleEl(words[w], op), FRAME_MS);
+        }
+        // Fade in next
+        const next = words[(w+1) % words.length];
+        for (let f = 0; f < fadeF; f++) {
+          const op = f / fadeF;
+          await addFrame(textEls, buildTitleEl(next, op), FRAME_MS);
+        }
+      }
+
     } else {
-      await recordTitle();
+      // Both motion + title
+      const words  = WORD_SETS[currentLang];
+      const HOLD   = 1800, FADE = 450;
+      const holdF  = Math.round(HOLD / FRAME_MS);
+      const fadeF  = Math.round(FADE / FRAME_MS);
+      const tStep  = 0.022;
+      let tVal = 0, frame = 0;
+
+      for (let w = 0; w < words.length; w++) {
+        progress.textContent = `Word ${w+1}/${words.length}…`;
+        for (let f = 0; f < holdF + fadeF * 2; f++) {
+          const pos = getMotionPositions(tVal);
+          const textEls = buildLetterEls(pos, {x: panOffsetX, y: panOffsetY});
+          let op = 1.0;
+          if (f < fadeF) op = f / fadeF;
+          else if (f >= holdF + fadeF) op = 1 - (f - holdF - fadeF) / fadeF;
+          const word = f < holdF + fadeF ? words[w] : words[(w+1)%words.length];
+          await addFrame(textEls, buildTitleEl(word, op), FRAME_MS);
+          tVal += tStep;
+        }
+      }
     }
 
-    restoreColors();
     progress.textContent = 'Encoding GIF…';
-
     gif.on('finished', blob => {
       const a = document.createElement('a');
       a.download = `foams-animated-${logoColor}.gif`;
@@ -1262,16 +1344,13 @@ function exportGif(logoColor) {
       a.click();
       progress.style.display = 'none';
     });
-    gif.on('progress', p => {
-      progress.textContent = `Encoding GIF… ${Math.round(p*100)}%`;
-    });
+    gif.on('progress', p => { progress.textContent = `Encoding… ${Math.round(p*100)}%`; });
     gif.render();
   }
 
   runCapture().catch(err => {
-    restoreColors();
     progress.style.display = 'none';
-    alert('GIF export failed: ' + err.message);
+    alert('GIF export failed: ' + err);
   });
 }
 
