@@ -1082,7 +1082,7 @@
         <a href="#generative-examples" data-i18n="nav-gen-examples">Exemplos Generativos</a>
         <a href="#closing" data-i18n="nav-closing">↓ Keep it fluid</a>
       </nav>
-      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v3.1</div>
+      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v3.2</div>
 
       <!-- BACK TO TOP — inside sticky sidebar so it's always in viewport -->
       <div id="back-to-top-wrap">
@@ -2018,7 +2018,16 @@
     // Wrap examples of usage images
     document.querySelectorAll('#examples-of-usage img, #generative-examples img').forEach(wrapExampleWithDownload);
 
-    // ── SECTION BACK-TO-TOP LINKS ──
+    // ── AUTO HEIGHT — sends content height to parent Squarespace page ──
+    function sendHeight() {
+      const h = document.documentElement.scrollHeight;
+      window.parent.postMessage({ type: 'foams-height', height: h }, '*');
+    }
+    // Send on load, on resize, and whenever DOM changes
+    window.addEventListener('load', sendHeight);
+    window.addEventListener('resize', sendHeight);
+    new MutationObserver(sendHeight).observe(document.body, { subtree: true, childList: true, attributes: true });
+    sendHeight();
     const topLinkSections = ['logo', 'color', 'typography', 'graphic-elements', 'photos-images', 'examples-of-usage', 'generative-examples'];
     topLinkSections.forEach(id => {
       const sec = document.getElementById(id);
