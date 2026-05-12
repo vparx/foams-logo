@@ -101,7 +101,6 @@
   </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
 <script src="https://unpkg.com/pako@2.1.0/dist/pako.min.js"></script>
-<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.10.1/dist/ffmpeg.min.js"></script>
 </head>
 <body>
 
@@ -121,7 +120,7 @@
   </defs>
 </svg>
 
-<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v9.6</div>
+<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v9.7</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -1703,17 +1702,10 @@ async function exportAPNG(logoColor) {
 }
 
 // ── Animated WebP Export (transparent, Squarespace ready) ─────────────────────
-let _ffmpeg = null;
-async function getFFmpeg() {
-  if (_ffmpeg && _ffmpeg.isLoaded()) return _ffmpeg;
-  const { createFFmpeg } = FFmpeg;
-  _ffmpeg = createFFmpeg({
-    log: false,
-    corePath: 'https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js'
-  });
-  await _ffmpeg.load();
-  return _ffmpeg;
-}
+
+// ── Animated WebP (pure JS, no server, no SharedArrayBuffer) ──────────────────
+// Strategy: encode each frame as a lossy WebP using canvas.toBlob('image/webp'),
+// then assemble them into a RIFF WEBPVP8X + ANIM + ANMFs container.
 
 async function exportWebP(logoColor) {
   const hasMotion = motionMode !== 'none' && !motionPaused;
@@ -1721,7 +1713,7 @@ async function exportWebP(logoColor) {
 
   const progress = document.getElementById('webmProgress');
   progress.style.display = 'block';
-  progress.textContent = 'Loading encoder…';
+  progress.textContent = 'Preparing…';
 
   const blobBlur = parseInt(document.getElementById('blurR').value);
   const defocus  = parseFloat(document.getElementById('defocus').value);
@@ -1731,7 +1723,7 @@ async function exportWebP(logoColor) {
   const letters  = ['F','O','A','M','S'];
   const SCALE    = 3;
   const FPS      = 25;
-  const FRAME_MS = 1000 / FPS;
+  const FRAME_MS = Math.round(1000 / FPS);
   const T_PER_FRAME = 0.022 * (60/FPS) * 2.5;
   const MOTION_FRAMES = Math.round((Math.PI*2) / T_PER_FRAME);
 
@@ -1791,13 +1783,13 @@ async function exportWebP(logoColor) {
       const b=new Blob([svgStr],{type:'image/svg+xml;charset=utf-8'});
       const url=URL.createObjectURL(b);
       const img=new Image();
-      img.onload=()=>{const tmp=document.createElement('canvas');tmp.width=BIGW;tmp.height=BIGH;tmp.getContext('2d').drawImage(img,0,0);URL.revokeObjectURL(url);resolve(tmp);};
+      img.onload=()=>{const c=document.createElement('canvas');c.width=BIGW;c.height=BIGH;c.getContext('2d').drawImage(img,0,0);URL.revokeObjectURL(url);resolve(c);};
       img.onerror=()=>{URL.revokeObjectURL(url);reject();};
       img.src=url;
     });
   }
 
-  // Measure bounds
+  // Measure crop bounds
   progress.textContent='Measuring…';
   let cropBounds=null;
   const probeTs=hasMotion?[0,0.25,0.5,0.75].map(f=>f*Math.PI*2):[0];
@@ -1810,7 +1802,6 @@ async function exportWebP(logoColor) {
     if(!cropBounds)cropBounds={...b2};
     else{cropBounds.minX=Math.min(cropBounds.minX,b2.minX);cropBounds.minY=Math.min(cropBounds.minY,b2.minY);cropBounds.maxX=Math.max(cropBounds.maxX,b2.maxX);cropBounds.maxY=Math.max(cropBounds.maxY,b2.maxY);}
   }
-
   const cw=cropBounds.maxX-cropBounds.minX,ch=cropBounds.maxY-cropBounds.minY;
   const outW=Math.min(800,cw),outH=Math.round(ch*(outW/cw));
 
@@ -1841,10 +1832,10 @@ async function exportWebP(logoColor) {
     }
   }
 
-  // Collect PNG frames
-  const pngFrames=[];
+  // Render frames and get WebP blobs from canvas.toBlob
   const tmpCanvas=document.createElement('canvas'); tmpCanvas.width=outW; tmpCanvas.height=outH;
   const tmpCtx=tmpCanvas.getContext('2d');
+  const webpFrames=[]; // array of {data: Uint8Array, duration: ms}
 
   for(let fi=0;fi<frameQueue.length;fi++){
     if(fi%10===0) progress.textContent=`Frame ${fi+1}/${frameQueue.length}…`;
@@ -1852,47 +1843,92 @@ async function exportWebP(logoColor) {
     const big=await svgToCanvas(buildSVG(getPos(t),word,op));
     tmpCtx.clearRect(0,0,outW,outH);
     tmpCtx.drawImage(big,cropBounds.minX,cropBounds.minY,cw,ch,0,0,outW,outH);
-    const pngData=await new Promise(r=>tmpCanvas.toBlob(b=>b.arrayBuffer().then(r),'image/png'));
-    pngFrames.push(new Uint8Array(pngData));
+    const webpData=await new Promise(r=>tmpCanvas.toBlob(b=>b.arrayBuffer().then(ab=>r(new Uint8Array(ab))),'image/webp',0.85));
+    webpFrames.push({data:webpData, duration:FRAME_MS});
   }
 
-  // Encode with ffmpeg.wasm
-  progress.textContent='Encoding WebP…';
-  try {
-    const ff=await getFFmpeg();
-    // Write each frame as PNG to ffmpeg virtual filesystem
-    for(let fi=0;fi<pngFrames.length;fi++){
-      ff.FS('writeFile',`frame${String(fi).padStart(4,'0')}.png`, pngFrames[fi]);
+  // Assemble animated WebP (RIFF container)
+  progress.textContent='Assembling WebP…';
+
+  function u32le(n){const b=new Uint8Array(4);new DataView(b.buffer).setUint32(0,n,true);return b;}
+  function u24le(n){return new Uint8Array([n&0xFF,(n>>8)&0xFF,(n>>16)&0xFF]);}
+  function u16le(n){const b=new Uint8Array(2);new DataView(b.buffer).setUint16(0,n,true);return b;}
+  function concat(...arrs){const len=arrs.reduce((s,a)=>s+a.length,0);const out=new Uint8Array(len);let off=0;arrs.forEach(a=>{out.set(a,off);off+=a.length;});return out;}
+  function pad(data){return data.length%2===0?data:concat(data,new Uint8Array(1));}
+
+  // Strip RIFF/WEBP header from each frame WebP to get raw VP8 bitstream
+  function extractVP8(webpData){
+    // WebP: RIFF(4) + size(4) + WEBP(4) + VP8 (4) + size(4) + bitstream
+    // Simple WebP: bytes 12+ is "VP8 " chunk
+    // We need the VP8 bitstream starting at byte 20
+    const view=new DataView(webpData.buffer,webpData.byteOffset);
+    let offset=12;
+    while(offset<webpData.length-8){
+      const tag=String.fromCharCode(webpData[offset],webpData[offset+1],webpData[offset+2],webpData[offset+3]);
+      const size=view.getUint32(offset+4,true);
+      if(tag==='VP8 '||tag==='VP8L'||tag==='VP8X'){
+        return {tag,data:webpData.slice(offset+8,offset+8+size)};
+      }
+      offset+=8+size+(size%2);
     }
-    // Encode as animated WebP
-    await ff.run(
-      '-framerate',String(FPS),
-      '-i','frame%04d.png',
-      '-vcodec','libwebp',
-      '-lossless','0',
-      '-compression_level','6',
-      '-q:v','80',
-      '-loop','0',
-      '-preset','picture',
-      '-an',
-      'output.webp'
-    );
-    const data=ff.FS('readFile','output.webp');
-    // Cleanup
-    for(let fi=0;fi<pngFrames.length;fi++) ff.FS('unlink',`frame${String(fi).padStart(4,'0')}.png`);
-    ff.FS('unlink','output.webp');
-
-    const blob=new Blob([data.buffer],{type:'image/webp'});
-    const a=document.createElement('a');
-    a.download=`foams-animated-${logoColor}-transparent.webp`;
-    a.href=URL.createObjectURL(blob);
-    a.click();
-    progress.style.display='none';
-  } catch(err) {
-    progress.style.display='none';
-    alert('WebP encoding failed: '+err+'\nTry the APNG option instead.');
+    return null;
   }
+
+  const chunks=[];
+
+  // VP8X chunk (extended features: animation + alpha)
+  const vp8x=new Uint8Array(10);
+  vp8x[0]=0x02; // animation flag
+  // canvas width-1 and height-1 as 3 bytes little-endian
+  vp8x.set(u24le(outW-1),4);
+  vp8x.set(u24le(outH-1),7);
+  chunks.push(concat(new TextEncoder().encode('VP8X'),u32le(10),vp8x));
+
+  // ANIM chunk (animation parameters)
+  const anim=new Uint8Array(6);
+  // background color BGRA = 0x00000000 (transparent)
+  // loop count = 0 (infinite)
+  chunks.push(concat(new TextEncoder().encode('ANIM'),u32le(6),anim));
+
+  // ANMF chunks (animation frames)
+  for(let fi=0;fi<webpFrames.length;fi++){
+    const {data,duration}=webpFrames[fi];
+    const vp8=extractVP8(data);
+    if(!vp8) continue;
+
+    const frameHeader=new Uint8Array(16);
+    // X,Y offsets (0,0) as 3 bytes each /2
+    // width-1, height-1 as 3 bytes each
+    frameHeader.set(u24le((outW-1)),6);
+    frameHeader.set(u24le((outH-1)),9);
+    // duration in ms as 3 bytes
+    frameHeader.set(u24le(duration),12);
+    // flags: 0 (no alpha blending dispose to bg)
+
+    const vp8Tag=new TextEncoder().encode(vp8.tag.padEnd(4));
+    const vp8Chunk=concat(vp8Tag,u32le(vp8.data.length),vp8.data);
+    if(vp8Chunk.length%2!==0) vp8Chunk.set([0],vp8Chunk.length); // pad
+
+    const anmfData=concat(frameHeader,pad(vp8Chunk));
+    chunks.push(concat(new TextEncoder().encode('ANMF'),u32le(anmfData.length),anmfData));
+  }
+
+  const body=concat(...chunks);
+  const riff=concat(
+    new TextEncoder().encode('RIFF'),
+    u32le(body.length+4),
+    new TextEncoder().encode('WEBP'),
+    body
+  );
+
+  const outBlob=new Blob([riff],{type:'image/webp'});
+  const a=document.createElement('a');
+  a.download=`foams-animated-${logoColor}-transparent.webp`;
+  a.href=URL.createObjectURL(outBlob);
+  a.click();
+  progress.style.display='none';
 }
+
 </script>
 </body>
 </html>
