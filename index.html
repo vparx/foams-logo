@@ -101,7 +101,6 @@
   </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
 <script src="https://unpkg.com/pako@2.1.0/dist/pako.min.js"></script>
-<script src="https://unpkg.com/upng-js@2.1.0/UPNG.js"></script>
 </head>
 <body>
 
@@ -121,7 +120,7 @@
   </defs>
 </svg>
 
-<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v9.2</div>
+<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v9.3</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -1588,11 +1587,99 @@ async function exportAPNG(logoColor) {
 
   progress.textContent='Encoding APNG…';
   // Use UPNG to encode animated PNG
-  const apng = UPNG.encode(frameBuffers, outW, outH, 0, frameDelays);
-  const blob2 = new Blob([apng], {type:'image/png'});
-  const a2 = document.createElement('a');
-  a2.download = `foams-animated-${logoColor}-transparent.png`;
-  a2.href = URL.createObjectURL(blob2);
+  progress.textContent='Encoding APNG…';
+
+  // Build APNG manually using pako for compression
+  function crc32(buf) {
+    let c = 0xFFFFFFFF;
+    const table = crc32._t || (crc32._t = (() => {
+      const t = new Uint32Array(256);
+      for (let i=0;i<256;i++){let c2=i;for(let j=0;j<8;j++)c2=c2&1?0xEDB88320^(c2>>>1):c2>>>1;t[i]=c2;}
+      return t;
+    })());
+    for (let i=0;i<buf.length;i++) c=table[(c^buf[i])&0xFF]^(c>>>8);
+    return (c^0xFFFFFFFF)>>>0;
+  }
+  function u32(n){const b=new Uint8Array(4);new DataView(b.buffer).setUint32(0,n);return b;}
+  function u16(n){const b=new Uint8Array(2);new DataView(b.buffer).setUint16(0,n);return b;}
+  function chunk(type,data){
+    const tb=new TextEncoder().encode(type);
+    const combined=new Uint8Array(tb.length+data.length);
+    combined.set(tb);combined.set(data,tb.length);
+    const crc=u32(crc32(combined));
+    const out=new Uint8Array(4+4+data.length+4);
+    out.set(u32(data.length),0);out.set(tb,4);out.set(data,8);out.set(crc,8+data.length);
+    return out;
+  }
+  function concat(...arrays){
+    const len=arrays.reduce((s,a)=>s+a.length,0);
+    const out=new Uint8Array(len);let off=0;
+    arrays.forEach(a=>{out.set(a,off);off+=a.length;});
+    return out;
+  }
+
+  // PNG signature
+  const sig = new Uint8Array([137,80,78,71,13,10,26,10]);
+
+  // IHDR
+  const ihdr = new Uint8Array(13);
+  const dv = new DataView(ihdr.buffer);
+  dv.setUint32(0,outW);dv.setUint32(4,outH);
+  ihdr[8]=8;ihdr[9]=6;ihdr[10]=0;ihdr[11]=0;ihdr[12]=0; // 8bit RGBA
+
+  // acTL
+  const actl = new Uint8Array(8);
+  new DataView(actl.buffer).setUint32(0,frameBuffers.length);
+  new DataView(actl.buffer).setUint32(4,0); // loop forever
+
+  let seqNum = 0;
+  const frameChunks = [];
+
+  for (let fi=0;fi<frameBuffers.length;fi++){
+    const delay = frameDelays[fi];
+    // fcTL
+    const fctl = new Uint8Array(26);
+    const fdv = new DataView(fctl.buffer);
+    fdv.setUint32(0,seqNum++);
+    fdv.setUint32(4,outW);fdv.setUint32(8,outH);
+    fdv.setUint32(12,0);fdv.setUint32(16,0); // x,y offset
+    fdv.setUint16(20,delay);fdv.setUint16(22,1000); // delay num/den
+    fctl[24]=1;fctl[25]=0; // dispose=1(clear), blend=0(source)
+    frameChunks.push(chunk('fcTL',fctl));
+
+    // Compress frame RGBA
+    const raw = new Uint8Array(frameBuffers[fi]);
+    // Add filter byte (0=None) before each row
+    const filtered = new Uint8Array(outH*(outW*4+1));
+    for(let r=0;r<outH;r++){
+      filtered[r*(outW*4+1)]=0; // None filter
+      filtered.set(raw.subarray(r*outW*4,(r+1)*outW*4), r*(outW*4+1)+1);
+    }
+    const compressed = pako.deflate(filtered, {level:6});
+
+    if(fi===0){
+      frameChunks.push(chunk('IDAT',compressed));
+    } else {
+      // fdAT: seqNum + compressed data
+      const fdat = new Uint8Array(4+compressed.length);
+      new DataView(fdat.buffer).setUint32(0,seqNum++);
+      fdat.set(compressed,4);
+      frameChunks.push(chunk('fdAT',fdat));
+    }
+  }
+
+  const apngBytes = concat(
+    sig,
+    chunk('IHDR',ihdr),
+    chunk('acTL',actl),
+    ...frameChunks,
+    chunk('IEND',new Uint8Array(0))
+  );
+
+  const blob2 = new Blob([apngBytes],{type:'image/png'});
+  const a2=document.createElement('a');
+  a2.download=`foams-animated-${logoColor}-transparent.png`;
+  a2.href=URL.createObjectURL(blob2);
   a2.click();
   progress.style.display='none';
 }
