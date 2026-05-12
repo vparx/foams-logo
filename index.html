@@ -120,7 +120,7 @@
   </defs>
 </svg>
 
-<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v9.8</div>
+<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v9.9</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -262,7 +262,7 @@
     </button>
   </div>
   <hr style="border:none;border-top:1px solid #252525;margin:1rem 0;">
-  <p style="font-size:11px;color:#777;margin-bottom:8px;">Animated GIF — loops through motion &amp; title</p>
+  <p class="section-title" style="margin-bottom:0.85rem;">Animated GIF</p>
   <div class="export-grid">
     <button class="exp-btn exp-black-white" onclick="exportGif('black')">
       <span class="exp-title">↓ Black · animated</span>
@@ -283,7 +283,7 @@
   </div>
   <div id="gifProgress" style="display:none;margin-top:8px;font-size:12px;color:#aaa;text-align:center;"></div>
   <hr style="border:none;border-top:1px solid #252525;margin:1rem 0;">
-  <p style="font-size:11px;color:#777;margin-bottom:8px;">Animated PNG — transparent background, full quality</p>
+  <p class="section-title" style="margin-bottom:0.85rem;">Animated PNG — transparent</p>
   <div class="export-grid">
     <button class="exp-btn exp-black-trans" onclick="exportAPNG('black')">
       <span class="exp-title">↓ Black · transparent</span>
@@ -299,23 +299,7 @@
     </button>
   </div>
   <div id="apngProgress" style="display:none;margin-top:8px;font-size:12px;color:#aaa;text-align:center;"></div>
-  <hr style="border:none;border-top:1px solid #252525;margin:1rem 0;">
-  <p style="font-size:11px;color:#777;margin-bottom:8px;">Animated WebM — transparent background, for web &amp; Squarespace video blocks</p>
-  <div class="export-grid">
-    <button class="exp-btn exp-black-trans" onclick="exportWebP('black')">
-      <span class="exp-title">↓ Black · transparent</span>
-      <span class="exp-sub">WebM · alpha channel</span>
-    </button>
-    <button class="exp-btn exp-white-trans" onclick="exportWebP('white')">
-      <span class="exp-title">↓ White · transparent</span>
-      <span class="exp-sub">WebM · alpha channel</span>
-    </button>
-    <button class="exp-btn exp-pink-trans" onclick="exportWebP('pink')">
-      <span class="exp-title">↓ Pink · transparent</span>
-      <span class="exp-sub">WebM · alpha channel</span>
-    </button>
-  </div>
-  <div id="webmProgress" style="display:none;margin-top:8px;font-size:12px;color:#aaa;text-align:center;"></div>
+
 </div>
 
 <script>
@@ -1493,11 +1477,9 @@ async function exportAPNG(logoColor) {
     const ahX = aPos2.left+aW*0.5+aHoleOffsetX, ahY = aPos2.top+baseSz*0.42+aHoleOffsetY;
     const ahCX=(ahX+panOffsetX+OX)*SCALE, ahCY=(ahY+panOffsetY+OY)*SCALE-sz2*0.35;
     const w=sz2*0.30,h=sz2*0.55;
-    // For transparent: hole should be cut out — we render it transparent (no fill visible)
-    // Actually: render in background color… but bg is transparent. 
-    // Solution: render with mix-blend-mode workaround — just skip hole in transparent APNG
-    // The hole is naturally transparent in the SVG since bg is transparent!
-    return ''; // hole appears naturally as transparent gap in the blob
+    const d=`M ${ahCX} ${ahCY-h} C ${ahCX+w*0.15} ${ahCY-h}, ${ahCX+w} ${ahCY-h*0.1}, ${ahCX+w} ${ahCY+h*0.15} C ${ahCX+w} ${ahCY+h*0.65}, ${ahCX+w*0.6} ${ahCY+h}, ${ahCX} ${ahCY+h} C ${ahCX-w*0.6} ${ahCY+h}, ${ahCX-w} ${ahCY+h*0.65}, ${ahCX-w} ${ahCY+h*0.15} C ${ahCX-w} ${ahCY-h*0.1}, ${ahCX-w*0.15} ${ahCY-h}, ${ahCX} ${ahCY-h} Z`;
+    // Use destination-out to cut a transparent hole through the logo
+    return `<g style="mix-blend-mode:destination-out"><path d="${d}" fill="rgba(0,0,0,1)" filter="url(#blob)"/></g>`;
   }
 
   function buildSVGFrame(positions, word, opacity) {
@@ -1532,7 +1514,7 @@ async function exportAPNG(logoColor) {
     <feComposite in="SourceGraphic" in2="sharp" operator="atop" result="crisp"/>
     ${defocusStep}
   </filter></defs>
-  <g filter="url(#blob)">${els}</g>${titleEl}</svg>`;
+  <g filter="url(#blob)">${els}</g>${buildHole(positions)}${titleEl}</svg>`;
   }
 
   function svgToCanvasTransparent(svgStr) {
@@ -1708,163 +1690,6 @@ async function exportAPNG(logoColor) {
   progress.style.display='none';
 }
 
-// ── Animated WebP Export (transparent, Squarespace ready) ─────────────────────
-
-// ── Animated WebP (pure JS, no server, no SharedArrayBuffer) ──────────────────
-// Strategy: encode each frame as a lossy WebP using canvas.toBlob('image/webp'),
-// then assemble them into a RIFF WEBPVP8X + ANIM + ANMFs container.
-
-async function exportWebP(logoColor) {
-  const hasMotion = motionMode !== 'none' && !motionPaused;
-  const hasTitle  = currentLang !== 'none' && !wordCyclePaused;
-  const progress = document.getElementById('webmProgress');
-  progress.style.display = 'block';
-  progress.textContent = 'Preparing…';
-
-  const mimeType = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(m=>MediaRecorder.isTypeSupported(m));
-  if (!mimeType) { progress.style.display='none'; alert('Not supported. Use APNG instead.'); return; }
-
-  const blobBlur=parseInt(document.getElementById('blurR').value);
-  const defocus=parseFloat(document.getElementById('defocus').value);
-  const baseSz=parseInt(document.getElementById('sz').value);
-  const fo=parseInt(document.getElementById('fillOp').value)/100;
-  const sw=parseInt(document.getElementById('strokeW').value);
-  const letters=['F','O','A','M','S'];
-  const SCALE=3,FPS=25,FRAME_MS=Math.round(1000/FPS);
-  const T_PER_FRAME=0.022*(60/FPS)*2.5;
-  const MOTION_FRAMES=Math.round((Math.PI*2)/T_PER_FRAME);
-  const logoFill=logoColor==='pink'?`rgba(255,48,255,${fo})`:logoColor==='white'?`rgba(255,255,255,${fo})`:`rgba(0,0,0,${fo})`;
-  const titleFill=logoColor==='pink'?'#ff30ff':logoColor==='white'?'#fff':'#000';
-  const margin=300,OX=margin,OY=margin;
-  const BIGW=(SW+margin*2)*SCALE,BIGH=(SH+margin*2)*SCALE;
-  const thr=(22-(blobBlur-4)*0.3)*SCALE,cut=(-9+(blobBlur-4)*0.1)*SCALE;
-  const vals=`1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${thr.toFixed(1)} ${cut.toFixed(1)}`;
-  const blobSVG=blobBlur*SCALE,fsSVG=baseSz*SCALE,swSVG=sw*SCALE;
-  const defSVG=defocus*SCALE,defStep=defSVG>0?`<feGaussianBlur in="crisp" stdDeviation="${defSVG}"/>`:'';
-  const motAmt=document.getElementById('motionAmt')?parseInt(document.getElementById('motionAmt').value):6;
-
-  function getPos(tVal){
-    if(motionMode==='none'||!hasMotion) return letterPositions;
-    return basePositions.map((base,i)=>{
-      if(!base) return letterPositions[i];
-      const ph=motionPhases[i]||0;let dx=0,dy=0;
-      if(motionMode==='side') dx=Math.sin(tVal+ph*0.4)*motAmt*1.4;
-      if(motionMode==='random'){dx=Math.sin(tVal*1.1+ph*2.3)*motAmt*1.3;dy=Math.cos(tVal*0.8+ph*1.7)*motAmt*1.3;}
-      return {left:base.left+dx,top:base.top+dy};
-    });
-  }
-
-  function buildSVG(positions,word,opacity){
-    let els='';
-    positions.forEach((pos,i)=>{
-      const x=(pos.left+panOffsetX+OX)*SCALE,y=(pos.top+panOffsetY+OY)*SCALE+fsSVG*0.75;
-      const sa=sw>0?`stroke="${logoFill}" stroke-width="${swSVG}" paint-order="stroke"`:'';
-      els+=`<text x="${x}" y="${y}" font-family="'Trebuchet MS',sans-serif" font-size="${fsSVG}" font-weight="900" fill="${logoFill}" ${sa}>${letters[i]}</text>\n`;
-    });
-    let titleEl='';
-    if(word&&opacity>0.01){
-      const tSz=wordTagStageSz*SCALE;
-      let tx,ty;
-      if(titleLocked){
-        tx=(wordTagStageX+panOffsetX+OX)*SCALE;
-        ty=(wordTagStageY+panOffsetY+OY)*SCALE+tSz*0.55;
-      } else {
-        const fEl=document.querySelector('#stage .letter'),tagEl=document.getElementById('wordTag'),fPos0=positions[0];
-        if(fEl&&tagEl&&fPos0){
-          const fR=fEl.getBoundingClientRect(),tR=tagEl.getBoundingClientRect();
-          tx=(fPos0.left+panOffsetX+(tR.left-fR.left)/zoomScale+OX)*SCALE;
-          ty=(fPos0.top+panOffsetY+(tR.top-fR.top)/zoomScale+OY)*SCALE+tSz*0.55;
-        }
-      }
-      if(tx!=null) titleEl=`<text x="${tx}" y="${ty}" font-family="'Trebuchet MS',sans-serif" font-size="${tSz}" font-weight="700" fill="${titleFill}" opacity="${opacity.toFixed(3)}" letter-spacing="${tSz*0.08}">${word}</text>`;
-    }
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${BIGW}" height="${BIGH}">
-  <defs><filter id="blob" color-interpolation-filters="sRGB" x="-30%" y="-30%" width="160%" height="160%">
-    <feGaussianBlur in="SourceGraphic" stdDeviation="${blobSVG}" result="blur"/>
-    <feColorMatrix in="blur" mode="matrix" values="${vals}" result="sharp"/>
-    <feComposite in="SourceGraphic" in2="sharp" operator="atop" result="crisp"/>
-    ${defStep}
-  </filter></defs>
-  <g filter="url(#blob)">${els}</g>${titleEl}</svg>`;
-  }
-
-  function svgToCanvas(svgStr){
-    return new Promise((res,rej)=>{
-      const b=new Blob([svgStr],{type:'image/svg+xml;charset=utf-8'});
-      const url=URL.createObjectURL(b);
-      const img=new Image();
-      img.onload=()=>{const c=document.createElement('canvas');c.width=BIGW;c.height=BIGH;c.getContext('2d').drawImage(img,0,0);URL.revokeObjectURL(url);res(c);};
-      img.onerror=()=>{URL.revokeObjectURL(url);rej();};
-      img.src=url;
-    });
-  }
-
-  progress.textContent='Measuring…';
-  let cropBounds=null;
-  const probeTs=hasMotion?[0,0.25,0.5,0.75].map(f=>f*Math.PI*2):[0];
-  for(const tP of probeTs){
-    const c=await svgToCanvas(buildSVG(getPos(tP),null,0));
-    const ctx=c.getContext('2d'),id=ctx.getImageData(0,0,BIGW,BIGH),d=id.data;
-    const PAD=32*SCALE;let mnX=BIGW,mxX=0,mnY=BIGH,mxY=0;
-    for(let py=0;py<BIGH;py++) for(let px=0;px<BIGW;px++){const i=(py*BIGW+px)*4;if(d[i+3]>20){if(px<mnX)mnX=px;if(px>mxX)mxX=px;if(py<mnY)mnY=py;if(py>mxY)mxY=py;}}
-    const b2={minX:Math.max(0,mnX-PAD),minY:Math.max(0,mnY-PAD),maxX:Math.min(BIGW,mxX+PAD),maxY:Math.min(BIGH,mxY+PAD)};
-    if(!cropBounds)cropBounds={...b2};
-    else{cropBounds.minX=Math.min(cropBounds.minX,b2.minX);cropBounds.minY=Math.min(cropBounds.minY,b2.minY);cropBounds.maxX=Math.max(cropBounds.maxX,b2.maxX);cropBounds.maxY=Math.max(cropBounds.maxY,b2.maxY);}
-  }
-  const cw=cropBounds.maxX-cropBounds.minX,ch=cropBounds.maxY-cropBounds.minY;
-  const outW=Math.min(800,cw),outH=Math.round(ch*(outW/cw));
-
-  const HOLD_F=Math.round(1800/FRAME_MS),FADE_F=Math.round(450/FRAME_MS);
-  const words=hasTitle?WORD_SETS[currentLang]:null;
-  const frameQueue=[];
-  if(hasMotion&&!hasTitle){
-    for(let f=0;f<MOTION_FRAMES;f++) frameQueue.push({t:f*T_PER_FRAME,word:null,op:0});
-  } else if(!hasMotion&&hasTitle){
-    const wList=wordCyclePaused?[document.getElementById('wordTag').textContent]:words;
-    for(let w=0;w<wList.length;w++){
-      for(let f=0;f<HOLD_F;f++) frameQueue.push({t:0,word:wList[w],op:1});
-      if(wList.length>1){
-        const next=wList[(w+1)%wList.length];
-        for(let f=0;f<FADE_F;f++) frameQueue.push({t:0,word:wList[w],op:1-f/FADE_F});
-        for(let f=0;f<FADE_F;f++) frameQueue.push({t:0,word:next,op:f/FADE_F});
-      }
-    }
-  } else if(words){
-    const FPWORD=HOLD_F+FADE_F*2;let tVal=0;
-    for(let f=0;f<words.length*FPWORD;f++){
-      const wIdx=Math.floor(f/FPWORD),wf=f%FPWORD;
-      let op=1,dw=words[wIdx%words.length];
-      if(wf<FADE_F) op=wf/FADE_F;
-      else if(wf>=HOLD_F+FADE_F) op=1-(wf-HOLD_F-FADE_F)/FADE_F;
-      frameQueue.push({t:tVal,word:dw,op}); tVal+=T_PER_FRAME;
-    }
-  }
-
-  const outCanvas=document.createElement('canvas');outCanvas.width=outW;outCanvas.height=outH;
-  const outCtx=outCanvas.getContext('2d');
-  const stream=outCanvas.captureStream(FPS);
-  const chunks=[];
-  const recorder=new MediaRecorder(stream,{mimeType,videoBitsPerSecond:8000000});
-  recorder.ondataavailable=e=>{if(e.data.size>0)chunks.push(e.data);};
-  recorder.onstop=()=>{
-    const blob=new Blob(chunks,{type:mimeType});
-    const a=document.createElement('a');
-    a.download=`foams-animated-${logoColor}-transparent.webm`;
-    a.href=URL.createObjectURL(blob);a.click();
-    progress.style.display='none';
-  };
-  recorder.start();
-  for(let fi=0;fi<frameQueue.length;fi++){
-    if(fi%10===0) progress.textContent=`Frame ${fi+1}/${frameQueue.length}…`;
-    const {t,word,op}=frameQueue[fi];
-    const big=await svgToCanvas(buildSVG(getPos(t),word,op));
-    outCtx.clearRect(0,0,outW,outH);
-    outCtx.drawImage(big,cropBounds.minX,cropBounds.minY,cw,ch,0,0,outW,outH);
-    await new Promise(r=>setTimeout(r,FRAME_MS));
-  }
-  await new Promise(r=>setTimeout(r,FRAME_MS));
-  recorder.stop();
-}
 
 </script>
 </body>
