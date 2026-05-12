@@ -1,2109 +1,1737 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FOAMS Brand Guidelines</title>
-  <link href="https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:wght@300;400;700&display=swap" rel="stylesheet"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FOAMS Logo Generator</title>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background: #111; min-height: 100vh; padding: 1.5rem; padding-bottom: 3rem; }
 
-    :root {
-      --brand: #FF30FF;
-      --black: #111111;
-      --dark: #171717;
-      --white: #ffffff;
-      --light: #F5F5F5;
-      --border: #e0e0e0;
-      --sidebar-width: 240px;
-      --font-sans: 'Trebuchet MS', sans-serif;
-
-      /* semantic tokens */
-      --bg: #ffffff;
-      --bg-light: #F5F5F5;
-      --text: #111111;
-      --text-muted: #555555;
-      --text-subtle: #888888;
-      --border-color: #e0e0e0;
-      --sidebar-bg: #ffffff;
-      --card-bg: #ffffff;
-    }
-
-    body.dark-mode {
-      --bg: #0e0e0e;
-      --bg-light: #1a1a1a;
-      --text: #f0f0f0;
-      --text-muted: #aaaaaa;
-      --text-subtle: #666666;
-      --border-color: #2a2a2a;
-      --sidebar-bg: #111111;
-      --card-bg: #181818;
-    }
-
-    /* ── CONTROL BAR ── */
-    .control-bar {
-      position: fixed;
-      top: 1rem;
-      right: 1.25rem;
-      display: flex;
-      gap: 0.5rem;
-      z-index: 300;
-    }
-
-    .ctrl-btn {
-      padding: 0.45rem 0.9rem;
-      border-radius: 999px;
-      border: 1.5px solid var(--border-color);
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font-sans);
-      font-size: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      cursor: pointer;
-      transition: background 0.2s, color 0.2s, border-color 0.2s;
-      white-space: nowrap;
-    }
-
-    .ctrl-btn:hover {
-      background: var(--brand);
-      color: #000;
-      border-color: var(--brand);
-    }
-
-    .ctrl-btn.active {
-      background: var(--brand);
-      color: #000;
-      border-color: var(--brand);
-    }
-
-    html { scroll-behavior: smooth; }
-
-    body {
-      font-family: var(--font-sans);
-      background: var(--bg);
-      color: var(--text);
-      font-size: 16px;
-      line-height: 1.6;
-      transition: background 0.3s, color 0.3s;
-    }
-
-    /* ── LAYOUT ── */
-    .layout {
-      display: flex;
-      min-height: 100vh;
-    }
-
-    /* ── SIDEBAR ── */
-    .sidebar {
-      width: var(--sidebar-width);
-      flex-shrink: 0;
-      position: sticky;
-      top: 0;
-      height: 100vh;
-      overflow-y: auto;
-      background: var(--sidebar-bg);
-      border-right: 1px solid var(--border-color);
-      padding: 2.5rem 0;
-      transition: background 0.3s, border-color 0.3s;
-    }
-
-    .sidebar-title {
-      font-family: 'Averia Serif Libre', serif;
-      font-size: 0.7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      color: var(--text-subtle);
-      padding: 0 1.5rem 1rem;
-      border-bottom: 1px solid var(--border-color);
-      margin-bottom: 0.5rem;
-    }
-
-    .sidebar nav a {
-      display: block;
-      padding: 0.85rem 1.5rem;
-      font-size: 0.9rem;
-      font-weight: 500;
-      color: var(--text-muted);
-      text-decoration: none;
-      transition: color 0.15s, background 0.15s;
-      border-left: 3px solid transparent;
-    }
-
-    .sidebar nav a:hover {
-      color: var(--text);
-      background: var(--bg-light);
-    }
-
-    .sidebar nav a.active {
-      color: var(--text);
-      font-weight: 700;
-      border-left: 3px solid var(--brand);
-      background: var(--bg-light);
-    }
-
-    /* Section back-to-top circle button */
-    .section-top-link {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 2.5rem;
-      padding-top: 1rem;
-      border-top: 1px solid var(--border-color);
-    }
-    .section-top-link a {
-      width: 40px;
-      height: 40px;
-      background: var(--bg);
-      color: var(--brand);
-      border: 2px solid var(--brand);
-      border-radius: 50%;
-      font-size: 1.2rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      transition: background 0.2s, color 0.2s;
-      cursor: pointer;
-    }
-    .section-top-link a:hover {
-      background: var(--brand);
-      color: #000;
-    }
-
-    /* ── MAIN CONTENT ── */
-    main {
-      flex: 1;
-      min-width: 0;
-      padding: 2rem 5rem 8rem;
-    }
-
-    /* ── SECTIONS ── */
-    .section {
-      padding-top: 4rem;
-      padding-bottom: 5rem;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .section:first-child {
-      padding-top: 1rem;
-    }
-
-    .section:last-child {
-      border-bottom: none;
-      padding-bottom: 3rem;
-    }
-
-    .section-header {
-      margin-bottom: 2.5rem;
-    }
-
-    .section-header h2 {
-      font-size: 3rem;
-      font-weight: 700;
-      font-family: 'Averia Serif Libre', serif;
-      letter-spacing: -0.02em;
-      line-height: 1.05;
-      margin-bottom: 0.75rem;
-      color: var(--text);
-    }
-
-    .section-header p {
-      color: var(--text-muted);
-      max-width: 640px;
-      font-size: 1rem;
-      line-height: 1.75;
-    }
-
-    /* ── TWO-COL ROW ── */
-    .two-col {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-      margin-top: 2rem;
-      align-items: start;
-    }
-
-    .two-col.wide-right {
-      grid-template-columns: 1fr 1.4fr;
-    }
-
-    /* ── HIGHLIGHT CARD ── */
-    .highlight-card {
-      background: var(--brand);
+    /* ── Play area ── */
+    .stage-outer {
       border-radius: 12px;
-      padding: 2.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 100%;
+      height: 42vw;
       min-height: 200px;
-    }
-
-    .highlight-card span {
-      font-size: 2.8rem;
-      font-weight: 900;
-      color: var(--black);
-      letter-spacing: -0.04em;
-      line-height: 1.1;
-      text-align: center;
-    }
-
-    .outline-card {
-      border: 3px solid var(--brand);
-      border-radius: 12px;
-      padding: 2.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 200px;
-    }
-
-    .outline-card span {
-      font-size: 2rem;
-      font-weight: 700;
-      color: var(--black);
-      letter-spacing: -0.03em;
-    }
-
-    /* ── COLOR SWATCHES ── */
-    .swatches {
-      display: flex;
-      gap: 1.5rem;
-      margin-top: 1.5rem;
-      flex-wrap: wrap;
-    }
-
-    .swatch {
-      flex: 1;
-      min-width: 140px;
-    }
-
-    .swatch-block {
-      height: 100px;
-      border-radius: 8px;
-      margin-bottom: 0.75rem;
-      border: 1px solid var(--border);
-    }
-
-    .swatch-label {
-      font-size: 0.85rem;
-      font-weight: 700;
-      margin-bottom: 0.25rem;
-    }
-
-    .swatch-meta {
-      font-size: 0.78rem;
-      color: #777;
-      line-height: 1.6;
-    }
-
-    /* ── TYPOGRAPHY SHOWCASE ── */
-    .type-showcase {
-      margin-top: 1.5rem;
-      background: var(--bg-light);
-      border-radius: 12px;
-      padding: 2.5rem;
-    }
-
-    .type-row {
-      display: flex;
-      align-items: baseline;
-      gap: 1.5rem;
-      padding: 1rem 0;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .type-row:last-child { border-bottom: none; }
-
-    .type-label {
-      width: 120px;
-      flex-shrink: 0;
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: #888;
-    }
-
-    .type-sample { color: var(--text); }
-    .type-sample.h1 { font-size: 3rem; font-weight: 900; letter-spacing: -0.03em; line-height: 1; }
-    .type-sample.h2 { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; }
-    .type-sample.h3 { font-size: 1.25rem; font-weight: 700; }
-    .type-sample.body { font-size: 1rem; font-weight: 400; }
-    .type-sample.caption { font-size: 0.8rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; }
-
-    /* ── GRAPHIC ELEMENTS ── */
-    .graphic-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-
-    .graphic-item {
-      background: var(--light);
-      border-radius: 10px;
-      padding: 1.5rem 1rem 1rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.75rem;
-      font-size: 0.72rem;
-      color: #666;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      text-align: center;
-    }
-
-    .graphic-preview {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .pattern-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-
-    .pattern-card {
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
-      font-size: 0.72rem;
-      font-weight: 600;
-      color: #666;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-    }
-
-    .pattern-preview {
-      height: 80px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-    }
-
-    /* ── PHOTOS & ILLUSTRATIONS ── */
-    .photo-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-
-    .photo-placeholder, .illus-placeholder {
-      background: var(--light);
-      border: 2px dashed var(--border);
-      border-radius: 10px;
-      aspect-ratio: 4/3;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: #aaa;
-      text-align: center;
-      gap: 0.25rem;
-    }
-
-    .photo-placeholder span, .illus-placeholder span {
-      font-size: 0.7rem;
-      font-weight: 400;
-      font-family: monospace;
-      color: #bbb;
-    }
-
-    .illustration-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-
-    .illus-placeholder {
-      aspect-ratio: 1;
-    }
-
-    /* Photo/illus images when added */
-    /* ── EXAMPLES (kept for reference) ── */
-
-    /* ── LOGO VARIANT ── */
-    /* (logo-display, logo-variant, logo-box defined later in full CSS) */
-
-    /* ── SUBSECTION ── */
-    .subsection {
-      margin-top: 3.5rem;
-    }
-
-    .subsection h3 {
-      font-size: 1.9rem;
-      font-weight: 700;
-      font-family: 'Averia Serif Libre', serif;
-      margin-bottom: 0.6rem;
-      color: var(--text);
-      letter-spacing: -0.01em;
-      line-height: 1.1;
-    }
-
-    .subsection > p {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      margin-bottom: 1.25rem;
-      line-height: 1.6;
-    }
-
-    .generator-block h3 {
-      font-family: 'Averia Serif Libre', serif;
-      font-size: 1.9rem;
-    }
-
-    .pairing-rules-title {
-      font-family: 'Averia Serif Libre', serif;
-      font-size: 1.9rem !important;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 0.25rem;
-    }
-
-    /* ── BUTTON ── */
-    .btn {
-      display: inline-block;
-      margin-top: 1.5rem;
-      padding: 0.9rem 2.25rem;
-      background: var(--black);
-      color: var(--white);
-      font-family: var(--font-sans);
-      font-weight: 700;
-      font-size: 0.82rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      text-decoration: none;
-      border: 2px solid var(--white);
-      cursor: pointer;
-      transition: background 0.2s, color 0.2s, border-color 0.2s;
-      border-radius: 2px;
-    }
-
-    .btn:hover {
-      background: #ffffff;
-      color: #000000;
-      border-color: #ffffff;
-    }
-
-    .btn-row {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      align-items: center;
-      margin-top: 1.5rem;
-    }
-    .btn-row .btn,
-    .btn-row .btn-generator {
-      margin-top: 0;
-    }
-
-    /* ── PHOTOS ── */
-    .photo-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.75rem;
-      margin-top: 1rem;
-    }
-
-    .photo-grid img {
-      width: 100%;
-      aspect-ratio: 4/3;
-      object-fit: cover;
-      border-radius: 8px;
-      display: block;
-    }
-
-    /* ── ELEMENTS GRID ── */
-    .elements-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0.6rem;
-    }
-
-    .element-item {
-      background: #111;
-      border-radius: 8px;
-      overflow: visible;       /* allows dl-btn to not be clipped */
-      aspect-ratio: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-    }
-
-    /* inner clip so the image itself stays rounded but dl-btn isn't cut */
-    .element-item .img-clip {
-      position: absolute;
-      inset: 0;
-      border-radius: 8px;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .element-item img {
-      width: 90%;
-      height: 90%;
-      object-fit: contain;
-      display: block;
-    }
-
-    .element-item--light {
-      background: #ffffff;
-    }
-
-    /* Dark mode inversion for "Different Usage" logo items */
-    body.dark-mode .element-item--light {
-      background: #000000;
-    }
-    body.dark-mode .element-item--light img {
-      filter: invert(1);
-    }
-
-    /* ── LOGO DISPLAY ── */
-    .logo-display {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      background: var(--bg-light);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-top: 1.5rem;
-    }
-
-    .logo-variant {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .logo-box {
-      width: 100%;
-      height: 110px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .logo-box.on-white { background: #ffffff; border: 1px solid var(--border-color); }
-    .logo-box.on-black { background: #000000; }
-    .logo-box.on-transparent {
-      background-color: #ffffff;
-      background-image:
-        linear-gradient(45deg, #cccccc 25%, transparent 25%),
-        linear-gradient(-45deg, #cccccc 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, #cccccc 75%),
-        linear-gradient(-45deg, transparent 75%, #cccccc 75%);
-      background-size: 16px 16px;
-      background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
-    }
-
-    /* White-on-transparent needs dark checkerboard so white logo shows */
-    .logo-box.on-transparent-dark {
-      background-color: #555555;
-      background-image:
-        linear-gradient(45deg, #333333 25%, transparent 25%),
-        linear-gradient(-45deg, #333333 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, #333333 75%),
-        linear-gradient(-45deg, transparent 75%, #333333 75%);
-      background-size: 16px 16px;
-      background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
-    }
-
-    .logo-box img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      padding: 0.75rem;
-    }
-
-    .logo-variant small {
-      font-size: 0.72rem;
-      color: #888;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      text-align: center;
-    }
-
-    /* ── BACK TO TOP — lives inside sticky sidebar ── */
-    #back-to-top-wrap {
-      position: absolute;
-      bottom: 1.5rem;
-      left: 0;
-      right: 0;
-      display: flex;
-      justify-content: center;
-      pointer-events: none;
-    }
-
-    #back-to-top {
-      width: 40px;
-      height: 40px;
-      background: var(--bg);
-      color: var(--brand);
-      border: 2px solid var(--brand);
-      border-radius: 50%;
-      font-size: 1.2rem;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s, background 0.2s, color 0.2s;
-      text-decoration: none;
-    }
-
-    #back-to-top.visible {
-      opacity: 1;
-      pointer-events: all;
-    }
-
-    #back-to-top:hover {
-      background: var(--brand);
-      color: #000;
-    }
-
-    /* ── DOWNLOAD OVERLAY ── */
-    .dl-wrap {
-      position: relative;
-      display: block;
-    }
-
-    .dl-wrap img {
-      display: block;
-      width: 100%;
-    }
-
-    .dl-btn {
-      position: absolute;
-      bottom: 0.35rem;
-      right: 0.35rem;
-      width: 26px;
-      height: 26px;
-      background: rgba(255, 48, 255, 0.85);
-      border: 1.5px solid rgba(255,255,255,0.7);
-      border-radius: 5px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      transition: opacity 0.18s, background 0.18s;
-      text-decoration: none;
-      z-index: 10;
-      cursor: pointer;
-    }
-
-    .dl-btn svg {
-      width: 14px;
-      height: 14px;
-      fill: #ffffff;
-      display: block;
-    }
-
-    .dl-wrap:hover .dl-btn,
-    .element-item:hover .dl-btn,
-    .logo-box:hover .dl-btn,
-    .example-wrap:hover .dl-btn {
-      opacity: 1;
-    }
-
-    .dl-btn:hover {
-      background: #FF30FF;
-    }
-
-    /* photo-grid images need wrapper too */
-    .photo-grid .dl-wrap {
-      border-radius: 8px;
-      overflow: hidden;
-      aspect-ratio: 4/3;
-    }
-    .photo-grid .dl-wrap img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    /* example usage image wrappers */
-    .example-wrap {
-      position: relative;
-      display: block;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .example-wrap img {
-      width: 100%;
-      display: block;
-    }
-    .generator-block {
-      margin-top: 2.5rem;
-      background: var(--dark);
-      border-radius: 12px;
-      padding: 2rem 2.5rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .generator-block h3 {
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: var(--white);
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-
-    .btn-generator {
-      display: inline-block;
-      margin-top: 0.25rem;
-      padding: 0.85rem 2rem;
-      background: var(--black);
-      color: var(--white);
-      font-family: 'Trebuchet MS', sans-serif;
-      font-weight: 700;
-      font-size: 0.85rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      text-decoration: none;
-      border: 2px solid #FF30FF;
-      cursor: pointer;
-      border-radius: 2px;
-      transition: background 0.2s, color 0.2s;
-      align-self: flex-start;
-    }
-
-    .btn-generator:hover {
-      background: #FF30FF;
-      color: var(--black);
-    }
-
-    .btn-generator-blue {
-      display: inline-block;
-      padding: 0.85rem 2rem;
-      background: var(--black);
-      color: var(--white);
-      font-family: 'Trebuchet MS', sans-serif;
-      font-weight: 700;
-      font-size: 0.85rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      text-decoration: none;
-      border: 2px solid #1a8cff;
-      cursor: pointer;
-      border-radius: 2px;
-      transition: background 0.2s, color 0.2s;
-      align-self: flex-start;
-    }
-
-    .btn-generator-blue:hover {
-      background: #1a8cff;
-      color: #fff;
-    }
-
-    .guidelines-note {
-      margin-top: 1rem;
-      padding: 1rem 1.25rem;
-      background: rgba(255,255,255,0.06);
-      border-left: 3px solid var(--brand);
-      border-radius: 0 6px 6px 0;
-    }
-
-    .guidelines-note strong {
-      display: block;
-      font-size: 0.7rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--brand);
-      margin-bottom: 0.4rem;
-    }
-
-    .guidelines-note p {
-      font-size: 0.9rem;
-      color: #ccc;
-      line-height: 1.6;
-      max-width: none;
-    }
-
-    /* ── CATEGORY CARDS ── */
-    .category-cards {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      margin-top: 1.5rem;
-    }
-
-    .category-card {
-      border-radius: 10px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-    }
-
-    .category-card .cat-preview {
-      height: 100px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2rem;
-    }
-
-    .category-card .cat-label {
-      padding: 0.75rem 1rem;
-      font-size: 0.85rem;
-      font-weight: 700;
-      color: var(--black);
-      border-top: 1px solid var(--border);
-    }
-
-    .category-card .cat-desc {
-      padding: 0 1rem 0.75rem;
-      font-size: 0.78rem;
-      color: #777;
-    }
-    /* ── ELEMENTS GRID ── */
-    .elements-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0.75rem;
-    }
-
-    .element-item {
-      background: #111;
-      border-radius: 8px;
-      overflow: hidden;
-      aspect-ratio: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .element-item--light {
-      background: #ffffff;
-    }
-
-    .elements-grid-placeholder {
-      background: var(--light);
-      border: 2px dashed var(--border);
-      border-radius: 10px;
-      padding: 2rem;
-    }
-
-    .element-placeholder {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: #aaa;
-      text-align: center;
-      gap: 0.25rem;
-      min-height: 80px;
-    }
-
-    .element-placeholder span {
-      font-size: 0.7rem;
-      font-weight: 400;
-      font-family: monospace;
-      color: #bbb;
-    }
-
-    @media (max-width: 768px) {
-      .elements-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    /* ── TYPOGRAPHY EXAMPLE CARD ── */
-    .type-example-card {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0;
-      border-radius: 12px;
-      overflow: hidden;
-      margin-top: 1rem;
-      border: 1px solid var(--border);
-    }
-
-    .type-ex-dark {
-      background: var(--black);
-      padding: 2rem;
-    }
-
-    .type-ex-light {
-      background: #ffffff;
-      padding: 2rem;
-      border-left: 1px solid #e0e0e0;
-    }
-
-    .type-ex-heading {
-      font-family: 'Averia Serif Libre', serif;
-      font-size: 2.2rem;
-      font-weight: 700;
-      color: var(--white);
-      line-height: 1;
-      margin-bottom: 0.25rem;
-    }
-
-    .type-ex-sub {
-      font-family: 'Averia Serif Libre', serif;
-      font-size: 1rem;
-      font-weight: 400;
-      color: #FF30FF;
-      margin-bottom: 0.75rem;
-    }
-
-    .type-ex-body {
-      font-family: 'Trebuchet MS', sans-serif;
-      font-size: 0.85rem;
-      color: #aaa;
-      line-height: 1.6;
-      margin-bottom: 1rem;
-    }
-
-    .type-ex-tag {
-      font-family: 'Trebuchet MS', sans-serif;
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: #555;
-    }
-
-    @media (max-width: 768px) {
-      .type-example-card { grid-template-columns: 1fr; }
-    }
-
-    /* ── PAIRING RULES ── */
-    .pairing-rules {
-      margin-top: 3rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .pairing-combo-header {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 1rem 1.5rem;
-      font-weight: 700;
-      font-size: 0.95rem;
-    }
-
-    .pairing-combo-header.allowed { background: #f0fdf4; color: #166534; border-bottom: 1px solid #bbf7d0; }
-    .pairing-combo-header.forbidden { background: #fef2f2; color: #991b1b; border-bottom: 1px solid #fecaca; }
-    .pairing-combo-header.conditional { background: #fffbeb; color: #92400e; border-bottom: 1px solid #fde68a; }
-    .pairing-combo-header .badge { font-size: 1rem; }
-
-    .pairing-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.45rem 1rem;
-      border-radius: 999px;
-      font-size: 0.82rem;
-      font-weight: 700;
-      letter-spacing: 0.03em;
-      white-space: nowrap;
-    }
-
-    .pairing-rules-intro {
-      font-size: 0.95rem;
-      color: var(--text-muted);
+      max-height: 340px;
       margin-bottom: 0.5rem;
-      line-height: 1.6;
+      overflow: hidden; background: #fff;
+      cursor: default; position: relative;
+      transition: background 0.3s ease;
     }
-
-    .pairing-combo {
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid var(--border-color);
+    .stage-outer.inverted { background: #000; }
+    .stage-outer.inverted .word-tag { color: #fff; }
+    .lamp-btn {
+      position: absolute;
+      bottom: 10px; right: 10px;
+      width: 28px; height: 28px;
+      background: none;
+      border: 1px solid rgba(0,0,0,0.15);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 20;
+      transition: border-color 0.2s, opacity 0.2s;
+      opacity: 0.35;
+      padding: 0;
     }
+    .lamp-btn:hover { opacity: 0.7; border-color: rgba(0,0,0,0.4); }
+    .lamp-btn svg { display: block; }
+    .stage-outer.inverted .lamp-btn { border-color: rgba(255,255,255,0.2); }
+    .stage-outer.inverted .lamp-btn:hover { border-color: rgba(255,255,255,0.6); }
+    .stage-outer.inverted .lamp-btn svg path { stroke: #fff; }
+    .stage { position: relative; width: 580px; height: 220px; pointer-events: none; }
+    .letter { position: absolute; font-weight: 900; line-height: 1; user-select: none; cursor: grab; touch-action: none; font-family: "Trebuchet MS", sans-serif; pointer-events: all; }
+    .letter:active { cursor: grabbing; }
+    .stage-outer.panning { cursor: grabbing; }
+    .word-tag { position: absolute; font-family: "Trebuchet MS", sans-serif; font-size: 12px; font-weight: 700; color: #000; letter-spacing: 0.08em; pointer-events: all; cursor: grab; transition: opacity 0.45s ease; z-index: 10; white-space: nowrap; }
+    .word-tag:active { cursor: grabbing; }
+    .word-tag.fade { opacity: 0; }
+    .hint { font-size: 13px; color: #aaa; margin-bottom: 2rem; text-align: center; }
 
-    .pairing-combo-body {
-      padding: 1.25rem 1.5rem;
-      display: flex;
-      align-items: center;
-      gap: 1.25rem;
-      flex-wrap: wrap;
-      background: var(--bg);
-    }
+    /* ── Sections ── */
+    .section { margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #252525; }
+    .section:last-child { border-bottom: none; padding-bottom: 0; }
+    .section-title { font-size: 11px; font-weight: 700; color: #aaa; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 0.85rem; }
+    /* ── Two-col row for Motion + Title ── */
+    .section-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2.5rem; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #252525; }
+    .section-row .section { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
 
-    .pairing-tag.pink  { background: #FF30FF; color: #000; }
-    .pairing-tag.dark  { background: #111; color: #fff; }
-    .pairing-tag.grey  { background: var(--bg-light); color: var(--text); border: 1px solid var(--border-color); }
-    .pairing-tag.blue  { background: #1a8cff; color: #fff; }
-    .pairing-tag.green { background: #2ec27e; color: #000; }
-    .pairing-tag.skin  { background: #c97a4a; color: #fff; }
-    .pairing-tag.teal  { background: #7ecac9; color: #000; }
+    /* ── Controls grid ── */
+    .ctrl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.5rem; }
+    .ctrl-group { display: flex; flex-direction: column; gap: 5px; }
+    .ctrl-group.full { grid-column: 1 / -1; }
+    label { font-size: 13px; color: #bbb; }
+    input[type=range] { width: 100%; accent-color: #fff; margin-top: 2px; }
 
-    .pairing-arrow {
-      font-size: 1.1rem;
-      color: var(--text-subtle);
-      font-weight: 700;
-    }
+    /* ── Button rows ── */
+    .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn { font-size: 13px; font-weight: 500; padding: 8px 18px; background: #1e1e1e; color: #bbb; border: 1px solid #3a3a3a; border-radius: 8px; cursor: pointer; font-family: sans-serif; transition: all 0.15s; }
+    .btn:hover { border-color: #777; color: #eee; }
+    .btn.active { background: #fff; color: #111; border-color: #fff; }
 
-    .pairing-note {
-      padding: 0.85rem 1.5rem;
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      background: var(--bg-light);
-      border-top: 1px solid var(--border-color);
-      font-style: italic;
-    }
+    .gen-btn { font-size: 12px; font-weight: 600; padding: 7px 16px; background: #fff; color: #111; border: none; border-radius: 20px; cursor: pointer; white-space: nowrap; }
+    .gen-btn:hover { background: #e8e8e8; }
+    .hint-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; }
 
-    /* ── SCROLLSPY ── */
-    @media (max-width: 900px) {
-      .sidebar { display: none; }
-      main { padding: 2.5rem 1.5rem 5rem; }
-      .logo-display { grid-template-columns: repeat(2, 1fr) !important; }
-      .elements-grid { grid-template-columns: repeat(3, 1fr); }
-      .photo-grid { grid-template-columns: 1fr 1fr; }
+    /* ── Export ── */
+    .export-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .exp-btn { font-size: 13px; font-weight: 500; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-family: sans-serif; border: 1px solid #444; text-align: left; line-height: 1.4; }
+    .exp-btn:hover { opacity: 0.85; }
+    .exp-btn .exp-title { font-size: 13px; font-weight: 600; display: block; }
+    .exp-btn .exp-sub { font-size: 12px; opacity: 0.75; display: block; margin-top: 2px; }
+    .exp-black-white { background: #fff; color: #111; border-color: #ddd; }
+    .exp-white-black { background: #000; color: #fff; border-color: #444; }
+    .exp-black-trans { background: repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 0 0/16px 16px; color: #111; border-color: #999; }
+    .exp-white-trans { background: repeating-conic-gradient(#555 0% 25%, #333 0% 50%) 0 0/16px 16px; color: #fff; border-color: #555; }
+    .exp-pink-white  { background: #fff; color: #ff30ff; border-color: #ffaaff; }
+    .exp-pink-black  { background: #000; color: #ff30ff; border-color: #aa00aa; }
+    .exp-pink-trans  { background: repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 0 0/16px 16px; color: #ff30ff; border-color: #ffaaff; }
+
+    @media (max-width: 640px) {
+      body { padding: 0.75rem; padding-bottom: 3rem; }
+      .stage-outer { height: 55vw; max-height: 280px; }
+      .ctrl-grid { grid-template-columns: 1fr; }
+      .ctrl-group.full { grid-column: 1; }
+      .section-row { grid-template-columns: 1fr; }
+      .hint-row { flex-direction: column; gap: 8px; align-items: flex-start; }
+      .export-grid { grid-template-columns: 1fr; }
     }
   </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+<script src="https://unpkg.com/pako@2.1.0/dist/pako.min.js"></script>
 </head>
 <body>
-  <script>
-    // Force scroll to top on every load (fixes iframe mid-scroll issue)
-    try { window.scrollTo(0, 0); } catch(e) {}
-    try { document.documentElement.scrollTop = 0; } catch(e) {}
-    try { document.body.scrollTop = 0; } catch(e) {}
-  </script>
 
-  <!-- CONTROL BAR -->
-  <div class="control-bar">
-    <button class="ctrl-btn active" id="btn-pt" onclick="setLang('pt')">PT</button>
-    <button class="ctrl-btn" id="btn-en" onclick="setLang('en')">EN</button>
-    <button class="ctrl-btn" id="btn-dark" onclick="toggleDark()">◑ Light</button>
+<svg id="svgfilters" width="0" height="0" style="position:absolute">
+  <defs>
+    <filter id="blobonly" color-interpolation-filters="sRGB" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+      <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9" result="sharp"/>
+      <feComposite in="SourceGraphic" in2="sharp" operator="atop"/>
+    </filter>
+    <filter id="blobdefocus" color-interpolation-filters="sRGB" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blob"/>
+      <feColorMatrix in="blob" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9" result="sharp"/>
+      <feComposite in="SourceGraphic" in2="sharp" operator="atop" result="crispshape"/>
+      <feGaussianBlur in="crispshape" stdDeviation="0" result="defocused"/>
+    </filter>
+  </defs>
+</svg>
+
+<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v10.2</div>
+<canvas id="measure" style="display:none"></canvas>
+
+<div class="stage-outer" id="stageOuter">
+  <div id="zoomWrap" style="position:absolute; top:50%; left:50%; transform-origin: center center; transform: translate(-50%,-50%);">
+    <div class="stage" id="stage"></div>
+    <svg id="aHoleSvg" xmlns="http://www.w3.org/2000/svg"
+      style="position:absolute;top:0;left:0;width:580px;height:220px;pointer-events:none;overflow:visible;display:none;">
+      <path id="aHolePath" fill="white" filter="url(#blobonly)" style="cursor:grab;"
+        d="M 0 0" pointer-events="all"/>
+    </svg>
   </div>
+  <button class="lamp-btn" id="lampBtn" onclick="toggleInvert()" title="Invert colours">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M7 1.5a4 4 0 0 1 2.2 7.3c-.4.3-.7.8-.7 1.2v.5H5.5V10c0-.4-.3-.9-.7-1.2A4 4 0 0 1 7 1.5Z" stroke="#000" stroke-width="1.1" stroke-linejoin="round"/>
+      <path d="M5.5 11.5h3M6 13h2" stroke="#000" stroke-width="1.1" stroke-linecap="round"/>
+    </svg>
+  </button>
+  <button id="pinkBtn" onclick="togglePink()" title="Pink mode" style="position:absolute;bottom:10px;right:46px;width:28px;height:28px;background:none;border:1px solid rgba(0,0,0,0.15);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:20;opacity:0.4;transition:opacity 0.2s,border-color 0.2s;padding:0;">
+    <div style="width:14px;height:14px;border-radius:50%;background:#ff30ff;"></div>
+  </button>
+</div>
+<div class="hint-row">
+  <p class="hint" style="margin-bottom:0;">Click to drag letters · Click empty space to pan · Scroll to zoom</p>
+  <button class="gen-btn" onclick="randomize()">&#8635; New variation</button>
+</div>
 
-  <div class="layout">
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-      <div class="sidebar-title">Brand Guidelines</div>
-      <nav>
-        <a href="#brand-guidelines" data-i18n="nav-overview">Overview</a>
-        <a href="#logo" data-i18n="nav-logo">Logo</a>
-        <a href="#color" data-i18n="nav-color">Color</a>
-        <a href="#typography" data-i18n="nav-typography">Typography</a>
-        <a href="#graphic-elements" data-i18n="nav-graphic">Graphic Elements</a>
-        <a href="#photos-images" data-i18n="nav-photos">Photos &amp; Images</a>
-        <a href="#examples-of-usage" data-i18n="nav-examples">Examples of Usage</a>
-        <a href="#generative-examples" data-i18n="nav-gen-examples">Exemplos Generativos</a>
-        <a href="#closing" data-i18n="nav-closing">↓ Keep it fluid</a>
-      </nav>
-      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v3.6</div>
-
-      <!-- BACK TO TOP — inside sticky sidebar so it's always in viewport -->
-      <div id="back-to-top-wrap">
-        <a id="back-to-top" title="Back to top">↑</a>
+<!-- Logo section -->
+<div class="section">
+  <p class="section-title">Logo</p>
+  <div class="ctrl-grid">
+    <div class="ctrl-group">
+      <label>Letter size: <span id="szOut">96</span>px</label>
+      <input type="range" id="sz" min="50" max="140" value="96" step="2" oninput="document.getElementById('szOut').textContent=this.value; draw()">
+    </div>
+    <div class="ctrl-group">
+      <label>Merge softness: <span id="blurOut">7</span></label>
+      <input type="range" id="blurR" min="4" max="24" value="7" step="1" oninput="document.getElementById('blurOut').textContent=this.value; updateFilters()">
+    </div>
+    <div class="ctrl-group">
+      <label>Vertical spread: <span id="vspreadOut">40</span>%</label>
+      <input type="range" id="vspread" min="0" max="100" value="40" step="5" oninput="document.getElementById('vspreadOut').textContent=this.value; draw()">
+    </div>
+    <div class="ctrl-group">
+      <label>Horizontal spread: <span id="hspreadOut">-10</span>%</label>
+      <input type="range" id="hspread" min="-50" max="50" value="-10" step="5" oninput="document.getElementById('hspreadOut').textContent=this.value; draw()">
+    </div>
+    <div class="ctrl-group">
+      <label>Stroke weight: <span id="strokeOut">0</span>px</label>
+      <input type="range" id="strokeW" min="0" max="20" value="0" step="1" oninput="document.getElementById('strokeOut').textContent=this.value; updateLetterStyle()">
+    </div>
+    <div class="ctrl-group">
+      <label>Fill opacity: <span id="fillOut">100</span>%</label>
+      <input type="range" id="fillOp" min="0" max="100" value="100" step="5" oninput="document.getElementById('fillOut').textContent=this.value; updateLetterStyle()">
+    </div>
+    <div class="ctrl-group">
+      <label>Edge defocus: <span id="defocusOut">0.0</span></label>
+      <input type="range" id="defocus" min="0" max="12" value="0" step="0.5" oninput="document.getElementById('defocusOut').textContent=parseFloat(this.value).toFixed(1); updateFilters()">
+    </div>
+    <div class="ctrl-group">
+      <label>A hole</label>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
+        <button class="btn" id="aHoleToggle" onclick="toggleAHole()" style="padding:6px 14px;font-size:12px;">Show</button>
+        <input type="range" id="aHoleSize" min="10" max="80" value="20" step="1" style="flex:1;accent-color:#fff;" oninput="resizeAHole()">
       </div>
-    </aside>
+    </div>
+    </div>
+</div>
 
-    <!-- MAIN -->
-    <main>
+<!-- Motion + Title side by side -->
+<div class="section-row">
 
-      <!-- BRAND GUIDELINES -->
-      <section class="section" id="brand-guidelines" style="padding-bottom: 2rem;">
-        <div class="section-header" style="margin-bottom:0;">
-          <h2 data-i18n="overview-h2">FOAMS Brand Guidelines</h2>
-          <p data-i18n="overview-p">We've created a set of guidelines to help you bring our brand to life consistently across every touchpoint. On this page you'll find our high-level guidelines and the assets you'll need.</p>
-        </div>
-      </section>
-
-      <!-- LOGO -->
-      <section class="section" id="logo">
-        <div class="section-header">
-          <h2 data-i18n="logo-h2">Logo</h2>
-          <p data-i18n="logo-p" data-html="1">Our logo is the cornerstone of our identity. Use it consistently and give it room to breathe. Ideally you should use the <strong>FOAMS LOGO GENERATOR</strong> tool every time you need a logo, to make it fluid. Our logo is always changing.</p>
-        </div>
-
-        <div class="btn-row">
-          <a href="foams-logo-options.zip" download class="btn" data-i18n="logo-dl">Download Base Logo</a>
-          <a href="http://casafoams.com/foams-logo" target="_blank" class="btn-generator" data-i18n="generator-btn">Open Logo Generator</a>
-          <a href="https://www.casafoams.com/brand-image" target="_blank" class="btn-generator-blue" data-i18n="brand-image-btn">Brand Image Generator</a>
-        </div>
-
-        <!-- Primary Logo -->
-        <div class="subsection">
-          <h3 data-i18n="logo-primary">Primary Logo</h3>
-          <div class="logo-display" style="grid-template-columns: repeat(4, 1fr);">
-            <div class="logo-variant">
-              <div class="logo-box on-white">
-                <img src="foams-black-on-transparent.png" alt="FOAMS black on white">
-              </div>
-              <small>On White</small>
-            </div>
-            <div class="logo-variant">
-              <div class="logo-box on-black">
-                <img src="foams-white-on-transparent.png" alt="FOAMS white on black">
-              </div>
-              <small>On Black</small>
-            </div>
-            <div class="logo-variant">
-              <div class="logo-box on-transparent">
-                <img src="foams-black-on-transparent.png" alt="FOAMS black on transparent">
-              </div>
-              <small>Black on Transparent</small>
-            </div>
-            <div class="logo-variant">
-              <div class="logo-box on-transparent-dark">
-                <img src="foams-white-on-transparent.png" alt="FOAMS white on transparent">
-              </div>
-              <small>White on Transparent</small>
-            </div>
-          </div>
-        </div>
-
-        <!-- Secondary Logo -->
-        <div class="subsection">
-          <h3><span data-i18n="logo-secondary">Secondary Logo</span> <span style="font-size:0.75rem; font-weight:400; font-family:'Trebuchet MS',sans-serif; color:#888; text-transform:none; letter-spacing:0;" data-i18n="logo-secondary-sub">— with brand color</span></h3>
-          <div class="logo-display" style="grid-template-columns: repeat(3, 1fr);">
-            <div class="logo-variant">
-              <div class="logo-box on-white">
-                <img src="foams-pink-on-transparent.png" alt="FOAMS pink on white">
-              </div>
-              <small>Pink on White</small>
-            </div>
-            <div class="logo-variant">
-              <div class="logo-box on-black">
-                <img src="foams-pink-on-transparent.png" alt="FOAMS pink on black">
-              </div>
-              <small>Pink on Black</small>
-            </div>
-            <div class="logo-variant">
-              <div class="logo-box on-transparent">
-                <img src="foams-pink-on-transparent.png" alt="FOAMS pink on transparent">
-              </div>
-              <small>Pink on Transparent</small>
-            </div>
-          </div>
-        </div>
-
-        <!-- Logo with Title -->
-        <div class="subsection">
-          <h3 data-i18n="logo-withtitle">Logo with Title</h3>
-          <p style="color:#666; font-size:0.9rem; max-width:520px; margin-bottom:1rem;" data-i18n="logo-withtitle-p">A title text can also be added. In case of Portuguese it should be located on the top left corner. In case of English it should be located on the bottom right corner.</p>
-
-          <div class="guidelines-note" style="margin-bottom:1.5rem;" data-i18n="logo-withtitle-note-wrap">
-            <strong data-i18n="logo-withtitle-note-title">Diretrizes</strong>
-            <p data-i18n="logo-withtitle-note-p">FOAMS não possui um único título, sinta-se livre para usar diferentes títulos em diferentes contextos, como Casa, Espaço, Coletivo, Base, Estúdios, etc.. — no gerador de logo é possível escolher diferentes títulos.</p>
-          </div>
-
-          <p style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#888; margin-bottom:0.75rem;" data-i18n="logo-pt-label">Portuguese — top left</p>
-          <div class="logo-display" style="grid-template-columns: repeat(3, 1fr);">
-            <div class="logo-variant">
-              <div class="logo-box on-white" style="height:120px;">
-                <img src="with-title-01.png" alt="Casa FOAMS">
-              </div>
-              <small>Casa</small>
-            </div>
-            <div class="logo-variant">
-              <div class="logo-box on-black" style="height:120px;">
-                <img src="with-title-02.png" alt="Espaço FOAMS">
-              </div>
-              <small>Espaço</small>
-            </div>
-            <div class="logo-variant">
-              <div class="logo-box on-black" style="height:120px;">
-                <img src="with-title-03.png" alt="Coletivo FOAMS">
-              </div>
-              <small>Coletivo</small>
-            </div>
-          </div>
-
-          <p style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#888; margin-top:1.5rem; margin-bottom:0.75rem;" data-i18n="logo-en-label">English — bottom right</p>
-          <div class="logo-display" style="grid-template-columns: repeat(3, 1fr);">
-            <div class="logo-variant">
-              <div class="logo-box on-white" style="height:120px;">
-                <img src="with-title-english-01.png" alt="FOAMS House">
-              </div>
-              <small>House</small>
-            </div>
-            <div class="logo-variant">
-              <div class="logo-box on-black" style="height:120px;">
-                <img src="with-title-english-02.png" alt="FOAMS Space">
-              </div>
-              <small>Space</small>
-            </div>
-            <div class="logo-variant">
-              <div class="logo-box on-black" style="height:120px;">
-                <img src="with-title-english-03.png" alt="FOAMS Collective">
-              </div>
-              <small>Collective</small>
-            </div>
-          </div>
-        </div>
-
-        <!-- GENERATOR -->
-        <div class="generator-block">
-          <h3 data-i18n="generator-h3">FOAMS Logo Generator</h3>
-          <a href="http://casafoams.com/foams-logo" target="_blank" class="btn-generator" data-i18n="generator-btn">Open Logo Generator</a>
-          <div class="guidelines-note">
-            <strong data-i18n="gen-guideline-title">Guidelines</strong>
-            <p data-i18n="gen-guideline-p">Preferably always make a logo in which the letters are closely connected and look very watery — fluid. But feel free to also explore different ways of using the logo generator tool.</p>
-          </div>
-          <div class="guidelines-note" style="margin-top:0.75rem;">
-            <strong data-i18n="gen-titletext-title">Title Text</strong>
-            <p data-i18n="gen-titletext-p">You can also add a title text in the generator by clicking the Title buttons, in case it's needed.</p>
-          </div>
-        </div>
-
-        <!-- DIFFERENT USAGE OF LOGO -->
-        <div class="subsection">
-          <h3 data-i18n="diff-usage-h3">Different Usage of Logo</h3>
-          <p style="color:#666; font-size:0.9rem; margin-bottom:1.25rem;" data-i18n="diff-usage-p">Feel free to go crazy with the logo!</p>
-          <div class="elements-grid" style="grid-template-columns: repeat(3, 1fr);">
-            <div class="element-item element-item--light"><img src="o1.png" alt="Logo usage example"></div>
-            <div class="element-item element-item--light"><img src="o2.png" alt="Logo usage example"></div>
-            <div class="element-item element-item--light"><img src="o3.png" alt="Logo usage example"></div>
-            <div class="element-item element-item--light"><img src="o4.png" alt="Logo usage example"></div>
-            <div class="element-item element-item--light"><img src="o5.png" alt="Logo usage example"></div>
-            <div class="element-item element-item--light"><img src="o6.png" alt="Logo usage example"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- COLOR -->
-      <section class="section" id="color">
-        <div class="section-header">
-          <h2 data-i18n="color-h2">Color</h2>
-          <p data-i18n="color-p">Our palette is bold and minimal. Pink is our signature — electric and unmistakable. The dark tones ground it with depth.</p>
-        </div>
-
-        <div class="swatches">
-          <div class="swatch">
-            <div class="swatch-block" style="background: #111111;"></div>
-            <div class="swatch-label">Black</div>
-            <div class="swatch-meta">HEX: #111111</div>
-          </div>
-          <div class="swatch">
-            <div class="swatch-block" style="background: #FF30FF;"></div>
-            <div class="swatch-label">Pink</div>
-            <div class="swatch-meta">HEX: #FF30FF</div>
-          </div>
-          <div class="swatch">
-            <div class="swatch-block" style="background: #171717;"></div>
-            <div class="swatch-label">Dark</div>
-            <div class="swatch-meta">HEX: #171717</div>
-          </div>
-          <div class="swatch">
-            <div class="swatch-block" style="background: #F5F5F5; border: 1px solid #e0e0e0;"></div>
-            <div class="swatch-label">Light</div>
-            <div class="swatch-meta">HEX: #F5F5F5</div>
-          </div>
-          <div class="swatch">
-            <div class="swatch-block" style="background: #FFFFFF; border: 1px solid #e0e0e0;"></div>
-            <div class="swatch-label">White</div>
-            <div class="swatch-meta">HEX: #FFFFFF</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- TYPOGRAPHY -->
-      <section class="section" id="typography">
-        <div class="section-header">
-          <h2 data-i18n="typo-h2">Typography</h2>
-          <p data-i18n="typo-p">Two typefaces, each with a clear role. Averia Serif Libre leads all titles and headings. Trebuchet MS handles body text.</p>
-        </div>
-
-        <div class="type-showcase">
-          <div class="type-row" style="align-items:center;">
-            <span class="type-label">Typeface</span>
-            <span style="font-family:'Averia Serif Libre', serif; font-size:1.1rem; font-weight:700; color:var(--text);">Averia Serif Libre</span>
-            <span style="margin-left:auto; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#FF30FF;">Headings &amp; Titles</span>
-          </div>
-          <div class="type-row">
-            <span class="type-label">H1</span>
-            <span class="type-sample h1" style="font-family:'Averia Serif Libre', serif;">FOAMS</span>
-          </div>
-          <div class="type-row">
-            <span class="type-label">H2</span>
-            <span class="type-sample h2" style="font-family:'Averia Serif Libre', serif;">Brand Guidelines</span>
-          </div>
-          <div class="type-row">
-            <span class="type-label">H3</span>
-            <span class="type-sample h3" style="font-family:'Averia Serif Libre', serif;">Section Title</span>
-          </div>
-        </div>
-
-        <div class="type-showcase" style="margin-top:1.5rem;">
-          <div class="type-row" style="align-items:center;">
-            <span class="type-label">Typeface</span>
-            <span style="font-family:'Trebuchet MS', sans-serif; font-size:1.1rem; font-weight:700; color:var(--text);">Trebuchet MS</span>
-            <span style="margin-left:auto; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#888;">Body Text Only</span>
-          </div>
-          <div class="type-row">
-            <span class="type-label">Body</span>
-            <span class="type-sample body" style="font-family:'Trebuchet MS', sans-serif;">Clear, energetic, and always on brand. This is how we write body copy — readable and direct.</span>
-          </div>
-          <div class="type-row">
-            <span class="type-label">Small</span>
-            <span class="type-sample caption" style="font-family:'Trebuchet MS', sans-serif;">Labels, captions, and UI text</span>
-          </div>
-        </div>
-
-        <!-- Live example -->
-        <div class="subsection">
-          <h3 data-i18n="typo-inuse">In Use</h3>
-          <div class="type-example-card">
-            <div class="type-ex-dark">
-              <div class="type-ex-heading">FOAMS</div>
-              <div class="type-ex-sub">Brand Guidelines</div>
-              <div class="type-ex-body">Averia Serif Libre for all headings and titles. Clean, expressive, and unmistakably ours.</div>
-              <div class="type-ex-tag">Trebuchet MS — body</div>
-            </div>
-            <div class="type-ex-light">
-              <div class="type-ex-heading" style="color:var(--black);">FOAMS</div>
-              <div class="type-ex-sub" style="color:#333;">Brand Guidelines</div>
-              <div class="type-ex-body" style="color:#555;">Averia Serif Libre for all headings and titles. Clean, expressive, and unmistakably ours.</div>
-              <div class="type-ex-tag" style="color:#999;">Trebuchet MS — body</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- GRAPHIC ELEMENTS -->
-      <section class="section" id="graphic-elements">
-        <div class="section-header">
-          <h2 data-i18n="graphic-h2">Graphic Elements</h2>
-          <p data-i18n="graphic-p">Our graphic language is built around two distinct visual styles. Each brings a different energy — use them individually or in combination.</p>
-        </div>
-
-        <!-- Pink Vectors -->
-        <div class="subsection" style="margin-top:0;">
-          <h3 data-i18n="pv-h3">Pink Vectors</h3>
-          <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;" data-i18n="pv-p">Bold magenta lines, curves, and geometric forms. Use on dark backgrounds for maximum impact.</p>
-          <p style="margin-bottom:1.25rem;"><span class="pairing-tag pink" style="font-size:0.72rem;" data-i18n="pv-tag">✅ Pair with: Water images only</span></p>
-          <div class="elements-grid">
-            <div class="element-item"><img src="Foams-Brand-Graphic-PinkVectors-01.png" alt="Pink vector element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-PinkVectors-02.png" alt="Pink vector element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-PinkVectors-03.png" alt="Pink vector element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-PinkVectors-04.png" alt="Pink vector element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-PinkVectors-05.png" alt="Pink vector element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-PinkVectors-06.png" alt="Pink vector element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-PinkVectors-07.png" alt="Pink vector element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-PinkVectors-08.png" alt="Pink vector element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-PinkVectors-09.png" alt="Pink vector element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-PinkVectors-10.png" alt="Pink vector element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-PinkVectors-11.png" alt="Pink vector element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-PinkVectors-12.png" alt="Pink vector element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-PinkVectors-13.png" alt="Pink vector element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-PinkVectors-14.png" alt="Pink vector element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-PinkVectors-15.png" alt="Pink vector element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-PinkVectors-16.png" alt="Pink vector element"></div>
-          </div>
-        </div>
-
-        <!-- Luz Desfocada -->
-        <div class="subsection">
-          <h3 data-i18n="fl-h3">Focus Light</h3>
-          <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;" data-i18n="fl-p">Concentrated light effects, glows, and radial highlights creating depth and drama.</p>
-          <p style="margin-bottom:1.25rem;"><span class="pairing-tag teal" style="font-size:0.72rem;" data-i18n="fl-tag">✅ Pair with: Tropical images only</span></p>
-          <div class="elements-grid">
-            <div class="element-item"><img src="Foams-Brand-Graphic-DefocusLight-01.png" alt="Defocus light element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-DefocusLight-02.png" alt="Defocus light element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-DefocusLight-03.png" alt="Defocus light element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-DefocusLight-04.png" alt="Defocus light element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-DefocusLight-05.png" alt="Defocus light element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-DefocusLight-06.png" alt="Defocus light element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-DefocusLight-07.png" alt="Defocus light element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-DefocusLight-08.png" alt="Defocus light element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-DefocusLight-09.png" alt="Defocus light element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-DefocusLight-10.png" alt="Defocus light element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-DefocusLight-11.png" alt="Defocus light element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-DefocusLight-12.png" alt="Defocus light element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-DefocusLight-13.png" alt="Defocus light element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-DefocusLight-14.png" alt="Defocus light element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-DefocusLight-15.png" alt="Defocus light element"></div>
-            <div class="element-item"><img src="Foams-Brand-Graphic-DefocusLight-16.png" alt="Defocus light element"></div>
-          </div>
-        </div>
-
-        <!-- PAIRING RULES -->
-        <div class="pairing-rules">
-          <h3 class="pairing-rules-title" data-i18n="pairing-title">How to Combine Elements + Images</h3>
-          <p class="pairing-rules-intro" data-i18n="pairing-intro">Each graphic element style is designed to pair with a specific image category. Follow these rules for a consistent and intentional visual result.</p>
-
-          <div class="pairing-combo">
-            <div class="pairing-combo-header allowed" data-i18n="rule1-header"><span class="badge">✅</span> Pink Vectors pair exclusively with Water images</div>
-            <div class="pairing-combo-body">
-              <span class="pairing-tag pink" data-i18n="pv-h3">Pink Vectors</span>
-              <span class="pairing-arrow">→</span>
-              <span class="pairing-tag blue" data-i18n="water-h3">Water</span>
-            </div>
-            <div class="pairing-note" data-i18n="rule1-note">The electric energy of Pink Vectors matches the raw movement of water. Never use Pink Vectors with Tropical or Body images.</div>
-          </div>
-
-          <div class="pairing-combo">
-            <div class="pairing-combo-header allowed" data-i18n="rule2-header"><span class="badge">✅</span> Focus Light pairs exclusively with Tropical images</div>
-            <div class="pairing-combo-body">
-              <span class="pairing-tag teal" data-i18n="fl-h3">Focus Light</span>
-              <span class="pairing-arrow">→</span>
-              <span class="pairing-tag green" data-i18n="tropical-h3">Tropical</span>
-            </div>
-            <div class="pairing-note" data-i18n="rule2-note">The soft glows of Focus Light complement the organic textures of tropical nature. Never use Focus Light with Water or Body images.</div>
-          </div>
-
-          <div class="pairing-combo">
-            <div class="pairing-combo-header conditional" data-i18n="rule3-header"><span class="badge">⚠️</span> Both can be used with Body images — but never at the same time</div>
-            <div class="pairing-combo-body">
-              <span class="pairing-tag pink" data-i18n="pv-h3">Pink Vectors</span>
-              <span style="font-size:0.8rem; color:#aaa; font-weight:700;" data-i18n-or="or">or</span>
-              <span class="pairing-tag teal" data-i18n="fl-h3">Focus Light</span>
-              <span class="pairing-arrow">→</span>
-              <span class="pairing-tag skin" data-i18n="body-h3">Body</span>
-            </div>
-            <div class="pairing-note" data-i18n="rule3-note">Choose one or the other — never mix Pink Vectors and Focus Light in the same composition.</div>
-          </div>
-
-          <div class="pairing-combo">
-            <div class="pairing-combo-header conditional" data-i18n="rule4-header"><span class="badge">💡</span> Recommended: use only ONE graphic element per image</div>
-            <div class="pairing-combo-body" style="font-size:0.9rem; color:#555; padding-top:1rem; padding-bottom:1rem;" data-i18n="rule4-body">More than one element is possible, but use it sparingly and with intention. Too many elements in one composition quickly becomes overwhelming.</div>
-          </div>
-
-          <div class="pairing-combo">
-            <div class="pairing-combo-header conditional" data-i18n="rule5-header"><span class="badge">🎨</span> Blending Modes are welcome — use with discretion</div>
-            <div class="pairing-combo-body" style="font-size:0.9rem; padding-top:1rem; padding-bottom:1rem;" data-i18n="rule5-body">Feel free to use blending modes like Multiply, Overlay, Screen, etc. when it works well with the composition. However, use it with discretion — don't make it too strong or it will overpower the image.</div>
-          </div>
-        </div>
-
-      </section>
-
-      <!-- PHOTOS & IMAGES -->
-      <section class="section" id="photos-images">
-        <div class="section-header">
-          <h2 data-i18n="photos-h2">Photos &amp; Images</h2>
-          <p data-i18n="photos-p">Our imagery is organized into three visual territories, each capturing a different dimension of the FOAMS world.</p>
-        </div>
-
-        <div class="subsection">
-          <h3 data-i18n="tropical-h3">Tropical</h3>
-          <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;" data-i18n="tropical-p">Images of plants, forest, lush natural environments.</p>
-          <p style="margin-bottom:1rem;"><span class="pairing-tag green" style="font-size:0.72rem;" data-i18n="tropical-tag">✅ Use with: Focus Light only</span></p>
-          <p style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#888; margin-bottom:0.5rem;" data-i18n="landscape-label">Landscape</p>
-          <div class="photo-grid" style="grid-template-columns: repeat(5,1fr);">
-            <img src="Foams-Brand-Images-Tropical-Landscape-01.png" alt="Tropical landscape">
-            <img src="Foams-Brand-Images-Tropical-Landscape-02.png" alt="Tropical landscape">
-            <img src="Foams-Brand-Images-Tropical-Landscape-03.png" alt="Tropical landscape">
-            <img src="Foams-Brand-Images-Tropical-Landscape-04.png" alt="Tropical landscape">
-            <img src="Foams-Brand-Images-Tropical-Landscape-05.png" alt="Tropical landscape">
-          </div>
-          <p style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#888; margin-top:1rem; margin-bottom:0.5rem;" data-i18n="portrait-label">Portrait</p>
-          <div class="photo-grid" style="grid-template-columns: repeat(5,1fr);">
-            <img src="Foams-Brand-Images-Tropical-Portrait-01.jpg" alt="Tropical portrait">
-            <img src="Foams-Brand-Images-Tropical-Portrait-02.jpg" alt="Tropical portrait">
-            <img src="Foams-Brand-Images-Tropical-Portrait-03.jpg" alt="Tropical portrait">
-            <img src="Foams-Brand-Images-Tropical-Portrait-04.jpg" alt="Tropical portrait">
-            <img src="Foams-Brand-Images-Tropical-Portrait-05.jpg" alt="Tropical portrait">
-          </div>
-        </div>
-
-        <div class="subsection">
-          <h3 data-i18n="water-h3">Water</h3>
-          <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;" data-i18n="water-p">Foaming waves, water in motion, aquatic textures.</p>
-          <p style="margin-bottom:1rem;"><span class="pairing-tag blue" style="font-size:0.72rem;" data-i18n="water-tag">✅ Use with: Pink Vectors only</span></p>
-          <p style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#888; margin-bottom:0.5rem;" data-i18n="landscape-label">Landscape</p>
-          <div class="photo-grid" style="grid-template-columns: repeat(5,1fr);">
-            <img src="Foams-Brand-Images-Water-Landscape-01.jpg" alt="Water landscape">
-            <img src="Foams-Brand-Images-Water-Landscape-02.jpg" alt="Water landscape">
-            <img src="Foams-Brand-Images-Water-Landscape-03.jpg" alt="Water landscape">
-            <img src="Foams-Brand-Images-Water-Landscape-04.jpg" alt="Water landscape">
-            <img src="Foams-Brand-Images-Water-Landscape-05.jpg" alt="Water landscape">
-          </div>
-          <p style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#888; margin-top:1rem; margin-bottom:0.5rem;" data-i18n="portrait-label">Portrait</p>
-          <div class="photo-grid" style="grid-template-columns: repeat(5,1fr);">
-            <img src="Foams-Brand-Images-Water-Portrait-01.jpg" alt="Water portrait">
-            <img src="Foams-Brand-Images-Water-Portrait-02.jpg" alt="Water portrait">
-            <img src="Foams-Brand-Images-Water-Portrait-03.jpg" alt="Water portrait">
-            <img src="Foams-Brand-Images-Water-Portrait-04.jpg" alt="Water portrait">
-            <img src="Foams-Brand-Images-Water-Portrait-05.jpg" alt="Water portrait">
-          </div>
-        </div>
-
-        <div class="subsection">
-          <h3 data-i18n="body-h3">Body</h3>
-          <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;" data-i18n="body-p">People, performers, human presence and movement.</p>
-          <p style="margin-bottom:1rem;"><span class="pairing-tag skin" style="font-size:0.72rem;" data-i18n="body-tag">⚠️ Use with: Pink Vectors OR Focus Light — never both</span></p>
-          <p style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#888; margin-bottom:0.5rem;" data-i18n="landscape-label">Landscape</p>
-          <div class="photo-grid" style="grid-template-columns: repeat(5,1fr);">
-            <img src="Foams-Brand-Images-Body-Landscape-01.jpg" alt="Body landscape">
-            <img src="Foams-Brand-Images-Body-Landscape-02.jpg" alt="Body landscape">
-            <img src="Foams-Brand-Images-Body-Landscape-03.jpg" alt="Body landscape">
-            <img src="Foams-Brand-Images-Body-Landscape-04.jpg" alt="Body landscape">
-            <img src="Foams-Brand-Images-Body-Landscape-05.jpg" alt="Body landscape">
-          </div>
-          <p style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#888; margin-top:1rem; margin-bottom:0.5rem;" data-i18n="portrait-label">Portrait</p>
-          <div class="photo-grid" style="grid-template-columns: repeat(5,1fr);">
-            <img src="Foams-Brand-Images-Body-Portrait-01.jpg" alt="Body portrait">
-            <img src="Foams-Brand-Images-Body-Portrait-02.jpg" alt="Body portrait">
-            <img src="Foams-Brand-Images-Body-Portrait-03.jpg" alt="Body portrait">
-            <img src="Foams-Brand-Images-Body-Portrait-04.jpg" alt="Body portrait">
-            <img src="Foams-Brand-Images-Body-Portrait-05.jpg" alt="Body portrait">
-          </div>
-        </div>
-      </section>
-
-      <!-- EXAMPLES OF USAGE -->
-      <section class="section" id="examples-of-usage">
-        <div class="section-header">
-          <h2 data-i18n="examples-h2">Examples of Usage</h2>
-          <p data-i18n="examples-p">See the brand in action across different formats and contexts — combining logo, graphic elements, and photography.</p>
-        </div>
-
-        <div class="subsection">
-          <h3 data-i18n="landscape-h3">Landscape</h3>
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top:1rem;">
-            <img src="foams-example-usage-landscape-01.png" alt="Example of usage landscape" style="width:100%; border-radius:8px; display:block;">
-            <img src="foams-example-usage-landscape-02.png" alt="Example of usage landscape" style="width:100%; border-radius:8px; display:block;">
-            <img src="foams-example-usage-landscape-03.png" alt="Example of usage landscape" style="width:100%; border-radius:8px; display:block;">
-            <img src="foams-example-usage-landscape-04.png" alt="Example of usage landscape" style="width:100%; border-radius:8px; display:block;">
-          </div>
-        </div>
-
-        <div class="subsection">
-          <h3 data-i18n="portrait-h3">Portrait</h3>
-          <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top:1rem;">
-            <img src="foams-example-usage-portrait-01.png" alt="Example of usage portrait" style="width:100%; border-radius:8px; display:block;">
-            <img src="foams-example-usage-portrait-02.png" alt="Example of usage portrait" style="width:100%; border-radius:8px; display:block;">
-            <img src="foams-example-usage-portrait-03.png" alt="Example of usage portrait" style="width:100%; border-radius:8px; display:block;">
-            <img src="foams-example-usage-portrait-04.png" alt="Example of usage portrait" style="width:100%; border-radius:8px; display:block;">
-          </div>
-        </div>
-      </section>
-
-      <!-- GENERATIVE EXAMPLES -->
-      <section class="section" id="generative-examples">
-        <div class="section-header">
-          <h2 data-i18n="gen-examples-h2">Exemplos Generativos</h2>
-          <p data-i18n="gen-examples-p">Pode-se também usar ferramentas generativas para criar imagens facilmente utilizando os diferentes elementos, sempre seguindo as regras de uso. Abaixo estão exemplos generativos, incluindo uma ferramenta para criar diferentes imagens para usar em rede sociais e divulgações.</p>
-        </div>
-
-        <a href="https://www.casafoams.com/brand-image" target="_blank" class="btn-generator-blue" style="margin-bottom: 2.5rem; display: inline-block;" data-i18n="brand-image-btn">Brand Image Generator</a>
-
-        <!-- Generative example images — landscape 2-col -->
-        <div class="subsection" style="margin-top: 1.5rem;">
-          <h3 data-i18n="gen-landscape-h3">Paisagem</h3>
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top:1rem;">
-            <img src="foams-image-generated-landscape-01.png" alt="Generative example landscape" style="width:100%; border-radius:8px; display:block;">
-            <img src="foams-image-generated-landscape-02.png" alt="Generative example landscape" style="width:100%; border-radius:8px; display:block;">
-            <img src="foams-image-generated-landscape-03.png" alt="Generative example landscape" style="width:100%; border-radius:8px; display:block;">
-            <img src="foams-image-generated-landscape-04.png" alt="Generative example landscape" style="width:100%; border-radius:8px; display:block;">
-          </div>
-        </div>
-
-        <!-- Generative example images — portrait 4-col -->
-        <div class="subsection">
-          <h3 data-i18n="gen-portrait-h3">Retrato</h3>
-          <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top:1rem;">
-            <img src="foams-image-generated-portrait-01.png" alt="Generative example portrait" style="width:100%; border-radius:8px; display:block;">
-            <img src="foams-image-generated-portrait-02.png" alt="Generative example portrait" style="width:100%; border-radius:8px; display:block;">
-            <img src="foams-image-generated-portrait-03.png" alt="Generative example portrait" style="width:100%; border-radius:8px; display:block;">
-            <img src="foams-image-generated-portrait-04.png" alt="Generative example portrait" style="width:100%; border-radius:8px; display:block;">
-          </div>
-        </div>
-
-        <!-- Prompt Guidelines -->
-        <div class="generator-block" style="margin-top: 3rem;">
-          <h3 data-i18n="prompt-h3">PROMPT GUIDELINES</h3>
-          <div class="guidelines-note" style="margin-top: 1rem;">
-            <strong data-i18n="prompt-note-title">Use estas diretrizes ao usar uma ferramenta generativa com prompt:</strong>
-            <ul style="margin-top: 0.75rem; padding-left: 1.25rem; line-height: 2; font-size: 0.9rem; color: var(--text-muted);">
-              <li data-i18n="prompt-1">O logo deve ser posicionado em um local agradável, como em tríade. Não exatamente no centro</li>
-              <li data-i18n="prompt-2">Use a imagem e o elemento gráfico apenas uma vez cada</li>
-              <li data-i18n="prompt-3">O elemento gráfico deve estar sobre a imagem, não separado</li>
-              <li data-i18n="prompt-4">Sinta-se livre para usar modos de mesclagem, mas não é obrigatório</li>
-              <li data-i18n="prompt-5">Mantenha a vibe elegante, moderna e um pouco misteriosa</li>
-              <li data-i18n="prompt-6">Para paisagem use resolução: 1920 × 1080</li>
-              <li data-i18n="prompt-7">Para retrato use resolução: 1080 × 1920</li>
-            </ul>
-          </div>
-        </div>
-
-      </section>
-
-      <!-- CLOSING -->
-      <section class="section" id="closing" style="padding-bottom:5rem;">
-        <div style="max-width:600px; padding-top:1rem;">
-          <h2 style="font-family:'Averia Serif Libre',serif; font-size:2.5rem; font-weight:700; margin-bottom:1.25rem; line-height:1.1;" data-i18n="closing-h2">Keep it fluid.</h2>
-          <p style="font-size:1.05rem; color:var(--text-muted); line-height:1.8; margin-bottom:1rem;" data-i18n="closing-p1">
-            FOAMS is a living brand. The logo shifts, the images breathe, and the elements flow. These guidelines exist not to constrain but to give you a foundation to explore from.
-          </p>
-          <p style="font-size:1.05rem; color:var(--text-muted); line-height:1.8; margin-bottom:2rem;" data-i18n="closing-p2">
-            When in doubt: stay bold, stay fluid, and use the generator.
-          </p>
-          <div style="display:flex; flex-wrap:wrap; gap:1rem; align-items:center; margin-top:0.5rem;">
-            <a href="http://casafoams.com/foams-logo" target="_blank" class="btn-generator" data-i18n="closing-btn-gen">Open Logo Generator</a>
-            <a href="https://www.casafoams.com/brand-image" target="_blank" class="btn-generator-blue" data-i18n="brand-image-btn">Brand Image Generator</a>
-            <a href="foams-logo-options.zip" download class="btn" data-i18n="closing-btn-dl">Download Base Logo</a>
-          </div>
-        </div>
-
-        <div style="margin-top:4rem; padding-top:2rem; border-top:1px solid var(--border-color); display:flex; align-items:center; gap:1rem;">
-          <img id="footer-logo" src="foams-white-on-transparent.png" alt="FOAMS" style="height:48px; object-fit:contain;">
-          <span style="font-size:0.8rem; color:var(--text-subtle); line-height:1.6;">FOAMS Brand Guidelines<br>casafoams.com</span>
-        </div>
-      </section>
-
-    </main>
+<!-- Motion section -->
+<div class="section">
+  <p class="section-title">Motion</p>
+  <div class="btn-group" style="margin-bottom:0.85rem;flex-wrap:wrap;">
+    <button class="btn active" id="m-none"   onclick="setMotion('none')">None</button>
+    <button class="btn"        id="m-side"   onclick="setMotion('side')">Side to side</button>
+    <button class="btn"        id="m-random" onclick="setMotion('random')">Random</button>
+    <button class="btn"        id="m-pause"  onclick="toggleMotionPause()">⏸ Pause</button>
   </div>
+  <div id="motionAmtRow" style="display:none;">
+    <label>Amount: <span id="motionAmtOut">6</span>px</label>
+    <input type="range" id="motionAmt" min="1" max="20" value="6" step="1" style="width:100%;accent-color:#fff;margin-top:4px;" oninput="document.getElementById('motionAmtOut').textContent=this.value">
+  </div>
+</div>
 
-  </div><!-- end layout -->
+<!-- Title section -->
+<div class="section">
+  <p class="section-title">Title</p>
+  <div class="btn-group" style="margin-bottom:0.85rem;flex-wrap:wrap;">
+    <button class="btn active" id="btn-none-lang"  onclick="setLanguage('none')">None</button>
+    <button class="btn"        id="btn-pt"          onclick="setLanguage('pt')">Português</button>
+    <button class="btn"        id="btn-en"           onclick="setLanguage('en')">English</button>
+    <button class="btn"        id="btn-pause"        onclick="togglePause()">⏸ Pause</button>
+    <button class="btn"        id="btn-lock-title"   onclick="toggleTitleLock()" title="Title stays in place, doesn't follow the logo">📌 Lock</button>
+  </div>
+  <div id="titleSizeRow">
+    <label>Title size: <span id="titleSzOut">12</span>px</label>
+    <input type="range" id="titleSz" min="8" max="28" value="12" step="1" style="width:100%;accent-color:#fff;margin-top:4px;" oninput="document.getElementById('titleSzOut').textContent=this.value; updateTitleSize()">
+  </div>
+</div>
 
-  <script>
-    // ── DARK MODE ──
-    function updateFooterLogo(isDark) {
-      const fl = document.getElementById('footer-logo');
-      if (fl) fl.src = isDark ? 'foams-white-on-transparent.png' : 'foams-black-on-transparent.png';
+</div><!-- end section-row -->
+
+<!-- Export section -->
+<div class="section">
+  <p class="section-title">Export — auto-cropped &amp; centred</p>
+  <div class="export-grid">
+    <button class="exp-btn exp-black-white" onclick="exportLogo('black','white')">
+      <span class="exp-title">↓ Black on white</span>
+      <span class="exp-sub">PNG · white background</span>
+    </button>
+    <button class="exp-btn exp-white-black" onclick="exportLogo('white','black')">
+      <span class="exp-title">↓ White on black</span>
+      <span class="exp-sub">PNG · black background</span>
+    </button>
+    <button class="exp-btn exp-black-trans" onclick="exportLogo('black','transparent')">
+      <span class="exp-title">↓ Black on transparent</span>
+      <span class="exp-sub">PNG · alpha channel</span>
+    </button>
+    <button class="exp-btn exp-white-trans" onclick="exportLogo('white','transparent')">
+      <span class="exp-title">↓ White on transparent</span>
+      <span class="exp-sub">PNG · alpha channel</span>
+    </button>
+  </div>
+  <hr style="border:none;border-top:1px solid #252525;margin:1rem 0;">
+  <div class="export-grid">
+    <button class="exp-btn exp-pink-white" onclick="exportLogo('pink','white')">
+      <span class="exp-title">↓ Pink on white</span>
+      <span class="exp-sub">PNG · white background</span>
+    </button>
+    <button class="exp-btn exp-pink-black" onclick="exportLogo('pink','black')">
+      <span class="exp-title">↓ Pink on black</span>
+      <span class="exp-sub">PNG · black background</span>
+    </button>
+    <button class="exp-btn exp-pink-trans" onclick="exportLogo('pink','transparent')">
+      <span class="exp-title">↓ Pink on transparent</span>
+      <span class="exp-sub">PNG · alpha channel</span>
+    </button>
+  </div>
+  <hr style="border:none;border-top:1px solid #252525;margin:1rem 0;">
+  <p class="section-title" style="margin-bottom:0.85rem;">Animated GIF</p>
+  <div class="export-grid">
+    <button class="exp-btn exp-black-white" onclick="exportGif('black')">
+      <span class="exp-title">↓ Black · animated</span>
+      <span class="exp-sub">GIF · white background</span>
+    </button>
+    <button class="exp-btn exp-white-black" onclick="exportGif('white')">
+      <span class="exp-title">↓ White · animated</span>
+      <span class="exp-sub">GIF · black background</span>
+    </button>
+    <button class="exp-btn exp-pink-white" onclick="exportGif('pink','white')">
+      <span class="exp-title">↓ Pink · animated</span>
+      <span class="exp-sub">GIF · white background</span>
+    </button>
+    <button class="exp-btn exp-pink-black" onclick="exportGif('pink','black')">
+      <span class="exp-title">↓ Pink on black · animated</span>
+      <span class="exp-sub">GIF · black background</span>
+    </button>
+  </div>
+  <div id="gifProgress" style="display:none;margin-top:8px;font-size:12px;color:#aaa;text-align:center;"></div>
+  <hr style="border:none;border-top:1px solid #252525;margin:1rem 0;">
+  <p class="section-title" style="margin-bottom:0.85rem;">Animated PNG — transparent</p>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+    <label style="font-size:12px;color:#aaa;">Quality:</label>
+    <select id="apngQuality" style="background:#1a1a1a;color:#eee;border:1px solid #333;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;">
+      <option value="small">Small file — 400px · 12fps</option>
+      <option value="medium" selected>Balanced — 600px · 18fps</option>
+      <option value="high">High quality — 800px · 25fps</option>
+    </select>
+  </div>
+  <div class="export-grid">
+    <button class="exp-btn exp-black-trans" onclick="exportAPNG('black')">
+      <span class="exp-title">↓ Black · transparent</span>
+      <span class="exp-sub">APNG · alpha channel</span>
+    </button>
+    <button class="exp-btn exp-white-trans" onclick="exportAPNG('white')">
+      <span class="exp-title">↓ White · transparent</span>
+      <span class="exp-sub">APNG · alpha channel</span>
+    </button>
+    <button class="exp-btn exp-pink-trans" onclick="exportAPNG('pink')">
+      <span class="exp-title">↓ Pink · transparent</span>
+      <span class="exp-sub">APNG · alpha channel</span>
+    </button>
+  </div>
+  <div id="apngProgress" style="display:none;margin-top:8px;font-size:12px;color:#aaa;text-align:center;"></div>
+
+</div>
+
+<script>
+const FONT = 'Trebuchet MS';
+const SW = 580, SH = 220;
+let seed = 315866;
+let letterPositions = [], basePositions = [], motionPhases = [];
+let motionMode = 'none', animFrame = null, t = 0;
+let motionPaused = false;
+let panOffsetX = 0, panOffsetY = 0;
+let zoomScale = 1.35;
+let isInverted = false;
+let isPink = false;
+const PINK = '#ff30ff';
+
+function getLogoColor() {
+  if (isPink)     return `rgba(255,48,255,${parseInt(document.getElementById('fillOp').value)/100})`;
+  if (isInverted) return `rgba(255,255,255,${parseInt(document.getElementById('fillOp').value)/100})`;
+  return `rgba(0,0,0,${parseInt(document.getElementById('fillOp').value)/100})`;
+}
+function getStrokeColor() {
+  if (isPink) return PINK;
+  return isInverted ? 'white' : 'black';
+}
+
+function togglePink() {
+  isPink = !isPink;
+  const btn = document.getElementById('pinkBtn');
+  btn.style.opacity = isPink ? '1' : '0.4';
+  btn.style.borderColor = isPink ? '#ff30ff' : 'rgba(0,0,0,0.15)';
+  const tag = document.getElementById('wordTag');
+  if (tag) tag.style.color = isPink ? PINK : (isInverted ? '#fff' : '#000');
+  updateLetterStyle();
+  updateAHoleColor();
+}
+
+function toggleInvert() {
+  isInverted = !isInverted;
+  const outer = document.getElementById('stageOuter');
+  const tag   = document.getElementById('wordTag');
+  outer.classList.toggle('inverted', isInverted);
+  updateLetterStyle();
+  if (tag) tag.style.color = isPink ? PINK : (isInverted ? '#fff' : '#000');
+  updateAHoleColor();
+}
+
+function applyZoom() {
+  const wrap = document.getElementById('zoomWrap');
+  wrap.style.transform = `translate(calc(-50% + ${panOffsetX}px), calc(-50% + ${panOffsetY}px)) scale(${zoomScale})`;
+  positionWordTag();
+}
+
+function initZoom() {
+  const outer = document.getElementById('stageOuter');
+
+  // Desktop: scroll wheel
+  outer.addEventListener('wheel', e => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.06 : 0.06;
+    zoomScale = Math.min(3.0, Math.max(0.2, zoomScale + delta));
+    applyZoom();
+  }, { passive: false });
+
+  // Mobile: pinch-to-zoom
+  let lastDist = null;
+  outer.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) {
+      lastDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
     }
+  }, { passive: true });
 
-    function toggleDark() {
-      const isDark = document.body.classList.toggle('dark-mode');
-      document.getElementById('btn-dark').textContent = isDark ? '◑ Light' : '◐ Dark';
-      localStorage.setItem('foams-dark', isDark ? '1' : '0');
-      updateFooterLogo(isDark);
-    }
-    if (localStorage.getItem('foams-dark') !== '0') {
-      document.body.classList.add('dark-mode');
-      document.getElementById('btn-dark').textContent = '◑ Light';
-      updateFooterLogo(true);
-    } else {
-      updateFooterLogo(false);
-    }
-
-    // ── LANGUAGE ──
-    const translations = {
-      en: {
-        'nav-top': '↑ Top',
-        'nav-overview': 'Overview',
-        'nav-logo': 'Logo',
-        'nav-color': 'Color',
-        'nav-typography': 'Typography',
-        'nav-graphic': 'Graphic Elements',
-        'nav-photos': 'Photos & Images',
-        'nav-examples': 'Examples of Usage',
-        'nav-closing': '↓ Keep it fluid',
-        'overview-h2': 'FOAMS Brand Guidelines',
-        'overview-p': "We've created a set of guidelines to help you bring our brand to life consistently across every touchpoint. On this page you'll find our high-level guidelines and the assets you'll need.",
-        'logo-h2': 'Logo',
-        'logo-p': 'Our logo is the cornerstone of our identity. Use it consistently and give it room to breathe. Ideally you should use the <strong>FOAMS LOGO GENERATOR</strong> tool every time you need a logo, to make it fluid. Our logo is always changing.',
-        'logo-dl': 'Download Base Logo',
-        'logo-primary': 'Primary Logo',
-        'logo-secondary': 'Secondary Logo',
-        'logo-secondary-sub': '— with brand color',
-        'logo-withtitle': 'Logo with Title',
-        'logo-withtitle-p': 'A title text can also be added. In case of Portuguese it should be located on the top left corner. In case of English it should be located on the bottom right corner.',
-        'logo-pt-label': 'Portuguese — top left',
-        'logo-en-label': 'English — bottom right',
-        'generator-h3': 'FOAMS Logo Generator',
-        'generator-btn': 'Open Logo Generator',
-        'gen-guideline-title': 'Guidelines',
-        'gen-guideline-p': 'Preferably always make a logo in which the letters are closely connected and look very watery — fluid. But feel free to also explore different ways of using the logo generator tool.',
-        'gen-titletext-title': 'Title Text',
-        'gen-titletext-p': 'You can also add a title text in the generator by clicking the Title buttons, in case it\'s needed.',
-        'diff-usage-h3': 'Different Usage of Logo',
-        'diff-usage-p': 'Feel free to go crazy with the logo!',
-        'color-h2': 'Color',
-        'color-p': 'Our palette is bold and minimal. Pink is our signature — electric and unmistakable. The dark tones ground it with depth.',
-        'typo-h2': 'Typography',
-        'typo-p': 'Two typefaces, each with a clear role. Averia Serif Libre leads all titles and headings. Trebuchet MS handles body text.',
-        'typo-inuse': 'In Use',
-        'graphic-h2': 'Graphic Elements',
-        'graphic-p': 'Our graphic language is built around two distinct visual styles. Each brings a different energy — use them individually or in combination.',
-        'pv-h3': 'Pink Vectors',
-        'pv-p': 'Bold magenta lines, curves, and geometric forms. Use on dark backgrounds for maximum impact.',
-        'pv-tag': '✅ Pair with: Water images only',
-        'fl-h3': 'Defocused Light',
-        'fl-p': 'Concentrated light effects, glows, and radial highlights creating depth and drama.',
-        'fl-tag': '✅ Pair with: Tropical images only',
-        'pairing-title': 'How to Combine Elements + Images',
-        'pairing-intro': 'Each graphic element style is designed to pair with a specific image category. Follow these rules for a consistent and intentional visual result.',
-        'rule1-header': '✅ Pink Vectors pair exclusively with Water images',
-        'rule1-note': 'The electric energy of Pink Vectors matches the raw movement of water. Never use Pink Vectors with Tropical or Body images.',
-        'rule2-header': '✅ Defocused Light pairs exclusively with Tropical images',
-        'rule2-note': 'The soft glows of Defocused Light complement the organic textures of tropical nature. Never use Defocused Light with Water or Body images.',
-        'rule3-header': '⚠️ Both can be used with Body images — but never at the same time',
-        'rule3-note': 'Choose one or the other — never mix Pink Vectors and Defocused Light in the same composition.',
-        'rule4-header': '💡 Recommended: use only ONE graphic element per image',
-        'rule4-body': 'More than one element is possible, but use it sparingly and with intention. Too many elements in one composition quickly becomes overwhelming.',
-        'rule5-header': '🎨 Blending Modes are welcome — use with discretion',
-        'rule5-body': 'Feel free to use blending modes like Multiply, Overlay, Screen, etc. when it works well with the composition. However, use it with discretion — don\'t make it too strong or it will overpower the image.',
-        'photos-h2': 'Photos & Images',
-        'photos-p': 'Our imagery is organized into three visual territories, each capturing a different dimension of the FOAMS world.',
-        'tropical-h3': 'Tropical',
-        'tropical-p': 'Images of plants, forest, lush natural environments.',
-        'tropical-tag': '✅ Use with: Defocused Light only',
-        'water-h3': 'Water',
-        'water-p': 'Foaming waves, water in motion, aquatic textures.',
-        'water-tag': '✅ Use with: Pink Vectors only',
-        'body-h3': 'Body',
-        'body-p': 'People, performers, human presence and movement.',
-        'body-tag': '⚠️ Use with: Pink Vectors OR Defocused Light — never both',
-        'logo-withtitle-note-title': 'Guidelines',
-        'logo-withtitle-note-p': 'FOAMS does not have a single title — feel free to use different titles in different contexts, such as House, Space, Collective, Base, Studios, etc. — in the logo generator you can choose different titles.',
-        'examples-h2': 'Examples of Usage',
-        'examples-p': 'See the brand in action across different formats and contexts — combining logo, graphic elements, and photography.',
-        'landscape-label': 'Landscape',
-        'portrait-label': 'Portrait',
-        'landscape-h3': 'Landscape',
-        'portrait-h3': 'Portrait',
-        'nav-gen-examples': 'Generative Examples',
-        'gen-examples-h2': 'Generative Examples',
-        'gen-examples-p': 'You can also use generative tools to easily create images using the different elements, always following the usage rules. Below are generative examples, including a tool to create different images for social media and promotion.',
-        'brand-image-btn': 'Brand Image Generator',
-        'gen-landscape-h3': 'Landscape',
-        'gen-portrait-h3': 'Portrait',
-        'prompt-h3': 'PROMPT GUIDELINES',
-        'prompt-note-title': 'Use these guidelines when using a generative tool with a prompt:',
-        'prompt-1': 'The logo should be placed in a nice position, like triad. Not exactly in the center',
-        'prompt-2': 'Use both image and graphical element only once each',
-        'prompt-3': 'The graphical element should be on top of the image, not separated',
-        'prompt-4': 'Feel free to use blend modes, but it\'s not mandatory',
-        'prompt-5': 'Keep the vibe elegant, modern and a bit mysterious',
-        'prompt-6': 'For landscape use resolution: 1920 × 1080',
-        'prompt-7': 'For portrait use resolution: 1080 × 1920',
-        'closing-h2': 'Keep it fluid.',
-        'closing-p1': 'FOAMS is a living brand. The logo shifts, the images breathe, and the elements flow. These guidelines exist not to constrain but to give you a foundation to explore from.',
-        'closing-p2': 'When in doubt: stay bold, stay fluid, and use the generator.',
-        'closing-btn-gen': 'Open Logo Generator',
-        'closing-btn-dl': 'Download Base Logo',
-      },
-      pt: {
-        'nav-top': '↑ Início',
-        'nav-overview': 'Visão Geral',
-        'nav-logo': 'Logo',
-        'nav-color': 'Cores',
-        'nav-typography': 'Tipografia',
-        'nav-graphic': 'Elementos Gráficos',
-        'nav-photos': 'Fotos & Imagens',
-        'nav-examples': 'Exemplos de Uso',
-        'nav-closing': '↓ Seja fluido',
-        'overview-h2': 'Guia de Marca FOAMS',
-        'overview-p': 'Criamos um conjunto de diretrizes para ajudá-lo a dar vida à nossa marca de forma consistente em todos os pontos de contato. Nesta página você encontrará nossas diretrizes de alto nível e os ativos de que vai precisar.',
-        'logo-h2': 'Logo',
-        'logo-p': 'Nosso logo é a pedra angular da nossa identidade. Use-o de forma consistente e dê espaço para respirar. Idealmente, use a ferramenta <strong>FOAMS LOGO GENERATOR</strong> sempre que precisar de um logo, para torná-lo fluido. Nosso logo está sempre mudando.',
-        'logo-dl': 'Baixar Logo Base',
-        'logo-primary': 'Logo Principal',
-        'logo-secondary': 'Logo Secundário',
-        'logo-secondary-sub': '— com cor da marca',
-        'logo-withtitle': 'Logo com Título',
-        'logo-withtitle-p': 'Um texto de título também pode ser adicionado. Em português, deve ficar no canto superior esquerdo. Em inglês, no canto inferior direito.',
-        'logo-pt-label': 'Português — canto superior esquerdo',
-        'logo-en-label': 'Inglês — canto inferior direito',
-        'generator-h3': 'Gerador de Logo FOAMS',
-        'generator-btn': 'Abrir Gerador de Logo',
-        'gen-guideline-title': 'Diretrizes',
-        'gen-guideline-p': 'Prefira sempre fazer um logo onde as letras estejam bem conectadas e pareçam muito aquosas — fluidas. Mas fique à vontade para explorar diferentes formas de usar a ferramenta.',
-        'gen-titletext-title': 'Texto de Título',
-        'gen-titletext-p': 'Você também pode adicionar um texto de título no gerador clicando nos botões de Título, caso seja necessário.',
-        'diff-usage-h3': 'Usos Diferentes do Logo',
-        'diff-usage-p': 'Sinta-se livre para explorar o logo!',
-        'color-h2': 'Cores',
-        'color-p': 'Nossa paleta é ousada e minimalista. O rosa é nossa assinatura — elétrico e inconfundível. Os tons escuros trazem profundidade.',
-        'typo-h2': 'Tipografia',
-        'typo-p': 'Duas tipografias, cada uma com um papel claro. Averia Serif Libre lidera todos os títulos e cabeçalhos. Trebuchet MS é usada para o corpo de texto.',
-        'typo-inuse': 'Na Prática',
-        'graphic-h2': 'Elementos Gráficos',
-        'graphic-p': 'Nossa linguagem gráfica é construída em torno de dois estilos visuais distintos. Cada um traz uma energia diferente — use-os individualmente ou em combinação.',
-        'pv-h3': 'Vetores Rosa',
-        'pv-p': 'Linhas, curvas e formas geométricas em magenta. Use em fundos escuros para máximo impacto.',
-        'pv-tag': '✅ Combinar com: somente imagens de Água',
-        'fl-h3': 'Luz Desfocada',
-        'fl-p': 'Efeitos de luz concentrada, brilhos e destaques radiais que criam profundidade e drama.',
-        'fl-tag': '✅ Combinar com: somente imagens Tropicais',
-        'pairing-title': 'Como Combinar Elementos + Imagens',
-        'pairing-intro': 'Cada estilo de elemento gráfico é projetado para ser combinado com uma categoria de imagem específica. Siga estas regras para um resultado visual consistente e intencional.',
-        'rule1-header': '✅ Vetores Rosa combinam exclusivamente com imagens de Água',
-        'rule1-note': 'A energia elétrica dos Vetores Rosa combina com o movimento bruto da água. Nunca use Vetores Rosa com imagens Tropicais ou Corpo.',
-        'rule2-header': '✅ Luz Desfocada combina exclusivamente com imagens Tropicais',
-        'rule2-note': 'Os brilhos suaves da Luz Desfocada complementam as texturas orgânicas da natureza tropical. Nunca use Luz Desfocada com imagens de Água ou Corpo.',
-        'rule3-header': '⚠️ Ambos podem ser usados com imagens de Corpo — mas nunca ao mesmo tempo',
-        'rule3-note': 'Escolha um ou outro — nunca misture Vetores Rosa e Luz Desfocada na mesma composição.',
-        'rule4-header': '💡 Recomendado: use apenas UM elemento gráfico por imagem',
-        'rule4-body': 'Mais de um elemento é possível, mas use com parcimônia e intenção. Muitos elementos em uma composição rapidamente se tornam avassaladores.',
-        'rule5-header': '🎨 Modos de Mesclagem são bem-vindos — use com discrição',
-        'rule5-body': 'Sinta-se livre para usar modos de mesclagem como Multiplicar, Overlay, Tela, etc. quando funcionar bem com a composição. No entanto, use com discrição — não exagere na intensidade para não sobrepor a imagem.',
-        'photos-h2': 'Fotos & Imagens',
-        'photos-p': 'Nossas imagens estão organizadas em três territórios visuais, cada um capturando uma dimensão diferente do mundo FOAMS.',
-        'tropical-h3': 'Tropical',
-        'tropical-p': 'Imagens de plantas, florestas e ambientes naturais exuberantes.',
-        'tropical-tag': '✅ Usar com: somente Luz Desfocada',
-        'water-h3': 'Água',
-        'water-p': 'Ondas com espuma, água em movimento, texturas aquáticas.',
-        'water-tag': '✅ Usar com: somente Vetores Rosa',
-        'body-h3': 'Corpo',
-        'body-p': 'Pessoas, performers, presença e movimento humanos.',
-        'body-tag': '⚠️ Usar com: Vetores Rosa OU Luz Desfocada — nunca os dois',
-        'logo-withtitle-note-title': 'Diretrizes',
-        'logo-withtitle-note-p': 'FOAMS não possui um único título, sinta-se livre para usar diferentes títulos em diferentes contextos, como Casa, Espaço, Coletivo, Base, Estúdios, etc.. — no gerador de logo é possível escolher diferentes títulos.',
-        'examples-h2': 'Exemplos de Uso',
-        'examples-p': 'Veja a marca em ação em diferentes formatos e contextos — combinando logo, elementos gráficos e fotografia.',
-        'landscape-label': 'Paisagem',
-        'portrait-label': 'Retrato',
-        'landscape-h3': 'Paisagem',
-        'portrait-h3': 'Retrato',
-        'nav-gen-examples': 'Exemplos Generativos',
-        'gen-examples-h2': 'Exemplos Generativos',
-        'gen-examples-p': 'Pode-se também usar ferramentas generativas para criar imagens facilmente utilizando os diferentes elementos, sempre seguindo as regras de uso. Abaixo estão exemplos generativos, incluindo uma ferramenta para criar diferentes imagens para usar em rede sociais e divulgações.',
-        'brand-image-btn': 'Abrir Gerador de Imagens',
-        'gen-portrait-h3': 'Retrato',
-        'prompt-h3': 'DIRETRIZES DE PROMPT',
-        'prompt-note-title': 'Use estas diretrizes ao usar uma ferramenta generativa com prompt:',
-        'prompt-1': 'O logo deve ser posicionado em um local agradável, como em tríade. Não exatamente no centro',
-        'prompt-2': 'Use a imagem e o elemento gráfico apenas uma vez cada',
-        'prompt-3': 'O elemento gráfico deve estar sobre a imagem, não separado',
-        'prompt-4': 'Sinta-se livre para usar modos de mesclagem, mas não é obrigatório',
-        'prompt-5': 'Mantenha a vibe elegante, moderna e um pouco misteriosa',
-        'prompt-6': 'Para paisagem use resolução: 1920 × 1080',
-        'prompt-7': 'Para retrato use resolução: 1080 × 1920',
-        'closing-h2': 'Seja fluido.',
-        'closing-p1': 'FOAMS é uma marca viva. O logo se transforma, as imagens respiram e os elementos fluem. Estas diretrizes existem não para restringir, mas para dar uma base a partir da qual explorar.',
-        'closing-p2': 'Na dúvida: seja ousado, seja fluido e use o gerador.',
-        'closing-btn-gen': 'Abrir Gerador de Logo',
-        'closing-btn-dl': 'Baixar Logo Base',
+  outer.addEventListener('touchmove', e => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      if (lastDist) {
+        const delta = (dist - lastDist) * 0.008;
+        zoomScale = Math.min(3.0, Math.max(0.2, zoomScale + delta));
+        applyZoom();
       }
+      lastDist = dist;
+    }
+  }, { passive: false });
+
+  outer.addEventListener('touchend', () => { lastDist = null; });
+}
+
+// ── Responsive default zoom based on screen width ─────────────────────────
+function getDefaultZoom() {
+  const outer = document.getElementById('stageOuter');
+  const outerW = outer.getBoundingClientRect().width || outer.offsetWidth || 300;
+  const fit = (outerW / SW) * 0.88;
+  return Math.min(fit, 1.35);
+}
+
+function applyDefaultZoom() {
+  zoomScale = getDefaultZoom();
+  applyZoom();
+}
+
+// Re-center when window resizes (orientation change on mobile)
+if (window.ResizeObserver) {
+  const ro = new ResizeObserver(() => {
+    if (letterPositions.length > 0) applyDefaultZoom();
+  });
+  ro.observe(document.getElementById('stageOuter'));
+}
+
+
+
+// ── A-hole draggable shape ───────────────────────────────────────────────────
+let aHoleVisible = false;
+let aHoleX = 290, aHoleY = 110; // position in stage coords
+let aHoleOffsetX = 0, aHoleOffsetY = 0; // offset from A letter center
+
+function aHolePathD(cx, cy, size) {
+  // Vertical egg: very narrow top, wider bottom, overall slimmer
+  const w = size * 0.30;
+  const h = size * 0.55;
+  return `M ${cx} ${cy - h}
+    C ${cx + w*0.15} ${cy - h}, ${cx + w} ${cy - h*0.1}, ${cx + w} ${cy + h*0.15}
+    C ${cx + w} ${cy + h*0.65}, ${cx + w*0.6} ${cy + h}, ${cx} ${cy + h}
+    C ${cx - w*0.6} ${cy + h}, ${cx - w} ${cy + h*0.65}, ${cx - w} ${cy + h*0.15}
+    C ${cx - w} ${cy - h*0.1}, ${cx - w*0.15} ${cy - h}, ${cx} ${cy - h} Z`;
+}
+
+function updateAHoleColor() {
+  const p = document.getElementById('aHolePath');
+  if (!p) return;
+  // Hole should always be the background color (punching through the logo)
+  if (isInverted) p.setAttribute('fill', '#000');
+  else p.setAttribute('fill', '#fff');
+}
+
+function renderAHole() {
+  const path = document.getElementById('aHolePath');
+  if (!path) return;
+  const size = parseInt(document.getElementById('aHoleSize').value);
+  path.setAttribute('d', aHolePathD(aHoleX, aHoleY, size));
+  // Use same filter as the logo so softness matches automatically
+  const defocus = parseFloat(document.getElementById('defocus').value);
+  path.setAttribute('filter', defocus > 0 ? 'url(#blobdefocus)' : 'url(#blobonly)');
+  updateAHoleColor();
+}
+
+function getACenter() {
+  const mc = document.getElementById('measure');
+  const sz = parseInt(document.getElementById('sz').value);
+  mc.width = 300; mc.height = 150;
+  const mctx = mc.getContext('2d');
+  mctx.font = `900 ${sz}px "Trebuchet MS", sans-serif`;
+  const aW = mctx.measureText('A').width;
+  const aPos = letterPositions[2]; // A is always index 2
+  if (!aPos) return null;
+  return { x: aPos.left + aW * 0.5, y: aPos.top + sz * 0.42 };
+}
+
+function toggleAHole() {
+  aHoleVisible = !aHoleVisible;
+  const svg = document.getElementById('aHoleSvg');
+  const btn = document.getElementById('aHoleToggle');
+  svg.style.display = aHoleVisible ? 'block' : 'none';
+  btn.textContent   = aHoleVisible ? 'Hide' : 'Show';
+  btn.classList.toggle('active', aHoleVisible);
+  if (aHoleVisible) {
+    // Snap hole to A letter center on first show
+    const ac = getACenter();
+    if (ac) { aHoleX = ac.x; aHoleY = ac.y; }
+    else { aHoleX = 290; aHoleY = 110; }
+    aHoleOffsetX = 0; aHoleOffsetY = 0;
+    renderAHole();
+    initAHoleDrag();
+  }
+}
+
+function resizeAHole() { renderAHole(); }
+
+function initAHoleDrag() {
+  const path = document.getElementById('aHolePath');
+  if (!path || path._dragInit) return;
+  path._dragInit = true;
+  path.style.cursor = 'grab';
+
+  let dragging = false, startX, startY, startHX, startHY;
+
+  path.addEventListener('mousedown', e => {
+    e.preventDefault(); e.stopPropagation();
+    dragging = true;
+    startX = e.clientX; startY = e.clientY;
+    startHX = aHoleX; startHY = aHoleY;
+    path.style.cursor = 'grabbing';
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+  path.addEventListener('touchstart', e => {
+    e.stopPropagation();
+    dragging = true;
+    startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+    startHX = aHoleX; startHY = aHoleY;
+    document.addEventListener('touchmove', onMoveT, { passive: false });
+    document.addEventListener('touchend', onUp);
+  }, { passive: true });
+
+  function onMove(e) {
+    if (!dragging) return;
+    aHoleX = startHX + (e.clientX - startX) / zoomScale;
+    aHoleY = startHY + (e.clientY - startY) / zoomScale;
+    // Update offset relative to A center
+    const ac = getACenter();
+    if (ac) { aHoleOffsetX = aHoleX - ac.x; aHoleOffsetY = aHoleY - ac.y; }
+    renderAHole();
+  }
+  function onMoveT(e) {
+    if (!dragging) return;
+    e.preventDefault();
+    aHoleX = startHX + (e.touches[0].clientX - startX) / zoomScale;
+    aHoleY = startHY + (e.touches[0].clientY - startY) / zoomScale;
+    const ac = getACenter();
+    if (ac) { aHoleOffsetX = aHoleX - ac.x; aHoleOffsetY = aHoleY - ac.y; }
+    renderAHole();
+  }
+  function onUp() {
+    dragging = false;
+    path.style.cursor = 'grab';
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    document.removeEventListener('touchmove', onMoveT);
+    document.removeEventListener('touchend', onUp);
+  }
+}
+
+function updateTitleSize() {
+  const sz = parseInt(document.getElementById('titleSz').value);
+  const tag = document.getElementById('wordTag');
+  if (tag) tag.style.fontSize = sz + 'px';
+  positionWordTag();
+}
+
+function seededRand(s, i) {
+  let x = Math.sin(s * 127.1 + i * 311.7) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+function measureLetters(letters, sz) {
+  const mc = document.getElementById('measure');
+  mc.width = 800; mc.height = 300;
+  const mctx = mc.getContext('2d');
+  mctx.font = `900 ${sz}px "${FONT}", sans-serif`;
+  return letters.map(l => mctx.measureText(l).width);
+}
+
+function updateFilters() {
+  const b = parseInt(document.getElementById('blurR').value);
+  const d = parseFloat(document.getElementById('defocus').value);
+  const threshold = 22 - (b - 4) * 0.3;
+  const cutoff    = -9  + (b - 4) * 0.1;
+  const vals = `1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${threshold.toFixed(1)} ${cutoff.toFixed(1)}`;
+  document.querySelectorAll('#svgfilters feGaussianBlur[result="blur"], #svgfilters feGaussianBlur[result="blob"]')
+    .forEach(el => el.setAttribute('stdDeviation', b));
+  document.querySelectorAll('#svgfilters feColorMatrix[result="sharp"]')
+    .forEach(el => el.setAttribute('values', vals));
+  const defEl = document.querySelector('#svgfilters feGaussianBlur[result="defocused"]');
+  if (defEl) defEl.setAttribute('stdDeviation', d);
+  document.getElementById('stage').style.filter = d > 0 ? 'url(#blobdefocus)' : 'url(#blobonly)';
+  if (aHoleVisible) renderAHole();
+}
+
+function updateLetterStyle() {
+  const sw = parseInt(document.getElementById('strokeW').value);
+  document.querySelectorAll('.letter').forEach(el => {
+    el.style.color = getLogoColor();
+    el.style.webkitTextStroke = sw > 0 ? `${sw}px ${getStrokeColor()}` : '0px';
+  });
+}
+
+function toggleMotionPause() {
+  motionPaused = !motionPaused;
+  const btn = document.getElementById('m-pause');
+  if (motionPaused) {
+    btn.textContent = '▶ Resume';
+    btn.classList.add('active');
+  } else {
+    btn.textContent = '⏸ Pause';
+    btn.classList.remove('active');
+  }
+}
+
+function setMotion(mode) {
+  motionMode = mode;
+  // Reset pause state when switching motion mode
+  motionPaused = false;
+  const pauseBtn = document.getElementById('m-pause');
+  pauseBtn.textContent = '⏸ Pause';
+  pauseBtn.classList.remove('active');
+  document.querySelectorAll('#m-none, #m-side, #m-random').forEach(b => b.classList.remove('active'));
+  document.getElementById('m-' + mode).classList.add('active');
+  document.getElementById('motionAmtRow').style.display = mode === 'none' ? 'none' : '';
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  mode !== 'none' ? startAnimation() : resetToBase();
+}
+
+function resetToBase() {
+  document.querySelectorAll('#stage .letter').forEach((el, i) => {
+    if (!basePositions[i]) return;
+    el.style.left = basePositions[i].left + 'px';
+    el.style.top  = basePositions[i].top  + 'px';
+    letterPositions[i] = { ...basePositions[i] };
+  });
+}
+
+function startAnimation() {
+  t = 0;
+  (function tick() {
+    const amt = parseInt(document.getElementById('motionAmt').value);
+    if (!motionPaused) {
+      t += 0.022;
+      document.querySelectorAll('#stage .letter').forEach((el, i) => {
+        if (!basePositions[i]) return;
+        const ph = motionPhases[i] || 0;
+        let dx = 0, dy = 0;
+        if      (motionMode === 'side')   dx = Math.sin(t + ph * 0.4) * amt * 1.4;
+        else if (motionMode === 'random') { dx = Math.sin(t * 1.1 + ph * 2.3) * amt * 1.3; dy = Math.cos(t * 0.8 + ph * 1.7) * amt * 1.3; }
+        el.style.left = (basePositions[i].left + dx) + 'px';
+        el.style.top  = (basePositions[i].top  + dy) + 'px';
+        letterPositions[i] = { left: basePositions[i].left + dx, top: basePositions[i].top + dy };
+      });
+      positionWordTag();
+      if (aHoleVisible) {
+        const ac = getACenter();
+        if (ac) { aHoleX = ac.x + aHoleOffsetX; aHoleY = ac.y + aHoleOffsetY; renderAHole(); }
+      }
+    }
+    animFrame = requestAnimationFrame(tick);
+  })();
+}
+
+// ── Per-letter drag ──────────────────────────────────────────────────────────
+function makeDraggable(el, stageEl, idx) {
+  let sx, sy, sl, st;
+  function down(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    sx = cx; sy = cy; sl = parseFloat(el.style.left); st = parseFloat(el.style.top);
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
+    document.addEventListener('touchmove', move, { passive: false });
+    document.addEventListener('touchend', up);
+  }
+  function move(e) {
+    e.preventDefault();
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    const r  = stageEl.getBoundingClientRect();
+    const nl = Math.max(-60, Math.min(r.width  + 20, sl + cx - sx));
+    const nt = Math.max(-60, Math.min(r.height + 20, st + cy - sy));
+    el.style.left = nl + 'px'; el.style.top = nt + 'px';
+    letterPositions[idx] = basePositions[idx] = { left: nl, top: nt };
+    if (idx === 2 && aHoleVisible) {
+      const ac = getACenter();
+      if (ac) { aHoleX = ac.x + aHoleOffsetX; aHoleY = ac.y + aHoleOffsetY; renderAHole(); }
+    }
+  }
+  function up() {
+    document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up);
+    document.removeEventListener('touchmove', move); document.removeEventListener('touchend', up);
+  }
+  el.addEventListener('mousedown', down);
+  el.addEventListener('touchstart', down, { passive: false });
+}
+
+// ── Canvas pan (click empty space) ──────────────────────────────────────────
+function initPan() {
+  const outer = document.getElementById('stageOuter');
+  let panning = false, psx, psy;
+
+  outer.addEventListener('mousedown', e => {
+    // Only pan if we clicked the outer div or stage itself (not a letter)
+    if (e.target.classList.contains('letter')) return;
+    panning = true;
+    psx = e.clientX; psy = e.clientY;
+    outer.classList.add('panning');
+    document.addEventListener('mousemove', onPanMove);
+    document.addEventListener('mouseup', onPanUp);
+  });
+
+  outer.addEventListener('touchstart', e => {
+    if (e.target.classList.contains('letter')) return;
+    if (e.touches.length !== 1) return; // ignore pinch
+    panning = true;
+    psx = e.touches[0].clientX; psy = e.touches[0].clientY;
+    document.addEventListener('touchmove', onPanMoveT, { passive: false });
+    document.addEventListener('touchend', onPanUpT);
+  }, { passive: true });
+
+  function applyTransform() {
+    const wrap = document.getElementById('zoomWrap');
+    wrap.style.transform = `translate(calc(-50% + ${panOffsetX}px), calc(-50% + ${panOffsetY}px)) scale(${zoomScale})`;
+  }
+
+  function onPanMove(e) {
+    if (!panning) return;
+    const dx = e.clientX - psx; const dy = e.clientY - psy;
+    psx = e.clientX; psy = e.clientY;
+    panOffsetX += dx; panOffsetY += dy;
+    applyTransform();
+    positionWordTag();
+  }
+  function onPanUp() {
+    panning = false;
+    outer.classList.remove('panning');
+    document.removeEventListener('mousemove', onPanMove);
+    document.removeEventListener('mouseup', onPanUp);
+  }
+  function onPanMoveT(e) {
+    if (!panning) return;
+    if (e.touches.length !== 1) { panning = false; return; } // second finger = pinch, stop pan
+    e.preventDefault();
+    const dx = e.touches[0].clientX - psx; const dy = e.touches[0].clientY - psy;
+    psx = e.touches[0].clientX; psy = e.touches[0].clientY;
+    panOffsetX += dx; panOffsetY += dy;
+    applyTransform();
+    positionWordTag();
+  }
+  function onPanUpT() {
+    panning = false;
+    document.removeEventListener('touchmove', onPanMoveT);
+    document.removeEventListener('touchend', onPanUpT);
+  }
+}
+
+function draw() {
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  const stage   = document.getElementById('stage');
+  const sz      = parseInt(document.getElementById('sz').value);
+  const vspread = parseInt(document.getElementById('vspread').value) / 100;
+  const hspread = parseInt(document.getElementById('hspread').value) / 100;
+  const sw      = parseInt(document.getElementById('strokeW').value);
+  const fo      = parseInt(document.getElementById('fillOp').value) / 100;
+  const letters = ['F','O','A','M','S'];
+  const widths  = measureLetters(letters, sz);
+  const gap     = sz * hspread;
+  const totalW  = widths.reduce((a,b) => a+b, 0) + gap * (letters.length - 1);
+  let curX      = (SW - totalW) / 2;
+
+  letterPositions = []; basePositions = [];
+  motionPhases = letters.map((_, i) => seededRand(seed * 3.7, i) * Math.PI * 2);
+  stage.innerHTML = '';
+  panOffsetX = 0; panOffsetY = 0;
+
+  letters.forEach((l, i) => {
+    const div = document.createElement('div');
+    div.className = 'letter';
+    div.textContent = l;
+    div.style.fontSize   = sz + 'px';
+    div.style.fontWeight = '900';
+    div.style.color      = getLogoColor();
+    if (sw > 0) div.style.webkitTextStroke = `${sw}px ${isInverted ? 'white' : 'black'}`;
+    const maxDy = (SH * 0.5 - sz * 0.5) * vspread;
+    const dy    = (seededRand(seed, i) - 0.5) * 2 * maxDy;
+    const left  = curX;
+    const top   = Math.max(4, Math.min(SH - sz - 4, SH / 2 - sz * 0.75 + dy));
+    div.style.left = left + 'px'; div.style.top = top + 'px';
+    letterPositions.push({ left, top }); basePositions.push({ left, top });
+    curX += widths[i] + gap;
+    makeDraggable(div, stage, i);
+    stage.appendChild(div);
+  });
+
+  updateFilters();
+  if (motionMode !== 'none') startAnimation();
+}
+
+function randomize() {
+  seed = Math.random() * 99999;
+  wordTagOffsetX = 0; wordTagOffsetY = 0;
+  zoomScale = getDefaultZoom(); applyZoom();
+  draw();
+  document.getElementById('stageOuter').classList.toggle('inverted', isInverted);
+  const tag = document.getElementById('wordTag');
+  if (tag) tag.style.color = isInverted ? '#fff' : '#000';
+  setTimeout(() => {
+    positionWordTag();
+    // Reposition A hole to new A center + preserved offset
+    if (aHoleVisible) {
+      const ac = getACenter();
+      if (ac) {
+        aHoleX = ac.x + aHoleOffsetX;
+        aHoleY = ac.y + aHoleOffsetY;
+        renderAHole();
+      }
+    }
+  }, 60);
+}
+
+// ── Export ───────────────────────────────────────────────────────────────────
+function exportLogo(logoColor, bgColor) {
+  const SCALE    = 4;
+  const letters  = ['F','O','A','M','S'];
+  const fo       = parseInt(document.getElementById('fillOp').value) / 100;
+  const sw       = parseInt(document.getElementById('strokeW').value);
+  const blobBlur = parseInt(document.getElementById('blurR').value);
+  const defocus  = parseFloat(document.getElementById('defocus').value);
+  const baseSz   = parseInt(document.getElementById('sz').value);
+  const color    = logoColor === 'pink' ? `rgba(255,48,255,${fo})` : logoColor === 'black' ? `rgba(0,0,0,${fo})` : `rgba(255,255,255,${fo})`;
+  const PAD      = 24 * SCALE;
+
+  const margin = 300;
+  const BIGW = (SW + margin * 2) * SCALE;
+  const BIGH = (SH + margin * 2) * SCALE;
+  const OX = margin, OY = margin;
+
+  const fsSVG   = baseSz   * SCALE;
+  const swSVG   = sw       * SCALE;
+  const blobSVG = blobBlur * SCALE;
+  const defSVG  = defocus  * SCALE;
+
+  const threshold = (22 - (blobBlur - 4) * 0.3) * SCALE;
+  const cutoff    = (-9  + (blobBlur - 4) * 0.1) * SCALE;
+  const vals = `1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${threshold.toFixed(1)} ${cutoff.toFixed(1)}`;
+  const defocusStep = defSVG > 0 ? `<feGaussianBlur in="crisp" stdDeviation="${defSVG}"/>` : '';
+
+  // Letters: stage coords + pan
+  let textEls = '';
+  letterPositions.forEach((pos, i) => {
+    const x = (pos.left + panOffsetX + OX) * SCALE;
+    const y = (pos.top  + panOffsetY + OY) * SCALE + fsSVG * 0.75;
+    const strokeAttr = sw > 0 ? `stroke="${color}" stroke-width="${swSVG}" paint-order="stroke"` : '';
+    textEls += `<text x="${x}" y="${y}" font-family="'Trebuchet MS',sans-serif" font-size="${fsSVG}" font-weight="900" fill="${color}" ${strokeAttr}>${letters[i]}</text>\n`;
+  });
+
+  // Title: measure screen position relative to F, convert offset to stage coords
+  let titleEl = '';
+  const tagEl = document.getElementById('wordTag');
+  if (tagEl && tagEl.style.display !== 'none' && currentLang !== 'none') {
+    const tagColor  = logoColor === 'pink' ? '#ff30ff' : logoColor === 'black' ? 'black' : 'white';
+    const tagSzSVG  = wordTagStageSz * SCALE;
+    const fEl2      = document.querySelector('#stage .letter');
+    const fRect2    = fEl2 ? fEl2.getBoundingClientRect() : null;
+    const tagRect2  = tagEl.getBoundingClientRect();
+    const fPos0     = letterPositions[0];
+    if (fRect2 && fPos0) {
+      // Difference in screen pixels between tag and F, divided by zoom = stage offset
+      const dxStage = (tagRect2.left - fRect2.left) / zoomScale;
+      const dyStage = (tagRect2.top  - fRect2.top)  / zoomScale;
+      const tagX = (fPos0.left + panOffsetX + dxStage + OX) * SCALE;
+      const tagY = (fPos0.top  + panOffsetY + dyStage + OY) * SCALE + tagSzSVG * 0.55;
+      titleEl = `<text x="${tagX}" y="${tagY}" font-family="'Trebuchet MS',sans-serif" font-size="${tagSzSVG}" font-weight="700" fill="${tagColor}" letter-spacing="${tagSzSVG * 0.08}">${tagEl.textContent}</text>`;
+    }
+  }
+
+  // A hole: same approach — measure screen offset from A letter
+  let aHoleEl = '';
+  let aHoleCutoutSvg = null; // for transparent exports: separate SVG to cut with destination-out
+  if (aHoleVisible) {
+    const aHoleSz = parseInt(document.getElementById('aHoleSize').value) * SCALE;
+    const ahCX = (aHoleX + panOffsetX + OX) * SCALE;
+    const ahCY = (aHoleY + panOffsetY + OY) * SCALE - aHoleSz * 0.35;
+    const w = aHoleSz * 0.30, h = aHoleSz * 0.55;
+    const d = `M ${ahCX} ${ahCY-h} C ${ahCX+w*0.15} ${ahCY-h}, ${ahCX+w} ${ahCY-h*0.1}, ${ahCX+w} ${ahCY+h*0.15} C ${ahCX+w} ${ahCY+h*0.65}, ${ahCX+w*0.6} ${ahCY+h}, ${ahCX} ${ahCY+h} C ${ahCX-w*0.6} ${ahCY+h}, ${ahCX-w} ${ahCY+h*0.65}, ${ahCX-w} ${ahCY+h*0.15} C ${ahCX-w} ${ahCY-h*0.1}, ${ahCX-w*0.15} ${ahCY-h}, ${ahCX} ${ahCY-h} Z`;
+    if (bgColor === 'transparent') {
+      // For transparent: we'll cut the hole out using destination-out after rendering
+      aHoleCutoutSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${BIGW}" height="${BIGH}"><defs><filter id="blob2" color-interpolation-filters="sRGB" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur in="SourceGraphic" stdDeviation="${blobSVG}" result="blur"/><feColorMatrix in="blur" mode="matrix" values="${vals}" result="sharp"/><feComposite in="SourceGraphic" in2="sharp" operator="atop" result="crisp"/>${defocusStep}</filter></defs><path d="${d}" fill="black" filter="url(#blob2)"/></svg>`;
+    } else {
+      const ahColor = bgColor === 'black' ? 'black' : 'white';
+      aHoleEl = `<path d="${d}" fill="${ahColor}" filter="url(#blob)"/>`;
+    }
+  }
+
+  const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${BIGW}" height="${BIGH}">
+  <defs>
+    <filter id="blob" color-interpolation-filters="sRGB" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="${blobSVG}" result="blur"/>
+      <feColorMatrix in="blur" mode="matrix" values="${vals}" result="sharp"/>
+      <feComposite in="SourceGraphic" in2="sharp" operator="atop" result="crisp"/>
+      ${defocusStep}
+    </filter>
+  </defs>
+  <g filter="url(#blob)">${textEls}</g>
+  ${aHoleEl}
+  ${titleEl}
+</svg>`;
+
+  const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const img  = new Image();
+  img.onload = () => {
+    const bigCanvas = document.createElement('canvas');
+    bigCanvas.width = BIGW; bigCanvas.height = BIGH;
+    const bctx = bigCanvas.getContext('2d');
+    bctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(url);
+
+    // For transparent exports: cut the A hole out using destination-out
+    const applyHoleCutout = () => {
+      if (!aHoleCutoutSvg) return Promise.resolve();
+      return new Promise(resolve => {
+        const holeBlob = new Blob([aHoleCutoutSvg], { type: 'image/svg+xml;charset=utf-8' });
+        const holeUrl = URL.createObjectURL(holeBlob);
+        const holeImg = new Image();
+        holeImg.onload = () => {
+          bctx.globalCompositeOperation = 'destination-out';
+          bctx.drawImage(holeImg, 0, 0);
+          bctx.globalCompositeOperation = 'source-over';
+          URL.revokeObjectURL(holeUrl);
+          resolve();
+        };
+        holeImg.onerror = () => { URL.revokeObjectURL(holeUrl); resolve(); };
+        holeImg.src = holeUrl;
+      });
     };
 
-    let currentLang = localStorage.getItem('foams-lang') || 'pt';
+    applyHoleCutout().then(() => {
+    const id = bctx.getImageData(0, 0, BIGW, BIGH); const d2 = id.data;
+    let minX=BIGW,maxX=0,minY=BIGH,maxY=0;
+    for(let py=0;py<BIGH;py++) for(let px=0;px<BIGW;px++){const i=(py*BIGW+px)*4;if(d2[i+3]>10){if(px<minX)minX=px;if(px>maxX)maxX=px;if(py<minY)minY=py;if(py>maxY)maxY=py;}}
+    minX=Math.max(0,minX-PAD);minY=Math.max(0,minY-PAD);maxX=Math.min(BIGW,maxX+PAD);maxY=Math.min(BIGH,maxY+PAD);
+    const cropW=maxX-minX,cropH=maxY-minY;
+    const fc=document.createElement('canvas');fc.width=cropW;fc.height=cropH;
+    const fctx=fc.getContext('2d');
+    if(bgColor==='white'){fctx.fillStyle='#fff';fctx.fillRect(0,0,cropW,cropH);}
+    else if(bgColor==='black'){fctx.fillStyle='#000';fctx.fillRect(0,0,cropW,cropH);}
+    fctx.drawImage(bigCanvas,minX,minY,cropW,cropH,0,0,cropW,cropH);
+    const a=document.createElement('a');a.download=`foams-${logoColor}-on-${bgColor}.png`;a.href=fc.toDataURL('image/png');a.click();
+    }); // end applyHoleCutout
+  };
+  img.onerror=()=>{URL.revokeObjectURL(url);alert('Export failed — try Chrome.');};
+  img.src=url;
+}
 
-    function setLang(lang) {
-      currentLang = lang;
-      localStorage.setItem('foams-lang', lang);
-      applyLang(lang);
-      document.getElementById('btn-en').classList.toggle('active', lang === 'en');
-      document.getElementById('btn-pt').classList.toggle('active', lang === 'pt');
+
+
+
+
+
+
+
+
+// ── Cycling word tag ─────────────────────────────────────────────────────────
+let wordTagOffsetX = 0;
+let wordTagOffsetY = 0;
+let wordTagStageX = 0;  // tag position in unscaled stage coords
+let wordTagStageY = 0;
+let wordTagStageSz = 12; // font size in unscaled stage px (= screen px / zoomScale)
+
+function positionWordTag() {
+  if (titleLocked) return; // locked: title stays where user placed it
+  const outer = document.getElementById('stageOuter');
+  const stage = document.getElementById('stage');
+  const tag   = document.getElementById('wordTag');
+  if (!tag) return;
+
+  const fEl = Array.from(stage.querySelectorAll('.letter')).find(el => el.textContent === 'F');
+  if (!fEl) return;
+
+  const outerRect = outer.getBoundingClientRect();
+  const fRect     = fEl.getBoundingClientRect();
+
+  const anchorLeft = fRect.left - outerRect.left - fRect.width * 0.15;
+  const anchorTop  = fRect.top  - outerRect.top  - 18;
+
+  const screenLeft = anchorLeft + wordTagOffsetX;
+  const screenTop  = anchorTop  + wordTagOffsetY;
+
+  tag.style.left = screenLeft + 'px';
+  tag.style.top  = screenTop  + 'px';
+
+  // Store in stage coords for export.
+  // screenLeft/Top are stageOuter-relative screen pixels.
+  // Stage origin on screen = stageOuter center + (-SW/2 + panOffsetX) * zoom, etc.
+  // So: stageCoord = (screenPixel - stageOriginOnScreen) / zoom
+  // stageOriginX on screen = outerW/2 + panOffsetX * zoom - SW/2 * zoom... 
+  // Simpler: we know F is at fPos.left in stage coords, and at (anchorLeft + fRect.width*0.15) on screen.
+  // So: stageCoord = fPos.left + (screenLeft - anchorLeft - fRect.width*0.15 + fRect.width*0.15) / zoom... 
+  // Even simpler: tag screen position relative to F screen position, converted to stage offset from F stage position.
+  const fScreenLeft = fRect.left - outerRect.left;
+  const fScreenTop  = fRect.top  - outerRect.top;
+  const fPos = letterPositions[0];
+  if (fPos) {
+    wordTagStageX = fPos.left + (screenLeft - fScreenLeft) / zoomScale;
+    wordTagStageY = fPos.top  + (screenTop  - fScreenTop)  / zoomScale;
+  }
+  const tagSzScreen = parseInt(document.getElementById('titleSz').value);
+  wordTagStageSz = tagSzScreen / zoomScale;
+}
+
+function initWordTagDrag() {
+  const outer = document.getElementById('stageOuter');
+  let dragging = false, sx, sy, ox, oy;
+
+  function onDown(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    dragging = true;
+    sx = e.touches ? e.touches[0].clientX : e.clientX;
+    sy = e.touches ? e.touches[0].clientY : e.clientY;
+    ox = wordTagOffsetX;
+    oy = wordTagOffsetY;
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onUp);
+  }
+  function onMove(e) {
+    if (!dragging) return;
+    e.preventDefault();
+    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+    wordTagOffsetX = ox + (cx - sx);
+    wordTagOffsetY = oy + (cy - sy);
+    positionWordTag();
+  }
+  function onUp() {
+    dragging = false;
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('touchend', onUp);
+  }
+
+  // Attach after tag exists
+  setTimeout(() => {
+    const tag = document.getElementById('wordTag');
+    if (tag) {
+      tag.addEventListener('mousedown', onDown);
+      tag.addEventListener('touchstart', onDown, { passive: false });
     }
+  }, 100);
+}
 
-    function applyLang(lang) {
-      const t = translations[lang];
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (t[key] !== undefined) {
-          if (el.getAttribute('data-html')) {
-            el.innerHTML = t[key];
-          } else {
-            el.textContent = t[key];
-          }
-        }
-      });
-      // Update section top links — always just ↑, no text
-      document.querySelectorAll('.section-top-link a').forEach(el => {
-        el.textContent = '↑';
-      });
+const WORD_SETS = {
+  pt: ['CASA','ESPAÇO','NÚCLEO','BASE','RETIRO','REFÚGIO','ESTÚDIOS','COLETIVO','RESIDÊNCIA','LABORATÓRIO','RESISTÊNCIA'],
+  en: ['HOUSE','SPACE','BASE','RETREAT','REFUGE','STUDIOS','COLLECTIVE','RESIDENCY','LABORATORY','RESISTANCE']
+};
+let currentLang = 'none';
+let wordCycleIndex = 0;
+let wordCycleTimer = null;
+let wordCyclePaused = false;
+let titleLocked = false; // when true, title stays in fixed position, doesn't follow F
+
+function toggleTitleLock() {
+  titleLocked = !titleLocked;
+  const btn = document.getElementById('btn-lock-title');
+  btn.classList.toggle('active', titleLocked);
+  btn.textContent = titleLocked ? '📌 Locked' : '📌 Lock';
+}
+
+function togglePause() {
+  wordCyclePaused = !wordCyclePaused;
+  const btn = document.getElementById('btn-pause');
+  if (wordCyclePaused) {
+    if (wordCycleTimer) clearTimeout(wordCycleTimer);
+    btn.textContent = '▶ Resume';
+    btn.classList.add('active');
+  } else {
+    btn.textContent = '⏸ Pause';
+    btn.classList.remove('active');
+    scheduleWordNext();
+  }
+}
+
+function initWordCycle() {
+  const outer = document.getElementById('stageOuter');
+  const tag = document.createElement('div');
+  tag.className = 'word-tag';
+  tag.id = 'wordTag';
+  tag.textContent = WORD_SETS['pt'][0];
+  tag.style.display = 'none'; // default is None
+  outer.appendChild(tag);
+  // Hide title size row by default
+  const sizeRow = document.getElementById('titleSizeRow');
+  if (sizeRow) sizeRow.style.display = 'none';
+}
+
+function scheduleWordNext() {
+  if (wordCycleTimer) clearTimeout(wordCycleTimer);
+  if (wordCyclePaused) return;
+  wordCycleTimer = setTimeout(() => {
+    if (wordCyclePaused) return;
+    const tag = document.getElementById('wordTag');
+    if (!tag) return;
+    tag.classList.add('fade');
+    setTimeout(() => {
+      wordCycleIndex = (wordCycleIndex + 1) % WORD_SETS[currentLang].length;
+      tag.textContent = WORD_SETS[currentLang][wordCycleIndex];
+      tag.classList.remove('fade');
+    }, 450);
+    scheduleWordNext();
+  }, 1600 + Math.random() * 1200);
+}
+
+function setLanguage(lang) {
+  currentLang = lang;
+  wordCycleIndex = 0;
+  document.getElementById('btn-pt').classList.toggle('active', lang === 'pt');
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  document.getElementById('btn-none-lang').classList.toggle('active', lang === 'none');
+  const tag = document.getElementById('wordTag');
+  const sizeRow = document.getElementById('titleSizeRow');
+  if (lang === 'none') {
+    if (wordCycleTimer) clearTimeout(wordCycleTimer);
+    if (tag) { tag.classList.add('fade'); setTimeout(() => { tag.style.display = 'none'; }, 450); }
+    if (sizeRow) sizeRow.style.display = 'none';
+  } else {
+    if (tag) {
+      tag.style.display = '';
+      tag.classList.add('fade');
+      setTimeout(() => {
+        tag.textContent = WORD_SETS[lang][0];
+        tag.classList.remove('fade');
+        positionWordTag();
+      }, 300);
     }
+    if (sizeRow) sizeRow.style.display = '';
+    scheduleWordNext();
+  }
+}
 
-    // Apply on load
-    setLang(currentLang);
+initPan();
+initZoom();
+draw();
+// Wait for layout to complete before calculating zoom
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    zoomScale = getDefaultZoom();
+    applyZoom();
+    initWordCycle();
+    initWordTagDrag();
+    setTimeout(positionWordTag, 80);
+  });
+});
 
-    // ── SCROLLSPY ──
-    const sections = document.querySelectorAll('.section');
-    const navLinks = document.querySelectorAll('.sidebar nav a');
+// ── GIF Export ───────────────────────────────────────────────────────────────
+function exportGif(logoColor, bgColor) {
+  bgColor = bgColor || (logoColor === 'white' ? 'black' : 'white');
+  const hasMotion = motionMode !== 'none' && !motionPaused;
+  const hasTitle  = currentLang !== 'none' && !wordCyclePaused;
 
-    // Set Overview as active immediately on load
-    navLinks.forEach(l => l.classList.remove('active'));
-    const overviewLink = document.querySelector('.sidebar nav a[href="#brand-guidelines"]');
-    if (overviewLink) overviewLink.classList.add('active');
+  const progress = document.getElementById('gifProgress');
+  progress.style.display = 'block';
+  progress.textContent = 'Preparing…';
 
-    // Delay starting the observer so it doesn't instantly override Overview on load
-    let observerActive = false;
-    setTimeout(() => { observerActive = true; }, 800);
+  const blobBlur = parseInt(document.getElementById('blurR').value);
+  const defocus  = parseFloat(document.getElementById('defocus').value);
+  const baseSz   = parseInt(document.getElementById('sz').value);
+  const fo       = parseInt(document.getElementById('fillOp').value) / 100;
+  const sw       = parseInt(document.getElementById('strokeW').value);
+  const letters  = ['F','O','A','M','S'];
+  const SCALE    = 3;
 
-    const observer = new IntersectionObserver((entries) => {
-      if (!observerActive) return;
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          navLinks.forEach(link => link.classList.remove('active'));
-          const id = entry.target.id;
-          const active = document.querySelector(`.sidebar nav a[href="#${id}"]`);
-          if (active) active.classList.add('active');
-        }
-      });
-    }, { rootMargin: '-10% 0px -80% 0px' });
+  // Live: 60fps, t += 0.022 per frame → t advances 0.022/16.67ms = 0.00132 per ms
+  // GIF at 25fps (40ms/frame): t should advance 0.00132 * 40 = 0.0528 per frame
+  const FRAME_MS      = 33; // ~30fps
+  // Live: t += 0.022 per frame at 60fps. Multiply by 3x to match visual speed in GIF.
+  const T_PER_GIF     = 0.022 * (60 / 30) * 2.5; // ~0.11 per frame
+  const MOTION_FRAMES = Math.round((Math.PI * 2) / T_PER_GIF);
 
-    sections.forEach(s => observer.observe(s));
+  const logoFill  = logoColor === 'pink'  ? `rgba(255,48,255,${fo})`
+                  : logoColor === 'white' ? `rgba(255,255,255,${fo})`
+                  :                         `rgba(0,0,0,${fo})`;
+  const titleFill = logoColor === 'pink' ? '#ff30ff' : logoColor === 'white' ? '#fff' : '#000';
+  const bgFill    = bgColor === 'black' ? '#000000' : '#ffffff';
 
-    // ── BACK TO TOP — iframe-safe via IntersectionObserver ──
-    // Works even when the iframe itself doesn't scroll (Squarespace embeds)
-    const backToTop = document.getElementById('back-to-top');
-    const firstSection = document.getElementById('brand-guidelines');
+  const margin = 300;
+  const OX = margin, OY = margin;
+  const BIGW = (SW + margin * 2) * SCALE;
+  const BIGH = (SH + margin * 2) * SCALE;
 
-    // Show button when first section leaves view (user has scrolled past it)
-    const topObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        backToTop.classList.toggle('visible', !entry.isIntersecting);
-      });
-    }, { threshold: 0, rootMargin: '0px' });
+  const threshold = (22 - (blobBlur - 4) * 0.3) * SCALE;
+  const cutoff    = (-9  + (blobBlur - 4) * 0.1) * SCALE;
+  const vals      = `1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${threshold.toFixed(1)} ${cutoff.toFixed(1)}`;
+  const blobSVG   = blobBlur * SCALE;
+  const fsSVG     = baseSz * SCALE;
+  const swSVG     = sw * SCALE;
+  const defSVG    = defocus * SCALE;
+  const defocusStep = defSVG > 0 ? `<feGaussianBlur in="crisp" stdDeviation="${defSVG}"/>` : '';
 
-    if (firstSection) topObserver.observe(firstSection);
+  const motionAmtV = document.getElementById('motionAmt') ? parseInt(document.getElementById('motionAmt').value) : 6;
 
-    // Sidebar nav smooth scroll
-    navLinks.forEach(link => {
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        const targetId = link.getAttribute('href').replace('#', '');
-        const target = document.getElementById(targetId);
-        if (target) {
-          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      });
+  function getPositions(tVal) {
+    if (motionMode === 'none' || !hasMotion) return letterPositions;
+    return basePositions.map((base, i) => {
+      if (!base) return letterPositions[i];
+      const ph = motionPhases[i] || 0;
+      let dx = 0, dy = 0;
+      if (motionMode === 'side')   dx = Math.sin(tVal + ph * 0.4) * motionAmtV * 1.4;
+      if (motionMode === 'random') { dx = Math.sin(tVal*1.1+ph*2.3)*motionAmtV*1.3; dy = Math.cos(tVal*0.8+ph*1.7)*motionAmtV*1.3; }
+      return { left: base.left + dx, top: base.top + dy };
+    });
+  }
+
+  function buildAHoleEl(positions) {
+    if (!aHoleVisible) return '';
+    const aHoleSz = parseInt(document.getElementById('aHoleSize').value) * SCALE;
+    const ahColor = bgColor === 'black' ? 'black' : 'white';
+
+    // Compute A hole position tracking the animated A letter
+    const aPos2 = positions[2]; // A is index 2
+    const mc2 = document.getElementById('measure');
+    mc2.width = 300; mc2.height = 150;
+    const mc2ctx = mc2.getContext('2d');
+    mc2ctx.font = `900 ${baseSz}px "Trebuchet MS", sans-serif`;
+    const aW = mc2ctx.measureText('A').width;
+    const aCenterX = aPos2.left + aW * 0.5;
+    const aCenterY = aPos2.top  + baseSz * 0.42;
+
+    const ahX = aCenterX + aHoleOffsetX;
+    const ahY = aCenterY + aHoleOffsetY;
+    const ahCX = (ahX + panOffsetX + OX) * SCALE;
+    const ahCY = (ahY + panOffsetY + OY) * SCALE - aHoleSz * 0.35;
+    const w = aHoleSz * 0.30, h = aHoleSz * 0.55;
+    const d = `M ${ahCX} ${ahCY-h} C ${ahCX+w*0.15} ${ahCY-h}, ${ahCX+w} ${ahCY-h*0.1}, ${ahCX+w} ${ahCY+h*0.15} C ${ahCX+w} ${ahCY+h*0.65}, ${ahCX+w*0.6} ${ahCY+h}, ${ahCX} ${ahCY+h} C ${ahCX-w*0.6} ${ahCY+h}, ${ahCX-w} ${ahCY+h*0.65}, ${ahCX-w} ${ahCY+h*0.15} C ${ahCX-w} ${ahCY-h*0.1}, ${ahCX-w*0.15} ${ahCY-h}, ${ahCX} ${ahCY-h} Z`;
+    return `<path d="${d}" fill="${ahColor}" filter="url(#blob)"/>`;
+  }
+
+  function buildSVG(positions, word, wordOpacity) {
+    let textEls = '';
+    positions.forEach((pos, i) => {
+      const x = (pos.left + panOffsetX + OX) * SCALE;
+      const y = (pos.top  + panOffsetY + OY) * SCALE + fsSVG * 0.75;
+      const sa = sw > 0 ? `stroke="${logoFill}" stroke-width="${swSVG}" paint-order="stroke"` : '';
+      textEls += `<text x="${x}" y="${y}" font-family="'Trebuchet MS',sans-serif" font-size="${fsSVG}" font-weight="900" fill="${logoFill}" ${sa}>${letters[i]}</text>\n`;
     });
 
-    // Back to top — scrollIntoView works inside iframes
-    backToTop.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (firstSection) {
-        firstSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    let titleEl = '';
+    if (word && wordOpacity > 0.01) {
+      const fEl    = document.querySelector('#stage .letter');
+      const tagEl  = document.getElementById('wordTag');
+      const fPos0  = positions[0];
+      if (fEl && tagEl && fPos0) {
+        const fRect   = fEl.getBoundingClientRect();
+        const tagRect = tagEl.getBoundingClientRect();
+        const dxStage = (tagRect.left - fRect.left) / zoomScale;
+        const dyStage = (tagRect.top  - fRect.top)  / zoomScale;
+        const tagSzSVG = wordTagStageSz * SCALE;
+        const tagX = (fPos0.left + panOffsetX + dxStage + OX) * SCALE;
+        const tagY = (fPos0.top  + panOffsetY + dyStage + OY) * SCALE + tagSzSVG * 0.55;
+        titleEl = `<text x="${tagX}" y="${tagY}" font-family="'Trebuchet MS',sans-serif" font-size="${tagSzSVG}" font-weight="700" fill="${titleFill}" opacity="${wordOpacity.toFixed(3)}" letter-spacing="${tagSzSVG * 0.08}">${word}</text>`;
+      }
+    }
+
+    const aHoleEl = buildAHoleEl(positions);
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${BIGW}" height="${BIGH}">
+  <defs><filter id="blob" color-interpolation-filters="sRGB" x="-30%" y="-30%" width="160%" height="160%">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="${blobSVG}" result="blur"/>
+    <feColorMatrix in="blur" mode="matrix" values="${vals}" result="sharp"/>
+    <feComposite in="SourceGraphic" in2="sharp" operator="atop" result="crisp"/>
+    ${defocusStep}
+  </filter></defs>
+  <g filter="url(#blob)">${textEls}</g>
+  ${aHoleEl}
+  ${titleEl}
+</svg>`;
+  }
+
+  function svgToCanvas(svgStr) {
+    return new Promise((resolve, reject) => {
+      const blob = new Blob([svgStr], {type:'image/svg+xml;charset=utf-8'});
+      const url  = URL.createObjectURL(blob);
+      const img  = new Image();
+      img.onload = () => {
+        const tmp = document.createElement('canvas');
+        tmp.width = BIGW; tmp.height = BIGH;
+        tmp.getContext('2d').drawImage(img, 0, 0);
+        URL.revokeObjectURL(url);
+        resolve(tmp);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('SVG render failed')); };
+      img.src = url;
+    });
+  }
+
+  function getCropBounds(canvas) {
+    const PAD = 32 * SCALE;
+    const ctx = canvas.getContext('2d');
+    const id  = ctx.getImageData(0, 0, BIGW, BIGH);
+    const d   = id.data;
+    let mnX=BIGW, mxX=0, mnY=BIGH, mxY=0;
+    for (let py=0; py<BIGH; py++) {
+      for (let px=0; px<BIGW; px++) {
+        const i = (py*BIGW+px)*4;
+        if (d[i+3] > 20) { if(px<mnX)mnX=px; if(px>mxX)mxX=px; if(py<mnY)mnY=py; if(py>mxY)mxY=py; }
+      }
+    }
+    return { minX:Math.max(0,mnX-PAD), minY:Math.max(0,mnY-PAD), maxX:Math.min(BIGW,mxX+PAD), maxY:Math.min(BIGH,mxY+PAD) };
+  }
+
+  let cropBounds = null;
+  let gif = null;
+  let gifW = 800, gifH = 400;
+
+  function addFrame(canvas, delay) {
+    const {minX,minY,maxX,maxY} = cropBounds;
+    const cw = maxX-minX, ch = maxY-minY;
+    const fc = document.createElement('canvas');
+    fc.width = gifW; fc.height = gifH;
+    const fctx = fc.getContext('2d');
+    fctx.fillStyle = bgFill;
+    fctx.fillRect(0,0,gifW,gifH);
+    fctx.drawImage(canvas, minX, minY, cw, ch, 0, 0, gifW, gifH);
+    gif.addFrame(fc, {delay, copy: true});
+  }
+
+  async function runCapture() {
+    // Measure bounds across full motion cycle
+    progress.textContent = 'Measuring…';
+    const probeTs = hasMotion ? [0, 0.25, 0.5, 0.75].map(f => f * Math.PI * 2) : [0];
+    const probeWord = hasTitle ? (WORD_SETS[currentLang]||[])[0] || null : null;
+    for (const tProbe of probeTs) {
+      const svg = buildSVG(getPositions(tProbe), probeWord, 1.0);
+      const c   = await svgToCanvas(svg);
+      const b   = getCropBounds(c);
+      if (!cropBounds) cropBounds = {...b};
+      else {
+        cropBounds.minX = Math.min(cropBounds.minX, b.minX);
+        cropBounds.minY = Math.min(cropBounds.minY, b.minY);
+        cropBounds.maxX = Math.max(cropBounds.maxX, b.maxX);
+        cropBounds.maxY = Math.max(cropBounds.maxY, b.maxY);
+      }
+    }
+
+    const cw = cropBounds.maxX - cropBounds.minX;
+    const ch = cropBounds.maxY - cropBounds.minY;
+    gifW = Math.min(800, cw);
+    gifH = Math.round(ch * (gifW / cw));
+
+    gif = new GIF({
+      workers: 2, quality: 6, width: gifW, height: gifH,
+      workerScript: URL.createObjectURL(new Blob(
+        [`importScripts('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js')`],
+        {type:'application/javascript'}
+      ))
+    });
+
+    const words = hasTitle ? WORD_SETS[currentLang] : null;
+    const HOLD_F = Math.round(1800 / FRAME_MS);
+    const FADE_F = Math.round(450  / FRAME_MS);
+
+    if (hasMotion && !hasTitle) {
+      for (let f = 0; f < MOTION_FRAMES; f++) {
+        if (f % 5 === 0) progress.textContent = `Frame ${f+1}/${MOTION_FRAMES}…`;
+        const c = await svgToCanvas(buildSVG(getPositions(f * T_PER_GIF), null, 0));
+        addFrame(c, FRAME_MS);
+      }
+
+    } else if (!hasMotion && hasTitle) {
+      const wordList = wordCyclePaused
+        ? [document.getElementById('wordTag').textContent]
+        : words;
+      const pos = letterPositions;
+      for (let w = 0; w < wordList.length; w++) {
+        progress.textContent = `Word ${w+1}/${wordList.length}`;
+        for (let f = 0; f < HOLD_F; f++) {
+          const c = await svgToCanvas(buildSVG(pos, wordList[w], 1.0));
+          addFrame(c, FRAME_MS);
+        }
+        if (wordList.length === 1) continue;
+        const next = wordList[(w+1) % wordList.length];
+        // fade out current
+        for (let f = 0; f < FADE_F; f++) {
+          const c = await svgToCanvas(buildSVG(pos, wordList[w], 1 - f/FADE_F));
+          addFrame(c, FRAME_MS);
+        }
+        // fade in next (start from 0 opacity, no jump)
+        for (let f = 0; f < FADE_F; f++) {
+          const c = await svgToCanvas(buildSVG(pos, next, f/FADE_F));
+          addFrame(c, FRAME_MS);
+        }
+      }
+
+    } else {
+      // Both: motion + title
+      const FRAMES_PER_WORD = HOLD_F + FADE_F * 2;
+      const totalFrames = words.length * FRAMES_PER_WORD;
+      let tVal = 0;
+      for (let f = 0; f < totalFrames; f++) {
+        if (f % 5 === 0) progress.textContent = `Frame ${f+1}/${totalFrames}…`;
+        const pos  = getPositions(tVal);
+        const wIdx = Math.floor(f / FRAMES_PER_WORD);
+        const wf   = f % FRAMES_PER_WORD;
+        const word = words[wIdx % words.length];
+        const next = words[(wIdx+1) % words.length];
+        let op = 1.0, displayWord = word;
+        if (wf < FADE_F) {
+          // fade in current word from 0
+          op = wf / FADE_F; displayWord = word;
+        } else if (wf >= HOLD_F + FADE_F) {
+          // fade out current word
+          op = 1 - (wf - HOLD_F - FADE_F) / FADE_F; displayWord = word;
+        }
+        const c = await svgToCanvas(buildSVG(pos, displayWord, op));
+        addFrame(c, FRAME_MS);
+        tVal += T_PER_GIF;
+      }
+    }
+
+    progress.textContent = 'Encoding GIF…';
+    gif.on('finished', blob => {
+      const a = document.createElement('a');
+      a.download = `foams-animated-${logoColor}.gif`;
+      a.href = URL.createObjectURL(blob);
+      a.click();
+      progress.style.display = 'none';
+    });
+    gif.on('progress', p => { progress.textContent = `Encoding… ${Math.round(p*100)}%`; });
+    gif.render();
+  }
+
+  runCapture().catch(err => { progress.style.display = 'none'; alert('GIF failed: ' + err); });
+}
+
+// ── Animated PNG Export (full alpha transparency) ─────────────────────────────
+async function exportAPNG(logoColor) {
+  const hasMotion = motionMode !== 'none' && !motionPaused;
+  const hasTitle  = currentLang !== 'none' && !wordCyclePaused;
+
+  const progress = document.getElementById('apngProgress');
+  progress.style.display = 'block';
+  progress.textContent = 'Preparing…';
+
+  // Reuse the same SVG building logic from exportGif
+  // but render to canvas with transparent background
+  const blobBlur = parseInt(document.getElementById('blurR').value);
+  const defocus  = parseFloat(document.getElementById('defocus').value);
+  const baseSz   = parseInt(document.getElementById('sz').value);
+  const fo       = parseInt(document.getElementById('fillOp').value) / 100;
+  const sw       = parseInt(document.getElementById('strokeW').value);
+  const letters  = ['F','O','A','M','S'];
+  const SCALE    = 3;
+  const quality = (document.getElementById('apngQuality')||{}).value || 'medium';
+  const qualSettings = {
+    small:  { maxW: 400, fps: 12, compress: 9 },
+    medium: { maxW: 600, fps: 18, compress: 8 },
+    high:   { maxW: 800, fps: 25, compress: 6 },
+  }[quality];
+
+  const FRAME_MS = Math.round(1000 / qualSettings.fps);
+  const T_PER_FRAME = 0.022 * (60 / qualSettings.fps) * 2.5;
+  const MOTION_FRAMES = Math.round((Math.PI * 2) / T_PER_FRAME);
+
+  const logoFill  = logoColor === 'pink'  ? `rgba(255,48,255,${fo})`
+                  : logoColor === 'white' ? `rgba(255,255,255,${fo})`
+                  :                         `rgba(0,0,0,${fo})`;
+  const titleFill = logoColor === 'pink' ? '#ff30ff' : logoColor === 'white' ? '#fff' : '#000';
+
+  const margin = 300;
+  const OX = margin, OY = margin;
+  const BIGW = (SW + margin * 2) * SCALE;
+  const BIGH = (SH + margin * 2) * SCALE;
+  const threshold = (22 - (blobBlur-4)*0.3)*SCALE, cutoff = (-9+(blobBlur-4)*0.1)*SCALE;
+  const vals = `1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${threshold.toFixed(1)} ${cutoff.toFixed(1)}`;
+  const blobSVG = blobBlur*SCALE, fsSVG = baseSz*SCALE, swSVG = sw*SCALE;
+  const defSVG = defocus*SCALE;
+  const defocusStep = defSVG>0 ? `<feGaussianBlur in="crisp" stdDeviation="${defSVG}"/>` : '';
+  const motionAmtV = document.getElementById('motionAmt') ? parseInt(document.getElementById('motionAmt').value) : 6;
+
+  function getPos(tVal) {
+    if (motionMode==='none'||!hasMotion) return letterPositions;
+    return basePositions.map((base,i)=>{
+      if(!base) return letterPositions[i];
+      const ph=motionPhases[i]||0; let dx=0,dy=0;
+      if(motionMode==='side') dx=Math.sin(tVal+ph*0.4)*motionAmtV*1.4;
+      if(motionMode==='random'){dx=Math.sin(tVal*1.1+ph*2.3)*motionAmtV*1.3;dy=Math.cos(tVal*0.8+ph*1.7)*motionAmtV*1.3;}
+      return {left:base.left+dx, top:base.top+dy};
+    });
+  }
+
+  function buildHoleSVG(positions) {
+    if (!aHoleVisible) return null;
+    const sz2 = parseInt(document.getElementById('aHoleSize').value)*SCALE;
+    const mc2 = document.getElementById('measure'); mc2.width=300; mc2.height=150;
+    const mc2c = mc2.getContext('2d'); mc2c.font=`900 ${baseSz}px "Trebuchet MS",sans-serif`;
+    const aW = mc2c.measureText('A').width;
+    const aPos2 = positions[2];
+    const ahX = aPos2.left+aW*0.5+aHoleOffsetX, ahY = aPos2.top+baseSz*0.42+aHoleOffsetY;
+    const ahCX=(ahX+panOffsetX+OX)*SCALE, ahCY=(ahY+panOffsetY+OY)*SCALE-sz2*0.35;
+    const w=sz2*0.30,h=sz2*0.55;
+    const d=`M ${ahCX} ${ahCY-h} C ${ahCX+w*0.15} ${ahCY-h}, ${ahCX+w} ${ahCY-h*0.1}, ${ahCX+w} ${ahCY+h*0.15} C ${ahCX+w} ${ahCY+h*0.65}, ${ahCX+w*0.6} ${ahCY+h}, ${ahCX} ${ahCY+h} C ${ahCX-w*0.6} ${ahCY+h}, ${ahCX-w} ${ahCY+h*0.65}, ${ahCX-w} ${ahCY+h*0.15} C ${ahCX-w} ${ahCY-h*0.1}, ${ahCX-w*0.15} ${ahCY-h}, ${ahCX} ${ahCY-h} Z`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${BIGW}" height="${BIGH}">
+  <defs><filter id="blob" color-interpolation-filters="sRGB" x="-30%" y="-30%" width="160%" height="160%">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="${blobSVG}" result="blur"/>
+    <feColorMatrix in="blur" mode="matrix" values="${vals}" result="sharp"/>
+    <feComposite in="SourceGraphic" in2="sharp" operator="atop" result="crisp"/>
+  </filter></defs>
+  <path d="${d}" fill="black" filter="url(#blob)"/>
+</svg>`;
+  }
+
+  function buildSVGFrame(positions, word, opacity) {
+    let els='';
+    positions.forEach((pos,i)=>{
+      const x=(pos.left+panOffsetX+OX)*SCALE, y=(pos.top+panOffsetY+OY)*SCALE+fsSVG*0.75;
+      const sa=sw>0?`stroke="${logoFill}" stroke-width="${swSVG}" paint-order="stroke"`:'';
+      els+=`<text x="${x}" y="${y}" font-family="'Trebuchet MS',sans-serif" font-size="${fsSVG}" font-weight="900" fill="${logoFill}" ${sa}>${letters[i]}</text>\n`;
+    });
+    let titleEl='';
+    if(word&&opacity>0.01){
+      const tSz=wordTagStageSz*SCALE;
+      let tx, ty;
+      if(titleLocked) {
+        // Use stored stage coords — title doesn't follow motion
+        tx=(wordTagStageX+panOffsetX+OX)*SCALE;
+        ty=(wordTagStageY+panOffsetY+OY)*SCALE+tSz*0.55;
       } else {
-        try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(err) {}
-        try { document.documentElement.scrollTop = 0; } catch(err) {}
+        const fEl=document.querySelector('#stage .letter'), tagEl=document.getElementById('wordTag'), fPos0=positions[0];
+        if(fEl&&tagEl&&fPos0){
+          const fR=fEl.getBoundingClientRect(),tR=tagEl.getBoundingClientRect();
+          const dx=(tR.left-fR.left)/zoomScale, dy=(tR.top-fR.top)/zoomScale;
+          tx=(fPos0.left+panOffsetX+dx+OX)*SCALE; ty=(fPos0.top+panOffsetY+dy+OY)*SCALE+tSz*0.55;
+        }
       }
-    });
-
-    // ── DOWNLOAD ICON OVERLAYS ──
-    const dlIcon = `<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M8 11.5l-4.5-4.5h3V2h3v5h3L8 11.5z"/><rect x="2" y="13" width="12" height="1.5" rx="0.75"/></svg>`;
-
-    function wrapWithDownload(img) {
-      const src = img.getAttribute('src');
-      if (!src || img.closest('.dl-wrap') || img.closest('.example-wrap')) return;
-
-      const wrapper = document.createElement('div');
-      wrapper.className = 'dl-wrap';
-
-      // carry over any inline styles from the img
-      const inlineStyle = img.getAttribute('style') || '';
-      if (inlineStyle) {
-        wrapper.setAttribute('style', inlineStyle);
-        img.removeAttribute('style');
-      }
-
-      img.parentNode.insertBefore(wrapper, img);
-      wrapper.appendChild(img);
-
-      const btn = document.createElement('a');
-      btn.className = 'dl-btn';
-      btn.href = src;
-      btn.download = src.split('/').pop();
-      btn.title = 'Download image';
-      btn.innerHTML = dlIcon;
-      wrapper.appendChild(btn);
+      if(tx!=null) titleEl=`<text x="${tx}" y="${ty}" font-family="'Trebuchet MS',sans-serif" font-size="${tSz}" font-weight="700" fill="${titleFill}" opacity="${opacity.toFixed(3)}" letter-spacing="${tSz*0.08}">${word}</text>`;
     }
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${BIGW}" height="${BIGH}">
+  <defs><filter id="blob" color-interpolation-filters="sRGB" x="-30%" y="-30%" width="160%" height="160%">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="${blobSVG}" result="blur"/>
+    <feColorMatrix in="blur" mode="matrix" values="${vals}" result="sharp"/>
+    <feComposite in="SourceGraphic" in2="sharp" operator="atop" result="crisp"/>
+    ${defocusStep}
+  </filter></defs>
+  <g filter="url(#blob)">${els}</g>${titleEl}</svg>`;
+  }
 
-    function wrapExampleWithDownload(img) {
-      const src = img.getAttribute('src');
-      if (!src || img.closest('.example-wrap') || img.closest('.dl-wrap')) return;
-
-      const wrapper = document.createElement('div');
-      wrapper.className = 'example-wrap';
-
-      // copy border-radius from inline style if present
-      const inlineStyle = img.getAttribute('style') || '';
-      img.removeAttribute('style');
-
-      img.parentNode.insertBefore(wrapper, img);
-      wrapper.appendChild(img);
-
-      const btn = document.createElement('a');
-      btn.className = 'dl-btn';
-      btn.href = src;
-      btn.download = src.split('/').pop();
-      btn.title = 'Download image';
-      btn.innerHTML = dlIcon;
-      wrapper.appendChild(btn);
-    }
-
-    // Wrap element-item images — img goes inside .img-clip, dl-btn sits on .element-item (not clipped)
-    document.querySelectorAll('.element-item img').forEach(img => {
-      const src = img.getAttribute('src');
-      if (!src) return;
-      const item = img.closest('.element-item');
-      if (!item) return;
-
-      // Wrap img in .img-clip so the image is clipped but btn is not
-      const clip = document.createElement('div');
-      clip.className = 'img-clip';
-      img.parentNode.insertBefore(clip, img);
-      clip.appendChild(img);
-
-      // Add dl-btn directly on .element-item (outside .img-clip, not clipped)
-      const btn = document.createElement('a');
-      btn.className = 'dl-btn';
-      btn.href = src;
-      btn.download = src.split('/').pop();
-      btn.title = 'Download image';
-      btn.innerHTML = dlIcon;
-      item.appendChild(btn);
+  function svgToCanvasTransparent(svgStr) {
+    return new Promise((resolve,reject)=>{
+      const blob=new Blob([svgStr],{type:'image/svg+xml;charset=utf-8'});
+      const url=URL.createObjectURL(blob);
+      const img=new Image();
+      img.onload=()=>{
+        const tmp=document.createElement('canvas'); tmp.width=BIGW; tmp.height=BIGH;
+        tmp.getContext('2d').drawImage(img,0,0);
+        URL.revokeObjectURL(url); resolve(tmp);
+      };
+      img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('SVG fail'));};
+      img.src=url;
     });
+  }
 
-    // Wrap photo-grid images (tropical, water, body)
-    document.querySelectorAll('.photo-grid img').forEach(wrapWithDownload);
+  // Measure bounds
+  progress.textContent='Measuring…';
+  let cropBounds=null;
+  const probeTs = hasMotion?[0,0.25,0.5,0.75].map(f=>f*Math.PI*2):[0];
+  // Include title word in probe so its position is included in crop bounds
+  const probeWord = hasTitle ? (WORD_SETS[currentLang]||[])[0] || null : null;
+  for(const tP of probeTs){
+    const c=await svgToCanvasTransparent(buildSVGFrame(getPos(tP), probeWord, 1.0));
+    const ctx=c.getContext('2d'),id=ctx.getImageData(0,0,BIGW,BIGH),d=id.data;
+    const PAD=32*SCALE; let mnX=BIGW,mxX=0,mnY=BIGH,mxY=0;
+    for(let py=0;py<BIGH;py++) for(let px=0;px<BIGW;px++){const i=(py*BIGW+px)*4;if(d[i+3]>20){if(px<mnX)mnX=px;if(px>mxX)mxX=px;if(py<mnY)mnY=py;if(py>mxY)mxY=py;}}
+    const b={minX:Math.max(0,mnX-PAD),minY:Math.max(0,mnY-PAD),maxX:Math.min(BIGW,mxX+PAD),maxY:Math.min(BIGH,mxY+PAD)};
+    if(!cropBounds)cropBounds={...b};
+    else{cropBounds.minX=Math.min(cropBounds.minX,b.minX);cropBounds.minY=Math.min(cropBounds.minY,b.minY);cropBounds.maxX=Math.max(cropBounds.maxX,b.maxX);cropBounds.maxY=Math.max(cropBounds.maxY,b.maxY);}
+  }
 
-    // Wrap logo-box images (primary, secondary, logo-with-title)
-    document.querySelectorAll('.logo-box img').forEach(img => {
-      const src = img.getAttribute('src');
-      if (!src) return;
-      const box = img.closest('.logo-box');
-      if (!box) return;
-      // Make logo-box relatively positioned for the overlay
-      box.style.position = 'relative';
-      box.style.overflow = 'hidden';
+  const cw=cropBounds.maxX-cropBounds.minX, ch=cropBounds.maxY-cropBounds.minY;
+  const outW=Math.min(qualSettings.maxW,cw), outH=Math.round(ch*(outW/cw));
 
-      const btn = document.createElement('a');
-      btn.className = 'dl-btn';
-      btn.href = src;
-      btn.download = src.split('/').pop();
-      btn.title = 'Download image';
-      btn.innerHTML = dlIcon;
-      box.appendChild(btn);
+  const frameBuffers=[], frameDelays=[];
+  const HOLD_F=Math.round(1800/FRAME_MS), FADE_F=Math.round(450/FRAME_MS);
+  const words=hasTitle?WORD_SETS[currentLang]:null;
 
-      box.addEventListener('mouseenter', () => btn.style.opacity = '1');
-      box.addEventListener('mouseleave', () => btn.style.opacity = '0');
-    });
-
-    // Wrap examples of usage images
-    document.querySelectorAll('#examples-of-usage img, #generative-examples img').forEach(wrapExampleWithDownload);
-
-    // ── AUTO HEIGHT — sends content height to parent Squarespace page ──
-    function sendHeight() {
-      const h = document.documentElement.scrollHeight;
-      window.parent.postMessage({ type: 'foams-height', height: h }, '*');
-    }
-    // Send on load, on resize, and whenever DOM changes
-    window.addEventListener('load', sendHeight);
-    window.addEventListener('resize', sendHeight);
-    new MutationObserver(sendHeight).observe(document.body, { subtree: true, childList: true, attributes: true });
-    sendHeight();
-    const topLinkSections = ['logo', 'color', 'typography', 'graphic-elements', 'photos-images', 'examples-of-usage', 'generative-examples'];
-    topLinkSections.forEach(id => {
-      const sec = document.getElementById(id);
-      if (!sec) return;
-      const wrap = document.createElement('div');
-      wrap.className = 'section-top-link';
-      const btn = document.createElement('a');
-      btn.href = '#brand-guidelines';
-      btn.title = currentLang === 'pt' ? 'Voltar ao início' : 'Back to top';
-      btn.textContent = '↑';
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        const top = document.getElementById('brand-guidelines');
-        if (top) top.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  async function collectFrame(positions,word,opacity){
+    const big=await svgToCanvasTransparent(buildSVGFrame(positions,word,opacity));
+    const fc=document.createElement('canvas'); fc.width=outW; fc.height=outH;
+    const fctx=fc.getContext('2d');
+    fctx.drawImage(big,cropBounds.minX,cropBounds.minY,cw,ch,0,0,outW,outH);
+    // Cut A hole using destination-out on the canvas
+    const holeSVG = buildHoleSVG(positions);
+    if (holeSVG) {
+      await new Promise(res => {
+        const hb=new Blob([holeSVG],{type:'image/svg+xml;charset=utf-8'});
+        const hurl=URL.createObjectURL(hb);
+        const himg=new Image();
+        himg.onload=()=>{
+          fctx.globalCompositeOperation='destination-out';
+          fctx.drawImage(himg,cropBounds.minX,cropBounds.minY,cw,ch,0,0,outW,outH);
+          fctx.globalCompositeOperation='source-over';
+          URL.revokeObjectURL(hurl); res();
+        };
+        himg.onerror=()=>{URL.revokeObjectURL(hurl);res();};
+        himg.src=hurl;
       });
-      wrap.appendChild(btn);
-      sec.appendChild(wrap);
-    });
-  </script>
+    }
+    const imgData = fctx.getImageData(0,0,outW,outH);
+    frameBuffers.push(imgData.data.buffer.slice(0));
+    frameDelays.push(FRAME_MS);
+  }
 
+  if(hasMotion&&!hasTitle){
+    for(let f=0;f<MOTION_FRAMES;f++){
+      if(f%5===0)progress.textContent=`Frame ${f+1}/${MOTION_FRAMES}…`;
+      await collectFrame(getPos(f*T_PER_FRAME),null,0);
+    }
+  } else if(!hasMotion&&hasTitle){
+    const wList=wordCyclePaused?[document.getElementById('wordTag').textContent]:words;
+    for(let w=0;w<wList.length;w++){
+      progress.textContent=`Word ${w+1}/${wList.length}`;
+      for(let f=0;f<HOLD_F;f++) await collectFrame(letterPositions,wList[w],1.0);
+      if(wList.length===1) continue;
+      const next=wList[(w+1)%wList.length];
+      for(let f=0;f<FADE_F;f++) await collectFrame(letterPositions,wList[w],1-f/FADE_F);
+      for(let f=0;f<FADE_F;f++) await collectFrame(letterPositions,next,f/FADE_F);
+    }
+  } else {
+    const FPWORD=HOLD_F+FADE_F*2, total=(words||[]).length*FPWORD; let tVal=0;
+    for(let f=0;f<total;f++){
+      if(f%5===0)progress.textContent=`Frame ${f+1}/${total}…`;
+      const pos=getPos(tVal), wIdx=Math.floor(f/FPWORD), wf=f%FPWORD;
+      const word=(words||[])[wIdx%((words||[]).length)], next=(words||[])[(wIdx+1)%((words||[]).length)];
+      let op=1.0,dw=word;
+      if(wf<FADE_F){op=wf/FADE_F;dw=word;}
+      else if(wf>=HOLD_F+FADE_F){op=1-(wf-HOLD_F-FADE_F)/FADE_F;dw=word;}
+      await collectFrame(pos,dw,op); tVal+=T_PER_FRAME;
+    }
+  }
+
+  progress.textContent='Encoding APNG…';
+  // Use UPNG to encode animated PNG
+  progress.textContent='Encoding APNG…';
+
+  // Build APNG manually using pako for compression
+  function crc32(buf) {
+    let c = 0xFFFFFFFF;
+    const table = crc32._t || (crc32._t = (() => {
+      const t = new Uint32Array(256);
+      for (let i=0;i<256;i++){let c2=i;for(let j=0;j<8;j++)c2=c2&1?0xEDB88320^(c2>>>1):c2>>>1;t[i]=c2;}
+      return t;
+    })());
+    for (let i=0;i<buf.length;i++) c=table[(c^buf[i])&0xFF]^(c>>>8);
+    return (c^0xFFFFFFFF)>>>0;
+  }
+  function u32(n){const b=new Uint8Array(4);new DataView(b.buffer).setUint32(0,n);return b;}
+  function u16(n){const b=new Uint8Array(2);new DataView(b.buffer).setUint16(0,n);return b;}
+  function chunk(type,data){
+    const tb=new TextEncoder().encode(type);
+    const combined=new Uint8Array(tb.length+data.length);
+    combined.set(tb);combined.set(data,tb.length);
+    const crc=u32(crc32(combined));
+    const out=new Uint8Array(4+4+data.length+4);
+    out.set(u32(data.length),0);out.set(tb,4);out.set(data,8);out.set(crc,8+data.length);
+    return out;
+  }
+  function concat(...arrays){
+    const len=arrays.reduce((s,a)=>s+a.length,0);
+    const out=new Uint8Array(len);let off=0;
+    arrays.forEach(a=>{out.set(a,off);off+=a.length;});
+    return out;
+  }
+
+  // PNG signature
+  const sig = new Uint8Array([137,80,78,71,13,10,26,10]);
+
+  // IHDR
+  const ihdr = new Uint8Array(13);
+  const dv = new DataView(ihdr.buffer);
+  dv.setUint32(0,outW);dv.setUint32(4,outH);
+  ihdr[8]=8;ihdr[9]=6;ihdr[10]=0;ihdr[11]=0;ihdr[12]=0; // 8bit RGBA
+
+  // acTL
+  const actl = new Uint8Array(8);
+  new DataView(actl.buffer).setUint32(0,frameBuffers.length);
+  new DataView(actl.buffer).setUint32(4,0); // loop forever
+
+  let seqNum = 0;
+  const frameChunks = [];
+
+  for (let fi=0;fi<frameBuffers.length;fi++){
+    const delay = frameDelays[fi];
+    // fcTL
+    const fctl = new Uint8Array(26);
+    const fdv = new DataView(fctl.buffer);
+    fdv.setUint32(0,seqNum++);
+    fdv.setUint32(4,outW);fdv.setUint32(8,outH);
+    fdv.setUint32(12,0);fdv.setUint32(16,0); // x,y offset
+    fdv.setUint16(20,delay);fdv.setUint16(22,1000); // delay num/den
+    fctl[24]=1;fctl[25]=0; // dispose=1(clear), blend=0(source)
+    frameChunks.push(chunk('fcTL',fctl));
+
+    // Compress frame RGBA
+    const raw = new Uint8Array(frameBuffers[fi]);
+    // Add filter byte (0=None) before each row
+    const filtered = new Uint8Array(outH*(outW*4+1));
+    for(let r=0;r<outH;r++){
+      filtered[r*(outW*4+1)]=0; // None filter
+      filtered.set(raw.subarray(r*outW*4,(r+1)*outW*4), r*(outW*4+1)+1);
+    }
+    const compressed = pako.deflate(filtered, {level: qualSettings.compress});
+
+    if(fi===0){
+      frameChunks.push(chunk('IDAT',compressed));
+    } else {
+      // fdAT: seqNum + compressed data
+      const fdat = new Uint8Array(4+compressed.length);
+      new DataView(fdat.buffer).setUint32(0,seqNum++);
+      fdat.set(compressed,4);
+      frameChunks.push(chunk('fdAT',fdat));
+    }
+  }
+
+  const apngBytes = concat(
+    sig,
+    chunk('IHDR',ihdr),
+    chunk('acTL',actl),
+    ...frameChunks,
+    chunk('IEND',new Uint8Array(0))
+  );
+
+  const blob2 = new Blob([apngBytes],{type:'image/png'});
+  const a2=document.createElement('a');
+  a2.download=`foams-animated-${logoColor}-transparent.png`;
+  a2.href=URL.createObjectURL(blob2);
+  a2.click();
+  progress.style.display='none';
+}
+
+
+</script>
 </body>
 </html>
