@@ -412,11 +412,13 @@
     }
 
     .subsection h3 {
-      font-size: 1.35rem;
+      font-size: 1.9rem;
       font-weight: 700;
       font-family: 'Averia Serif Libre', serif;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.6rem;
       color: var(--text);
+      letter-spacing: -0.01em;
+      line-height: 1.1;
     }
 
     .subsection > p {
@@ -428,7 +430,15 @@
 
     .generator-block h3 {
       font-family: 'Averia Serif Libre', serif;
-      font-size: 1.35rem;
+      font-size: 1.9rem;
+    }
+
+    .pairing-rules-title {
+      font-family: 'Averia Serif Libre', serif;
+      font-size: 1.9rem !important;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.25rem;
     }
 
     /* ── BUTTON ── */
@@ -499,17 +509,24 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
     }
 
     .element-item img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       display: block;
     }
 
     .element-item--light {
       background: #ffffff;
+    }
+
+    /* Dark mode inversion for "Different Usage" logo items */
+    body.dark-mode .element-item--light {
+      background: #000000;
+      filter: invert(1);
     }
 
     /* ── LOGO DISPLAY ── */
@@ -628,13 +645,13 @@
 
     .dl-btn {
       position: absolute;
-      bottom: 0.45rem;
-      right: 0.45rem;
-      width: 28px;
-      height: 28px;
-      background: rgba(0,0,0,0.65);
-      border: 1.5px solid rgba(255,255,255,0.35);
-      border-radius: 6px;
+      bottom: 0.35rem;
+      right: 0.35rem;
+      width: 26px;
+      height: 26px;
+      background: rgba(0,0,0,0.72);
+      border: 1.5px solid rgba(255,255,255,0.4);
+      border-radius: 5px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -655,9 +672,6 @@
       fill: #ffffff;
       display: block;
     }
-
-    /* keep element-item overflow visible so overlay peeks out */
-    .element-item { overflow: visible; position: relative; }
 
     /* photo-grid images need wrapper too */
     .photo-grid .dl-wrap {
@@ -936,14 +950,6 @@
       white-space: nowrap;
     }
 
-    .pairing-rules-title {
-      font-family: 'Averia Serif Libre', serif;
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 0.25rem;
-    }
-
     .pairing-rules-intro {
       font-size: 0.95rem;
       color: var(--text-muted);
@@ -1025,7 +1031,7 @@
         <a href="#examples-of-usage" data-i18n="nav-examples">Examples of Usage</a>
         <a href="#closing" data-i18n="nav-closing">↓ Keep it fluid</a>
       </nav>
-      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v1.7</div>
+      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v1.8</div>
     </aside>
 
     <!-- MAIN -->
@@ -1169,7 +1175,7 @@
         <div class="subsection">
           <h3 data-i18n="diff-usage-h3">Different Usage of Logo</h3>
           <p style="color:#666; font-size:0.9rem; margin-bottom:1.25rem;" data-i18n="diff-usage-p">Feel free to go crazy with the logo!</p>
-          <div class="elements-grid">
+          <div class="elements-grid" style="grid-template-columns: repeat(3, 1fr);">
             <div class="element-item element-item--light"><img src="o1.png" alt="Logo usage example"></div>
             <div class="element-item element-item--light"><img src="o2.png" alt="Logo usage example"></div>
             <div class="element-item element-item--light"><img src="o3.png" alt="Logo usage example"></div>
@@ -1471,7 +1477,7 @@
         </div>
 
         <div style="margin-top:4rem; padding-top:2rem; border-top:1px solid var(--border-color); display:flex; align-items:center; gap:1rem;">
-          <img src="foams-pink-on-black.png" alt="FOAMS" style="height:48px; object-fit:contain;">
+          <img id="footer-logo" src="foams-white-on-transparent.png" alt="FOAMS" style="height:48px; object-fit:contain;">
           <span style="font-size:0.8rem; color:var(--text-subtle); line-height:1.6;">FOAMS Brand Guidelines<br>casafoams.com</span>
         </div>
       </section>
@@ -1486,14 +1492,23 @@
 
   <script>
     // ── DARK MODE ──
+    function updateFooterLogo(isDark) {
+      const fl = document.getElementById('footer-logo');
+      if (fl) fl.src = isDark ? 'foams-white-on-transparent.png' : 'foams-black-on-transparent.png';
+    }
+
     function toggleDark() {
       const isDark = document.body.classList.toggle('dark-mode');
       document.getElementById('btn-dark').textContent = isDark ? '◑ Light' : '◐ Dark';
       localStorage.setItem('foams-dark', isDark ? '1' : '0');
+      updateFooterLogo(isDark);
     }
     if (localStorage.getItem('foams-dark') === '1') {
       document.body.classList.add('dark-mode');
       document.getElementById('btn-dark').textContent = '◑ Light';
+      updateFooterLogo(true);
+    } else {
+      updateFooterLogo(false);
     }
 
     // ── LANGUAGE ──
@@ -1804,6 +1819,28 @@
 
     // Wrap photo-grid images (tropical, water, body)
     document.querySelectorAll('.photo-grid img').forEach(wrapWithDownload);
+
+    // Wrap logo-box images (primary, secondary, logo-with-title)
+    document.querySelectorAll('.logo-box img').forEach(img => {
+      const src = img.getAttribute('src');
+      if (!src) return;
+      const box = img.closest('.logo-box');
+      if (!box) return;
+      // Make logo-box relatively positioned for the overlay
+      box.style.position = 'relative';
+      box.style.overflow = 'hidden';
+
+      const btn = document.createElement('a');
+      btn.className = 'dl-btn';
+      btn.href = src;
+      btn.download = src.split('/').pop();
+      btn.title = 'Download image';
+      btn.innerHTML = dlIcon;
+      box.appendChild(btn);
+
+      box.addEventListener('mouseenter', () => btn.style.opacity = '1');
+      box.addEventListener('mouseleave', () => btn.style.opacity = '0');
+    });
 
     // Wrap examples of usage images
     document.querySelectorAll('#examples-of-usage img').forEach(wrapExampleWithDownload);
