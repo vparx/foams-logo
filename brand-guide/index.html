@@ -17,75 +17,16 @@
       --border: #e0e0e0;
       --sidebar-width: 240px;
       --font-sans: 'Trebuchet MS', sans-serif;
-
-      /* semantic tokens */
-      --bg: #ffffff;
-      --bg-light: #F5F5F5;
-      --text: #111111;
-      --text-muted: #555555;
-      --text-subtle: #888888;
-      --border-color: #e0e0e0;
-      --sidebar-bg: #ffffff;
-      --card-bg: #ffffff;
-    }
-
-    body.dark-mode {
-      --bg: #0e0e0e;
-      --bg-light: #1a1a1a;
-      --text: #f0f0f0;
-      --text-muted: #aaaaaa;
-      --text-subtle: #666666;
-      --border-color: #2a2a2a;
-      --sidebar-bg: #111111;
-      --card-bg: #181818;
-    }
-
-    /* ── CONTROL BAR ── */
-    .control-bar {
-      position: fixed;
-      top: 1rem;
-      right: 1.25rem;
-      display: flex;
-      gap: 0.5rem;
-      z-index: 300;
-    }
-
-    .ctrl-btn {
-      padding: 0.45rem 0.9rem;
-      border-radius: 999px;
-      border: 1.5px solid var(--border-color);
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font-sans);
-      font-size: 0.75rem;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      cursor: pointer;
-      transition: background 0.2s, color 0.2s, border-color 0.2s;
-      white-space: nowrap;
-    }
-
-    .ctrl-btn:hover {
-      background: var(--brand);
-      color: #000;
-      border-color: var(--brand);
-    }
-
-    .ctrl-btn.active {
-      background: var(--brand);
-      color: #000;
-      border-color: var(--brand);
     }
 
     html { scroll-behavior: smooth; }
 
     body {
       font-family: var(--font-sans);
-      background: var(--bg);
-      color: var(--text);
+      background: var(--white);
+      color: var(--black);
       font-size: 16px;
       line-height: 1.6;
-      transition: background 0.3s, color 0.3s;
     }
 
     /* ── LAYOUT ── */
@@ -102,10 +43,9 @@
       top: 0;
       height: 100vh;
       overflow-y: auto;
-      background: var(--sidebar-bg);
-      border-right: 1px solid var(--border-color);
+      background: var(--white);
+      border-right: 1px solid var(--border);
       padding: 2.5rem 0;
-      transition: background 0.3s, border-color 0.3s;
     }
 
     .sidebar-title {
@@ -114,9 +54,9 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.15em;
-      color: var(--text-subtle);
+      color: #aaa;
       padding: 0 1.5rem 1rem;
-      border-bottom: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border);
       margin-bottom: 0.5rem;
     }
 
@@ -125,22 +65,22 @@
       padding: 0.85rem 1.5rem;
       font-size: 0.9rem;
       font-weight: 500;
-      color: var(--text-muted);
+      color: #666;
       text-decoration: none;
       transition: color 0.15s, background 0.15s;
       border-left: 3px solid transparent;
     }
 
     .sidebar nav a:hover {
-      color: var(--text);
-      background: var(--bg-light);
+      color: var(--black);
+      background: var(--light);
     }
 
     .sidebar nav a.active {
-      color: var(--text);
+      color: var(--black);
       font-weight: 700;
       border-left: 3px solid var(--brand);
-      background: var(--bg-light);
+      background: var(--light);
     }
 
     /* ── MAIN CONTENT ── */
@@ -154,7 +94,7 @@
     .section {
       padding-top: 4rem;
       padding-bottom: 5rem;
-      border-bottom: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border);
     }
 
     .section:first-child {
@@ -177,11 +117,11 @@
       letter-spacing: -0.02em;
       line-height: 1.05;
       margin-bottom: 0.75rem;
-      color: var(--text);
+      color: var(--black);
     }
 
     .section-header p {
-      color: var(--text-muted);
+      color: #555;
       max-width: 640px;
       font-size: 1rem;
       line-height: 1.75;
@@ -272,7 +212,7 @@
     /* ── TYPOGRAPHY SHOWCASE ── */
     .type-showcase {
       margin-top: 1.5rem;
-      background: var(--bg-light);
+      background: var(--light);
       border-radius: 12px;
       padding: 2.5rem;
     }
@@ -282,7 +222,7 @@
       align-items: baseline;
       gap: 1.5rem;
       padding: 1rem 0;
-      border-bottom: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border);
     }
 
     .type-row:last-child { border-bottom: none; }
@@ -297,7 +237,7 @@
       color: #888;
     }
 
-    .type-sample { color: var(--text); }
+    .type-sample { color: var(--black); }
     .type-sample.h1 { font-size: 3rem; font-weight: 900; letter-spacing: -0.03em; line-height: 1; }
     .type-sample.h2 { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; }
     .type-sample.h3 { font-size: 1.25rem; font-weight: 700; }
@@ -412,17 +352,15 @@
     }
 
     .subsection h3 {
-      font-size: 1.9rem;
+      font-size: 1.35rem;
       font-weight: 700;
       font-family: 'Averia Serif Libre', serif;
-      margin-bottom: 0.6rem;
-      color: var(--text);
-      letter-spacing: -0.01em;
-      line-height: 1.1;
+      margin-bottom: 0.5rem;
+      color: var(--black);
     }
 
     .subsection > p {
-      color: var(--text-muted);
+      color: #666;
       font-size: 0.9rem;
       margin-bottom: 1.25rem;
       line-height: 1.6;
@@ -430,15 +368,7 @@
 
     .generator-block h3 {
       font-family: 'Averia Serif Libre', serif;
-      font-size: 1.9rem;
-    }
-
-    .pairing-rules-title {
-      font-family: 'Averia Serif Libre', serif;
-      font-size: 1.9rem !important;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 0.25rem;
+      font-size: 1.35rem;
     }
 
     /* ── BUTTON ── */
@@ -454,28 +384,15 @@
       letter-spacing: 0.1em;
       text-transform: uppercase;
       text-decoration: none;
-      border: 2px solid var(--white);
+      border: none;
       cursor: pointer;
-      transition: background 0.2s, color 0.2s, border-color 0.2s;
+      transition: background 0.2s, color 0.2s;
       border-radius: 2px;
     }
 
     .btn:hover {
       background: var(--brand);
       color: var(--black);
-      border-color: var(--brand);
-    }
-
-    .btn-row {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      align-items: center;
-      margin-top: 1.5rem;
-    }
-    .btn-row .btn,
-    .btn-row .btn-generator {
-      margin-top: 0;
     }
 
     /* ── PHOTOS ── */
@@ -509,26 +426,17 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      position: relative;
     }
 
     .element-item img {
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: cover;
       display: block;
     }
 
     .element-item--light {
-      background: #ffffff;
-    }
-
-    /* Dark mode inversion for "Different Usage" logo items */
-    body.dark-mode .element-item--light {
-      background: #000000;
-    }
-    body.dark-mode .element-item--light img {
-      filter: invert(1);
+      background: var(--light);
     }
 
     /* ── LOGO DISPLAY ── */
@@ -536,7 +444,7 @@
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 1rem;
-      background: var(--bg-light);
+      background: var(--light);
       border-radius: 12px;
       padding: 1.5rem;
       margin-top: 1.5rem;
@@ -558,27 +466,27 @@
       justify-content: center;
     }
 
-    .logo-box.on-white { background: #ffffff; border: 1px solid var(--border-color); }
-    .logo-box.on-black { background: #000000; }
+    .logo-box.on-white { background: var(--white); border: 1px solid var(--border); }
+    .logo-box.on-black { background: var(--black); }
     .logo-box.on-transparent {
-      background-color: #ffffff;
+      background-color: #fff;
       background-image:
-        linear-gradient(45deg, #cccccc 25%, transparent 25%),
-        linear-gradient(-45deg, #cccccc 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, #cccccc 75%),
-        linear-gradient(-45deg, transparent 75%, #cccccc 75%);
+        linear-gradient(45deg, #ccc 25%, transparent 25%),
+        linear-gradient(-45deg, #ccc 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #ccc 75%),
+        linear-gradient(-45deg, transparent 75%, #ccc 75%);
       background-size: 16px 16px;
       background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
     }
 
     /* White-on-transparent needs dark checkerboard so white logo shows */
     .logo-box.on-transparent-dark {
-      background-color: #555555;
+      background-color: #444;
       background-image:
-        linear-gradient(45deg, #333333 25%, transparent 25%),
-        linear-gradient(-45deg, #333333 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, #333333 75%),
-        linear-gradient(-45deg, transparent 75%, #333333 75%);
+        linear-gradient(45deg, #333 25%, transparent 25%),
+        linear-gradient(-45deg, #333 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #333 75%),
+        linear-gradient(-45deg, transparent 75%, #333 75%);
       background-size: 16px 16px;
       background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
     }
@@ -600,39 +508,27 @@
     }
 
     /* ── BACK TO TOP ── */
-    #back-to-top-wrap {
-      position: sticky;
-      bottom: 2rem;
-      height: 0;
-      overflow: visible;
-      display: flex;
-      justify-content: flex-end;
-      pointer-events: none;
-      z-index: 9999;
-      margin-right: 2rem;
-    }
-
     #back-to-top {
-      width: 48px;
-      height: 48px;
-      background: var(--bg);
-      color: var(--brand);
-      border: 2px solid var(--brand);
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 44px;
+      height: 44px;
+      background: var(--black);
+      color: var(--white);
+      border: none;
       border-radius: 50%;
-      font-size: 1.3rem;
-      font-weight: 700;
+      font-size: 1.2rem;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
+      z-index: 200;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.3s, background 0.2s, color 0.2s;
+      transition: opacity 0.3s, background 0.2s;
       text-decoration: none;
-      box-shadow: 0 2px 16px rgba(0,0,0,0.35);
-      align-self: flex-end;
-      position: relative;
-      top: -48px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
     }
 
     #back-to-top.visible {
@@ -642,81 +538,10 @@
 
     #back-to-top:hover {
       background: var(--brand);
-      color: #000;
+      color: var(--black);
     }
 
-    /* ── DOWNLOAD OVERLAY ── */
-    .dl-wrap {
-      position: relative;
-      display: block;
-    }
-
-    .dl-wrap img {
-      display: block;
-      width: 100%;
-    }
-
-    .dl-btn {
-      position: absolute;
-      bottom: 0.35rem;
-      right: 0.35rem;
-      width: 26px;
-      height: 26px;
-      background: rgba(0,0,0,0.72);
-      border: 1.5px solid rgba(255,255,255,0.4);
-      border-radius: 5px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      transition: opacity 0.18s, background 0.18s;
-      text-decoration: none;
-      z-index: 10;
-      cursor: pointer;
-    }
-
-    .dl-wrap:hover .dl-btn {
-      opacity: 1;
-    }
-
-    .dl-btn svg {
-      width: 14px;
-      height: 14px;
-      fill: #ffffff;
-      display: block;
-    }
-
-    /* photo-grid images need wrapper too */
-    .photo-grid .dl-wrap {
-      border-radius: 8px;
-      overflow: hidden;
-      aspect-ratio: 4/3;
-    }
-    .photo-grid .dl-wrap img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    /* example usage image wrappers */
-    .example-wrap {
-      position: relative;
-      display: block;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .example-wrap img {
-      width: 100%;
-      display: block;
-    }
-    .example-wrap .dl-btn {
-      opacity: 0;
-    }
-    .example-wrap:hover .dl-btn {
-      opacity: 1;
-    }
-
-    
+    /* ── GENERATOR BLOCK ── */
     .generator-block {
       margin-top: 2.5rem;
       background: var(--dark);
@@ -836,7 +661,12 @@
     }
 
     .element-item--light {
-      background: #ffffff;
+      background: var(--light);
+    }
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
     .elements-grid-placeholder {
@@ -887,9 +717,9 @@
     }
 
     .type-ex-light {
-      background: #ffffff;
+      background: var(--white);
       padding: 2rem;
-      border-left: 1px solid #e0e0e0;
+      border-left: 1px solid var(--border);
     }
 
     .type-ex-heading {
@@ -937,6 +767,27 @@
       gap: 1rem;
     }
 
+    .pairing-rules-title {
+      font-family: 'Averia Serif Libre', serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--black);
+      margin-bottom: 0.25rem;
+    }
+
+    .pairing-rules-intro {
+      font-size: 0.95rem;
+      color: #555;
+      margin-bottom: 0.5rem;
+      line-height: 1.6;
+    }
+
+    .pairing-combo {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
     .pairing-combo-header {
       display: flex;
       align-items: center;
@@ -949,7 +800,19 @@
     .pairing-combo-header.allowed { background: #f0fdf4; color: #166534; border-bottom: 1px solid #bbf7d0; }
     .pairing-combo-header.forbidden { background: #fef2f2; color: #991b1b; border-bottom: 1px solid #fecaca; }
     .pairing-combo-header.conditional { background: #fffbeb; color: #92400e; border-bottom: 1px solid #fde68a; }
-    .pairing-combo-header .badge { font-size: 1rem; }
+
+    .pairing-combo-header .badge {
+      font-size: 1rem;
+    }
+
+    .pairing-combo-body {
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+      background: var(--white);
+    }
 
     .pairing-tag {
       display: inline-flex;
@@ -963,44 +826,22 @@
       white-space: nowrap;
     }
 
-    .pairing-rules-intro {
-      font-size: 0.95rem;
-      color: var(--text-muted);
-      margin-bottom: 0.5rem;
-      line-height: 1.6;
-    }
-
-    .pairing-combo {
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid var(--border-color);
-    }
-
-    .pairing-combo-body {
-      padding: 1.25rem 1.5rem;
-      display: flex;
-      align-items: center;
-      gap: 1.25rem;
-      flex-wrap: wrap;
-      background: var(--bg);
-    }
-
     .pairing-tag.pink { background: #FF30FF; color: #000; }
     .pairing-tag.dark { background: #111; color: #fff; }
-    .pairing-tag.grey { background: var(--bg-light); color: var(--text); border: 1px solid var(--border-color); }
+    .pairing-tag.grey { background: #eee; color: #333; border: 1px solid #ddd; }
 
     .pairing-arrow {
       font-size: 1.1rem;
-      color: var(--text-subtle);
+      color: #aaa;
       font-weight: 700;
     }
 
     .pairing-note {
       padding: 0.85rem 1.5rem;
       font-size: 0.82rem;
-      color: var(--text-muted);
-      background: var(--bg-light);
-      border-top: 1px solid var(--border-color);
+      color: #666;
+      background: var(--light);
+      border-top: 1px solid var(--border);
       font-style: italic;
     }
 
@@ -1015,19 +856,6 @@
   </style>
 </head>
 <body>
-  <script>
-    // Force scroll to top on every load (fixes iframe mid-scroll issue)
-    try { window.scrollTo(0, 0); } catch(e) {}
-    try { document.documentElement.scrollTop = 0; } catch(e) {}
-    try { document.body.scrollTop = 0; } catch(e) {}
-  </script>
-
-  <!-- CONTROL BAR -->
-  <div class="control-bar">
-    <button class="ctrl-btn active" id="btn-pt" onclick="setLang('pt')">PT</button>
-    <button class="ctrl-btn" id="btn-en" onclick="setLang('en')">EN</button>
-    <button class="ctrl-btn" id="btn-dark" onclick="toggleDark()">◐ Dark</button>
-  </div>
 
   <div class="layout">
 
@@ -1035,44 +863,40 @@
     <aside class="sidebar">
       <div class="sidebar-title">Brand Guidelines</div>
       <nav>
-        <a href="#brand-guidelines" data-i18n="nav-overview">Overview</a>
-        <a href="#logo" data-i18n="nav-logo">Logo</a>
-        <a href="#color" data-i18n="nav-color">Color</a>
-        <a href="#typography" data-i18n="nav-typography">Typography</a>
-        <a href="#graphic-elements" data-i18n="nav-graphic">Graphic Elements</a>
-        <a href="#photos-images" data-i18n="nav-photos">Photos &amp; Images</a>
-        <a href="#examples-of-usage" data-i18n="nav-examples">Examples of Usage</a>
-        <a href="#closing" data-i18n="nav-closing">↓ Keep it fluid</a>
+        <a href="#brand-guidelines">Overview</a>
+        <a href="#logo">Logo</a>
+        <a href="#color">Color</a>
+        <a href="#typography">Typography</a>
+        <a href="#graphic-elements">Graphic Elements</a>
+        <a href="#photos-images">Photos &amp; Images</a>
+        <a href="#examples-of-usage">Examples of Usage</a>
+        <a href="#closing">↓ Keep it fluid</a>
       </nav>
-      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v2.0</div>
     </aside>
 
     <!-- MAIN -->
     <main>
 
       <!-- BRAND GUIDELINES -->
-      <section class="section" id="brand-guidelines" style="padding-bottom: 2rem;">
-        <div class="section-header" style="margin-bottom:0;">
-          <h2 data-i18n="overview-h2">FOAMS Brand Guidelines</h2>
-          <p data-i18n="overview-p">We've created a set of guidelines to help you bring our brand to life consistently across every touchpoint. On this page you'll find our high-level guidelines and the assets you'll need.</p>
+      <section class="section" id="brand-guidelines">
+        <div class="section-header">
+          <h2>FOAMS Brand Guidelines</h2>
+          <p>We've created a set of guidelines to help you bring our brand to life consistently across every touchpoint. On this page you'll find our high-level guidelines and the assets you'll need.</p>
         </div>
       </section>
 
       <!-- LOGO -->
       <section class="section" id="logo">
         <div class="section-header">
-          <h2 data-i18n="logo-h2">Logo</h2>
-          <p data-i18n="logo-p" data-html="1">Our logo is the cornerstone of our identity. Use it consistently and give it room to breathe. Ideally you should use the <strong>FOAMS LOGO GENERATOR</strong> tool every time you need a logo, to make it fluid. Our logo is always changing.</p>
+          <h2>Logo</h2>
+          <p>Our logo is the cornerstone of our identity. Use it consistently and give it room to breathe. Ideally you should use the <strong>FOAMS LOGO GENERATOR</strong> tool every time you need a logo, to make it fluid. Our logo is always changing.</p>
         </div>
 
-        <div class="btn-row">
-          <a href="foams-logo-options.zip" download class="btn" data-i18n="logo-dl">Download Base Logo</a>
-          <a href="http://casafoams.com/foams-logo" target="_blank" class="btn-generator" data-i18n="generator-btn">Open Logo Generator</a>
-        </div>
+        <a href="foams-logo-options.zip" download class="btn">Download Base Logo</a>
 
         <!-- Primary Logo -->
         <div class="subsection">
-          <h3 data-i18n="logo-primary">Primary Logo</h3>
+          <h3>Primary Logo</h3>
           <div class="logo-display" style="grid-template-columns: repeat(4, 1fr);">
             <div class="logo-variant">
               <div class="logo-box on-white">
@@ -1103,7 +927,7 @@
 
         <!-- Secondary Logo -->
         <div class="subsection">
-          <h3><span data-i18n="logo-secondary">Secondary Logo</span> <span style="font-size:0.75rem; font-weight:400; font-family:'Trebuchet MS',sans-serif; color:#888; text-transform:none; letter-spacing:0;" data-i18n="logo-secondary-sub">— with brand color</span></h3>
+          <h3>Secondary Logo <span style="font-size:0.75rem; font-weight:400; font-family:'Trebuchet MS',sans-serif; color:#888; text-transform:none; letter-spacing:0;">— with brand color</span></h3>
           <div class="logo-display" style="grid-template-columns: repeat(3, 1fr);">
             <div class="logo-variant">
               <div class="logo-box on-white">
@@ -1118,7 +942,7 @@
               <small>Pink on Black</small>
             </div>
             <div class="logo-variant">
-              <div class="logo-box on-transparent pink-logo">
+              <div class="logo-box on-transparent">
                 <img src="foams-pink-on-transparent.png" alt="FOAMS pink on transparent">
               </div>
               <small>Pink on Transparent</small>
@@ -1128,13 +952,13 @@
 
         <!-- Logo with Title -->
         <div class="subsection">
-          <h3 data-i18n="logo-withtitle">Logo with Title</h3>
-          <p style="color:#666; font-size:0.9rem; max-width:520px; margin-bottom:1.5rem;" data-i18n="logo-withtitle-p">A title text can also be added. In case of Portuguese it should be located on the top left corner. In case of English it should be located on the bottom right corner.</p>
+          <h3>Logo with Title</h3>
+          <p style="color:#666; font-size:0.9rem; max-width:520px; margin-bottom:1.5rem;">A title text can also be added. In case of Portuguese it should be located on the top left corner. In case of English it should be located on the bottom right corner.</p>
 
-          <p style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#888; margin-bottom:0.75rem;" data-i18n="logo-pt-label">Portuguese — top left</p>
+          <p style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#888; margin-bottom:0.75rem;">Portuguese — top left</p>
           <div class="logo-display" style="grid-template-columns: repeat(3, 1fr);">
             <div class="logo-variant">
-              <div class="logo-box on-white" style="height:120px;">
+              <div class="logo-box on-black" style="height:120px;">
                 <img src="p1.png" alt="Logo with Portuguese title 1">
               </div>
             </div>
@@ -1144,16 +968,16 @@
               </div>
             </div>
             <div class="logo-variant">
-              <div class="logo-box on-black" style="height:120px;">
+              <div class="logo-box on-white" style="height:120px;">
                 <img src="p3.png" alt="Logo with Portuguese title 3">
               </div>
             </div>
           </div>
 
-          <p style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#888; margin-top:1.5rem; margin-bottom:0.75rem;" data-i18n="logo-en-label">English — bottom right</p>
+          <p style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#888; margin-top:1.5rem; margin-bottom:0.75rem;">English — bottom right</p>
           <div class="logo-display" style="grid-template-columns: repeat(3, 1fr);">
             <div class="logo-variant">
-              <div class="logo-box on-white" style="height:120px;">
+              <div class="logo-box on-black" style="height:120px;">
                 <img src="e1.png" alt="Logo with English title 1">
               </div>
             </div>
@@ -1163,7 +987,7 @@
               </div>
             </div>
             <div class="logo-variant">
-              <div class="logo-box on-black" style="height:120px;">
+              <div class="logo-box on-white" style="height:120px;">
                 <img src="e3.png" alt="Logo with English title 3">
               </div>
             </div>
@@ -1172,23 +996,23 @@
 
         <!-- GENERATOR -->
         <div class="generator-block">
-          <h3 data-i18n="generator-h3">FOAMS Logo Generator</h3>
-          <a href="http://casafoams.com/foams-logo" target="_blank" class="btn-generator" data-i18n="generator-btn">Open Logo Generator</a>
+          <h3>FOAMS Logo Generator</h3>
+          <a href="http://casafoams.com/foams-logo" target="_blank" class="btn-generator">Open Logo Generator</a>
           <div class="guidelines-note">
-            <strong data-i18n="gen-guideline-title">Guidelines</strong>
-            <p data-i18n="gen-guideline-p">Preferably always make a logo in which the letters are closely connected and look very watery — fluid. But feel free to also explore different ways of using the logo generator tool.</p>
+            <strong>Guidelines</strong>
+            <p>Preferably always make a logo in which the letters are closely connected and look very watery — fluid. But feel free to also explore different ways of using the logo generator tool.</p>
           </div>
           <div class="guidelines-note" style="margin-top:0.75rem;">
-            <strong data-i18n="gen-titletext-title">Title Text</strong>
-            <p data-i18n="gen-titletext-p">You can also add a title text in the generator by clicking the Title buttons, in case it's needed.</p>
+            <strong>Subtitle</strong>
+            <p>You can also add a subtitle in the generator by clicking the Title buttons, in case it's needed.</p>
           </div>
         </div>
 
         <!-- DIFFERENT USAGE OF LOGO -->
         <div class="subsection">
-          <h3 data-i18n="diff-usage-h3">Different Usage of Logo</h3>
-          <p style="color:#666; font-size:0.9rem; margin-bottom:1.25rem;" data-i18n="diff-usage-p">Feel free to go crazy with the logo!</p>
-          <div class="elements-grid" style="grid-template-columns: repeat(3, 1fr);">
+          <h3>Different Usage of Logo</h3>
+          <p style="color:#666; font-size:0.9rem; margin-bottom:1.25rem;">Feel free to go crazy with the logo!</p>
+          <div class="elements-grid">
             <div class="element-item element-item--light"><img src="o1.png" alt="Logo usage example"></div>
             <div class="element-item element-item--light"><img src="o2.png" alt="Logo usage example"></div>
             <div class="element-item element-item--light"><img src="o3.png" alt="Logo usage example"></div>
@@ -1202,8 +1026,8 @@
       <!-- COLOR -->
       <section class="section" id="color">
         <div class="section-header">
-          <h2 data-i18n="color-h2">Color</h2>
-          <p data-i18n="color-p">Our palette is bold and minimal. Pink is our signature — electric and unmistakable. The dark tones ground it with depth.</p>
+          <h2>Color</h2>
+          <p>Our palette is bold and minimal. Pink is our signature — electric and unmistakable. The dark tones ground it with depth.</p>
         </div>
 
         <div class="swatches">
@@ -1238,14 +1062,14 @@
       <!-- TYPOGRAPHY -->
       <section class="section" id="typography">
         <div class="section-header">
-          <h2 data-i18n="typo-h2">Typography</h2>
-          <p data-i18n="typo-p">Two typefaces, each with a clear role. Averia Serif Libre leads all titles and headings. Trebuchet MS handles body text.</p>
+          <h2>Typography</h2>
+          <p>Two typefaces, each with a clear role. Averia Serif Libre leads all titles and headings. Trebuchet MS handles body text.</p>
         </div>
 
         <div class="type-showcase">
           <div class="type-row" style="align-items:center;">
             <span class="type-label">Typeface</span>
-            <span style="font-family:'Averia Serif Libre', serif; font-size:1.1rem; font-weight:700; color:var(--text);">Averia Serif Libre</span>
+            <span style="font-family:'Averia Serif Libre', serif; font-size:1.1rem; font-weight:700; color:#333;">Averia Serif Libre</span>
             <span style="margin-left:auto; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#FF30FF;">Headings &amp; Titles</span>
           </div>
           <div class="type-row">
@@ -1265,7 +1089,7 @@
         <div class="type-showcase" style="margin-top:1.5rem;">
           <div class="type-row" style="align-items:center;">
             <span class="type-label">Typeface</span>
-            <span style="font-family:'Trebuchet MS', sans-serif; font-size:1.1rem; font-weight:700; color:var(--text);">Trebuchet MS</span>
+            <span style="font-family:'Trebuchet MS', sans-serif; font-size:1.1rem; font-weight:700; color:#333;">Trebuchet MS</span>
             <span style="margin-left:auto; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#888;">Body Text Only</span>
           </div>
           <div class="type-row">
@@ -1280,7 +1104,7 @@
 
         <!-- Live example -->
         <div class="subsection">
-          <h3 data-i18n="typo-inuse">In Use</h3>
+          <h3>In Use</h3>
           <div class="type-example-card">
             <div class="type-ex-dark">
               <div class="type-ex-heading">FOAMS</div>
@@ -1301,15 +1125,15 @@
       <!-- GRAPHIC ELEMENTS -->
       <section class="section" id="graphic-elements">
         <div class="section-header">
-          <h2 data-i18n="graphic-h2">Graphic Elements</h2>
-          <p data-i18n="graphic-p">Our graphic language is built around two distinct visual styles. Each brings a different energy — use them individually or in combination.</p>
+          <h2>Graphic Elements</h2>
+          <p>Our graphic language is built around two distinct visual styles. Each brings a different energy — use them individually or in combination.</p>
         </div>
 
         <!-- Pink Vectors -->
         <div class="subsection" style="margin-top:0;">
-          <h3 data-i18n="pv-h3">Pink Vectors</h3>
-          <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;" data-i18n="pv-p">Bold magenta lines, curves, and geometric forms. Use on dark backgrounds for maximum impact.</p>
-          <p style="margin-bottom:1.25rem;"><span class="pairing-tag pink" style="font-size:0.72rem;" data-i18n="pv-tag">✅ Pair with: Water images only</span></p>
+          <h3>Pink Vectors</h3>
+          <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;">Bold magenta lines, curves, and geometric forms. Use on dark backgrounds for maximum impact.</p>
+          <p style="margin-bottom:1.25rem;"><span class="pairing-tag pink" style="font-size:0.72rem;">✅ Pair with: Water images only</span></p>
           <div class="elements-grid">
             <div class="element-item"><img src="pink-vectors__14_.png" alt="Pink vector element"></div>
             <div class="element-item"><img src="pink-vectors__13_.png" alt="Pink vector element"></div>
@@ -1330,9 +1154,9 @@
 
         <!-- Focus Light -->
         <div class="subsection">
-          <h3 data-i18n="fl-h3">Focus Light</h3>
-          <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;" data-i18n="fl-p">Concentrated light effects, glows, and radial highlights creating depth and drama.</p>
-          <p style="margin-bottom:1.25rem;"><span class="pairing-tag grey" style="font-size:0.72rem;" data-i18n="fl-tag">✅ Pair with: Tropical images only</span></p>
+          <h3>Focus Light</h3>
+          <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;">Concentrated light effects, glows, and radial highlights creating depth and drama.</p>
+          <p style="margin-bottom:1.25rem;"><span class="pairing-tag grey" style="font-size:0.72rem;">✅ Pair with: Tropical images only</span></p>
           <div class="elements-grid">
             <div class="element-item"><img src="focus-light__1_.png" alt="Focus light element"></div>
             <div class="element-item"><img src="focus-light__2_.png" alt="Focus light element"></div>
@@ -1352,44 +1176,58 @@
 
         <!-- PAIRING RULES -->
         <div class="pairing-rules">
-          <h3 class="pairing-rules-title" data-i18n="pairing-title">How to Combine Elements + Images</h3>
-          <p class="pairing-rules-intro" data-i18n="pairing-intro">Each graphic element style is designed to pair with a specific image category. Follow these rules for a consistent and intentional visual result.</p>
+          <h3 class="pairing-rules-title">How to Combine Elements + Images</h3>
+          <p class="pairing-rules-intro">Each graphic element style is designed to pair with a specific image category. Follow these rules for a consistent and intentional visual result.</p>
 
+          <!-- Pink Vectors → Water only -->
           <div class="pairing-combo">
-            <div class="pairing-combo-header allowed" data-i18n="rule1-header"><span class="badge">✅</span> Pink Vectors pair exclusively with Water images</div>
-            <div class="pairing-combo-body">
-              <span class="pairing-tag pink" data-i18n="pv-h3">Pink Vectors</span>
-              <span class="pairing-arrow">→</span>
-              <span class="pairing-tag dark" data-i18n="water-h3">Water</span>
+            <div class="pairing-combo-header allowed">
+              <span class="badge">✅</span> Pink Vectors pair exclusively with Water images
             </div>
-            <div class="pairing-note" data-i18n="rule1-note">The electric energy of Pink Vectors matches the raw movement of water. Never use Pink Vectors with Tropical or Body images.</div>
+            <div class="pairing-combo-body">
+              <span class="pairing-tag pink">Pink Vectors</span>
+              <span class="pairing-arrow">→</span>
+              <span class="pairing-tag dark">Water</span>
+            </div>
+            <div class="pairing-note">The electric energy of Pink Vectors matches the raw movement of water. Never use Pink Vectors with Tropical or Body images.</div>
           </div>
 
+          <!-- Focus Light → Tropical only -->
           <div class="pairing-combo">
-            <div class="pairing-combo-header allowed" data-i18n="rule2-header"><span class="badge">✅</span> Focus Light pairs exclusively with Tropical images</div>
-            <div class="pairing-combo-body">
-              <span class="pairing-tag grey" data-i18n="fl-h3">Focus Light</span>
-              <span class="pairing-arrow">→</span>
-              <span class="pairing-tag grey" data-i18n="tropical-h3">Tropical</span>
+            <div class="pairing-combo-header allowed">
+              <span class="badge">✅</span> Focus Light pairs exclusively with Tropical images
             </div>
-            <div class="pairing-note" data-i18n="rule2-note">The soft glows of Focus Light complement the organic textures of tropical nature. Never use Focus Light with Water or Body images.</div>
+            <div class="pairing-combo-body">
+              <span class="pairing-tag grey">Focus Light</span>
+              <span class="pairing-arrow">→</span>
+              <span class="pairing-tag grey">Tropical</span>
+            </div>
+            <div class="pairing-note">The soft glows of Focus Light complement the organic textures of tropical nature. Never use Focus Light with Water or Body images.</div>
           </div>
 
+          <!-- Both → Body, but not together -->
           <div class="pairing-combo">
-            <div class="pairing-combo-header conditional" data-i18n="rule3-header"><span class="badge">⚠️</span> Both can be used with Body images — but never at the same time</div>
-            <div class="pairing-combo-body">
-              <span class="pairing-tag pink" data-i18n="pv-h3">Pink Vectors</span>
-              <span style="font-size:0.8rem; color:#aaa; font-weight:700;" data-i18n-or="or">or</span>
-              <span class="pairing-tag grey" data-i18n="fl-h3">Focus Light</span>
-              <span class="pairing-arrow">→</span>
-              <span class="pairing-tag dark" data-i18n="body-h3">Body</span>
+            <div class="pairing-combo-header conditional">
+              <span class="badge">⚠️</span> Both can be used with Body images — but never at the same time
             </div>
-            <div class="pairing-note" data-i18n="rule3-note">Choose one or the other — never mix Pink Vectors and Focus Light in the same composition.</div>
+            <div class="pairing-combo-body">
+              <span class="pairing-tag pink">Pink Vectors</span>
+              <span style="font-size:0.8rem; color:#aaa; font-weight:700;">or</span>
+              <span class="pairing-tag grey">Focus Light</span>
+              <span class="pairing-arrow">→</span>
+              <span class="pairing-tag dark">Body</span>
+            </div>
+            <div class="pairing-note">Choose one or the other — never mix Pink Vectors and Focus Light in the same composition.</div>
           </div>
 
+          <!-- One element rule -->
           <div class="pairing-combo">
-            <div class="pairing-combo-header conditional" data-i18n="rule4-header"><span class="badge">💡</span> Recommended: use only ONE graphic element per image</div>
-            <div class="pairing-combo-body" style="font-size:0.9rem; color:#555; padding-top:1rem; padding-bottom:1rem;" data-i18n="rule4-body">More than one element is possible, but use it sparingly and with intention. Too many elements in one composition quickly becomes overwhelming.</div>
+            <div class="pairing-combo-header conditional">
+              <span class="badge">💡</span> Recommended: use only ONE graphic element per image
+            </div>
+            <div class="pairing-combo-body" style="font-size:0.9rem; color:#555; padding-top:1rem; padding-bottom:1rem;">
+              More than one element is possible, but use it sparingly and with intention. Too many elements in one composition quickly becomes overwhelming.
+            </div>
           </div>
         </div>
 
@@ -1398,14 +1236,14 @@
       <!-- PHOTOS & IMAGES -->
       <section class="section" id="photos-images">
         <div class="section-header">
-          <h2 data-i18n="photos-h2">Photos &amp; Images</h2>
-          <p data-i18n="photos-p">Our imagery is organized into three visual territories, each capturing a different dimension of the FOAMS world.</p>
+          <h2>Photos &amp; Images</h2>
+          <p>Our imagery is organized into three visual territories, each capturing a different dimension of the FOAMS world.</p>
         </div>
 
         <div class="subsection">
-          <h3 data-i18n="tropical-h3">Tropical</h3>
-          <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;" data-i18n="tropical-p">Images of plants, forest, lush natural environments.</p>
-          <p style="margin-bottom:1rem;"><span class="pairing-tag grey" style="font-size:0.72rem;" data-i18n="tropical-tag">✅ Use with: Focus Light only</span></p>
+          <h3>Tropical</h3>
+          <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;">Images of plants, forest, lush natural environments.</p>
+          <p style="margin-bottom:1rem;"><span class="pairing-tag grey" style="font-size:0.72rem;">✅ Use with: Focus Light only</span></p>
           <div class="photo-grid">
             <img src="Foams-Brand-Images-Tropical__1_.jpg" alt="Tropical">
             <img src="Foams-Brand-Images-Tropical__2_.jpg" alt="Tropical">
@@ -1418,9 +1256,9 @@
         </div>
 
         <div class="subsection">
-          <h3 data-i18n="water-h3">Water</h3>
-          <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;" data-i18n="water-p">Foaming waves, water in motion, aquatic textures.</p>
-          <p style="margin-bottom:1rem;"><span class="pairing-tag pink" style="font-size:0.72rem;" data-i18n="water-tag">✅ Use with: Pink Vectors only</span></p>
+          <h3>Water</h3>
+          <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;">Foaming waves, water in motion, aquatic textures.</p>
+          <p style="margin-bottom:1rem;"><span class="pairing-tag pink" style="font-size:0.72rem;">✅ Use with: Pink Vectors only</span></p>
           <div class="photo-grid">
             <img src="Foams-Brand-Images-Water__1_.jpg" alt="Water">
             <img src="Foams-Brand-Images-Water__2_.jpg" alt="Water">
@@ -1433,9 +1271,9 @@
         </div>
 
         <div class="subsection">
-          <h3 data-i18n="body-h3">Body</h3>
-          <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;" data-i18n="body-p">People, performers, human presence and movement.</p>
-          <p style="margin-bottom:1rem;"><span class="pairing-tag dark" style="font-size:0.72rem;" data-i18n="body-tag">⚠️ Use with: Pink Vectors OR Focus Light — never both</span></p>
+          <h3>Body</h3>
+          <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;">People, performers, human presence and movement.</p>
+          <p style="margin-bottom:1rem;"><span class="pairing-tag dark" style="font-size:0.72rem;">⚠️ Use with: Pink Vectors OR Focus Light — never both</span></p>
           <div class="photo-grid">
             <img src="Foams-Brand-Images-Body__1_.jpg" alt="Body">
             <img src="Foams-Brand-Images-Body__2_.jpg" alt="Body">
@@ -1450,12 +1288,12 @@
       <!-- EXAMPLES OF USAGE -->
       <section class="section" id="examples-of-usage">
         <div class="section-header">
-          <h2 data-i18n="examples-h2">Examples of Usage</h2>
-          <p data-i18n="examples-p">See the brand in action across different formats and contexts — combining logo, graphic elements, and photography.</p>
+          <h2>Examples of Usage</h2>
+          <p>See the brand in action across different formats and contexts — combining logo, graphic elements, and photography.</p>
         </div>
 
         <div class="subsection">
-          <h3 data-i18n="landscape-h3">Landscape</h3>
+          <h3>Landscape</h3>
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top:1rem;">
             <img src="foams-example-usage-landscape-01.png" alt="Example of usage landscape" style="width:100%; border-radius:8px; display:block;">
             <img src="foams-example-usage-landscape-02.png" alt="Example of usage landscape" style="width:100%; border-radius:8px; display:block;">
@@ -1465,7 +1303,7 @@
         </div>
 
         <div class="subsection">
-          <h3 data-i18n="portrait-h3">Portrait</h3>
+          <h3>Portrait</h3>
           <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top:1rem;">
             <img src="foams-example-usage-portrait-01.png" alt="Example of usage portrait" style="width:100%; border-radius:8px; display:block;">
             <img src="foams-example-usage-portrait-02.png" alt="Example of usage portrait" style="width:100%; border-radius:8px; display:block;">
@@ -1478,247 +1316,37 @@
       <!-- CLOSING -->
       <section class="section" id="closing" style="padding-bottom:5rem;">
         <div style="max-width:600px; padding-top:1rem;">
-          <h2 style="font-family:'Averia Serif Libre',serif; font-size:2.5rem; font-weight:700; margin-bottom:1.25rem; line-height:1.1;" data-i18n="closing-h2">Keep it fluid.</h2>
-          <p style="font-size:1.05rem; color:var(--text-muted); line-height:1.8; margin-bottom:1rem;" data-i18n="closing-p1">
+          <h2 style="font-family:'Averia Serif Libre',serif; font-size:2.5rem; font-weight:700; margin-bottom:1.25rem; line-height:1.1;">Keep it fluid.</h2>
+          <p style="font-size:1.05rem; color:#444; line-height:1.8; margin-bottom:1rem;">
             FOAMS is a living brand. The logo shifts, the images breathe, and the elements flow. These guidelines exist not to constrain but to give you a foundation to explore from.
           </p>
-          <p style="font-size:1.05rem; color:var(--text-muted); line-height:1.8; margin-bottom:2rem;" data-i18n="closing-p2">
+          <p style="font-size:1.05rem; color:#444; line-height:1.8; margin-bottom:2rem;">
             When in doubt: stay bold, stay fluid, and use the generator.
           </p>
-          <a href="http://casafoams.com/foams-logo" target="_blank" class="btn-generator" data-i18n="closing-btn-gen">Open Logo Generator</a>
-          <a href="foams-logo-options.zip" download class="btn" style="margin-left:1rem;" data-i18n="closing-btn-dl">Download Base Logo</a>
+          <a href="http://casafoams.com/foams-logo" target="_blank" class="btn-generator">Open Logo Generator</a>
+          <a href="foams-logo-options.zip" download class="btn" style="margin-left:1rem;">Download Base Logo</a>
         </div>
 
-        <div style="margin-top:4rem; padding-top:2rem; border-top:1px solid var(--border-color); display:flex; align-items:center; gap:1rem;">
-          <img id="footer-logo" src="foams-white-on-transparent.png" alt="FOAMS" style="height:48px; object-fit:contain;">
-          <span style="font-size:0.8rem; color:var(--text-subtle); line-height:1.6;">FOAMS Brand Guidelines<br>casafoams.com</span>
+        <div style="margin-top:4rem; padding-top:2rem; border-top:1px solid var(--border); display:flex; align-items:center; gap:1rem;">
+          <img src="foams-pink-on-black.png" alt="FOAMS" style="height:48px; object-fit:contain;">
+          <span style="font-size:0.8rem; color:#aaa; line-height:1.6;">FOAMS Brand Guidelines<br>casafoams.com</span>
         </div>
       </section>
-
-      <!-- BACK TO TOP — sticky, works inside Squarespace iframe -->
-      <div id="back-to-top-wrap">
-        <a id="back-to-top" title="Back to top">↑</a>
-      </div>
 
     </main>
   </div>
 
   </div><!-- end layout -->
 
+  <!-- BACK TO TOP -->
+  <a href="#brand-guidelines" id="back-to-top" title="Back to top">↑</a>
+
   <script>
-    // ── DARK MODE ──
-    function updateFooterLogo(isDark) {
-      const fl = document.getElementById('footer-logo');
-      if (fl) fl.src = isDark ? 'foams-white-on-transparent.png' : 'foams-black-on-transparent.png';
-    }
-
-    function toggleDark() {
-      const isDark = document.body.classList.toggle('dark-mode');
-      document.getElementById('btn-dark').textContent = isDark ? '◑ Light' : '◐ Dark';
-      localStorage.setItem('foams-dark', isDark ? '1' : '0');
-      updateFooterLogo(isDark);
-    }
-    if (localStorage.getItem('foams-dark') === '1') {
-      document.body.classList.add('dark-mode');
-      document.getElementById('btn-dark').textContent = '◑ Light';
-      updateFooterLogo(true);
-    } else {
-      updateFooterLogo(false);
-    }
-
-    // ── LANGUAGE ──
-    const translations = {
-      en: {
-        'nav-overview': 'Overview',
-        'nav-logo': 'Logo',
-        'nav-color': 'Color',
-        'nav-typography': 'Typography',
-        'nav-graphic': 'Graphic Elements',
-        'nav-photos': 'Photos & Images',
-        'nav-examples': 'Examples of Usage',
-        'nav-closing': '↓ Keep it fluid',
-        'overview-h2': 'FOAMS Brand Guidelines',
-        'overview-p': "We've created a set of guidelines to help you bring our brand to life consistently across every touchpoint. On this page you'll find our high-level guidelines and the assets you'll need.",
-        'logo-h2': 'Logo',
-        'logo-p': 'Our logo is the cornerstone of our identity. Use it consistently and give it room to breathe. Ideally you should use the <strong>FOAMS LOGO GENERATOR</strong> tool every time you need a logo, to make it fluid. Our logo is always changing.',
-        'logo-dl': 'Download Base Logo',
-        'logo-primary': 'Primary Logo',
-        'logo-secondary': 'Secondary Logo',
-        'logo-secondary-sub': '— with brand color',
-        'logo-withtitle': 'Logo with Title',
-        'logo-withtitle-p': 'A title text can also be added. In case of Portuguese it should be located on the top left corner. In case of English it should be located on the bottom right corner.',
-        'logo-pt-label': 'Portuguese — top left',
-        'logo-en-label': 'English — bottom right',
-        'generator-h3': 'FOAMS Logo Generator',
-        'generator-btn': 'Open Logo Generator',
-        'gen-guideline-title': 'Guidelines',
-        'gen-guideline-p': 'Preferably always make a logo in which the letters are closely connected and look very watery — fluid. But feel free to also explore different ways of using the logo generator tool.',
-        'gen-titletext-title': 'Title Text',
-        'gen-titletext-p': 'You can also add a title text in the generator by clicking the Title buttons, in case it\'s needed.',
-        'diff-usage-h3': 'Different Usage of Logo',
-        'diff-usage-p': 'Feel free to go crazy with the logo!',
-        'color-h2': 'Color',
-        'color-p': 'Our palette is bold and minimal. Pink is our signature — electric and unmistakable. The dark tones ground it with depth.',
-        'typo-h2': 'Typography',
-        'typo-p': 'Two typefaces, each with a clear role. Averia Serif Libre leads all titles and headings. Trebuchet MS handles body text.',
-        'typo-inuse': 'In Use',
-        'graphic-h2': 'Graphic Elements',
-        'graphic-p': 'Our graphic language is built around two distinct visual styles. Each brings a different energy — use them individually or in combination.',
-        'pv-h3': 'Pink Vectors',
-        'pv-p': 'Bold magenta lines, curves, and geometric forms. Use on dark backgrounds for maximum impact.',
-        'pv-tag': '✅ Pair with: Water images only',
-        'fl-h3': 'Focus Light',
-        'fl-p': 'Concentrated light effects, glows, and radial highlights creating depth and drama.',
-        'fl-tag': '✅ Pair with: Tropical images only',
-        'pairing-title': 'How to Combine Elements + Images',
-        'pairing-intro': 'Each graphic element style is designed to pair with a specific image category. Follow these rules for a consistent and intentional visual result.',
-        'rule1-header': '✅ Pink Vectors pair exclusively with Water images',
-        'rule1-note': 'The electric energy of Pink Vectors matches the raw movement of water. Never use Pink Vectors with Tropical or Body images.',
-        'rule2-header': '✅ Focus Light pairs exclusively with Tropical images',
-        'rule2-note': 'The soft glows of Focus Light complement the organic textures of tropical nature. Never use Focus Light with Water or Body images.',
-        'rule3-header': '⚠️ Both can be used with Body images — but never at the same time',
-        'rule3-note': 'Choose one or the other — never mix Pink Vectors and Focus Light in the same composition.',
-        'rule4-header': '💡 Recommended: use only ONE graphic element per image',
-        'rule4-body': 'More than one element is possible, but use it sparingly and with intention. Too many elements in one composition quickly becomes overwhelming.',
-        'photos-h2': 'Photos & Images',
-        'photos-p': 'Our imagery is organized into three visual territories, each capturing a different dimension of the FOAMS world.',
-        'tropical-h3': 'Tropical',
-        'tropical-p': 'Images of plants, forest, lush natural environments.',
-        'tropical-tag': '✅ Use with: Focus Light only',
-        'water-h3': 'Water',
-        'water-p': 'Foaming waves, water in motion, aquatic textures.',
-        'water-tag': '✅ Use with: Pink Vectors only',
-        'body-h3': 'Body',
-        'body-p': 'People, performers, human presence and movement.',
-        'body-tag': '⚠️ Use with: Pink Vectors OR Focus Light — never both',
-        'examples-h2': 'Examples of Usage',
-        'examples-p': 'See the brand in action across different formats and contexts — combining logo, graphic elements, and photography.',
-        'landscape-h3': 'Landscape',
-        'portrait-h3': 'Portrait',
-        'closing-h2': 'Keep it fluid.',
-        'closing-p1': 'FOAMS is a living brand. The logo shifts, the images breathe, and the elements flow. These guidelines exist not to constrain but to give you a foundation to explore from.',
-        'closing-p2': 'When in doubt: stay bold, stay fluid, and use the generator.',
-        'closing-btn-gen': 'Open Logo Generator',
-        'closing-btn-dl': 'Download Base Logo',
-      },
-      pt: {
-        'nav-overview': 'Visão Geral',
-        'nav-logo': 'Logo',
-        'nav-color': 'Cores',
-        'nav-typography': 'Tipografia',
-        'nav-graphic': 'Elementos Gráficos',
-        'nav-photos': 'Fotos & Imagens',
-        'nav-examples': 'Exemplos de Uso',
-        'nav-closing': '↓ Seja fluido',
-        'overview-h2': 'Guia de Marca FOAMS',
-        'overview-p': 'Criamos um conjunto de diretrizes para ajudá-lo a dar vida à nossa marca de forma consistente em todos os pontos de contato. Nesta página você encontrará nossas diretrizes de alto nível e os ativos de que vai precisar.',
-        'logo-h2': 'Logo',
-        'logo-p': 'Nosso logo é a pedra angular da nossa identidade. Use-o de forma consistente e dê espaço para respirar. Idealmente, use a ferramenta <strong>FOAMS LOGO GENERATOR</strong> sempre que precisar de um logo, para torná-lo fluido. Nosso logo está sempre mudando.',
-        'logo-dl': 'Baixar Logo Base',
-        'logo-primary': 'Logo Principal',
-        'logo-secondary': 'Logo Secundário',
-        'logo-secondary-sub': '— com cor da marca',
-        'logo-withtitle': 'Logo com Título',
-        'logo-withtitle-p': 'Um texto de título também pode ser adicionado. Em português, deve ficar no canto superior esquerdo. Em inglês, no canto inferior direito.',
-        'logo-pt-label': 'Português — canto superior esquerdo',
-        'logo-en-label': 'Inglês — canto inferior direito',
-        'generator-h3': 'Gerador de Logo FOAMS',
-        'generator-btn': 'Abrir Gerador de Logo',
-        'gen-guideline-title': 'Diretrizes',
-        'gen-guideline-p': 'Prefira sempre fazer um logo onde as letras estejam bem conectadas e pareçam muito aquosas — fluidas. Mas fique à vontade para explorar diferentes formas de usar a ferramenta.',
-        'gen-titletext-title': 'Texto de Título',
-        'gen-titletext-p': 'Você também pode adicionar um texto de título no gerador clicando nos botões de Título, caso seja necessário.',
-        'diff-usage-h3': 'Usos Diferentes do Logo',
-        'diff-usage-p': 'Sinta-se livre para explorar o logo!',
-        'color-h2': 'Cores',
-        'color-p': 'Nossa paleta é ousada e minimalista. O rosa é nossa assinatura — elétrico e inconfundível. Os tons escuros trazem profundidade.',
-        'typo-h2': 'Tipografia',
-        'typo-p': 'Duas tipografias, cada uma com um papel claro. Averia Serif Libre lidera todos os títulos e cabeçalhos. Trebuchet MS é usada para o corpo de texto.',
-        'typo-inuse': 'Na Prática',
-        'graphic-h2': 'Elementos Gráficos',
-        'graphic-p': 'Nossa linguagem gráfica é construída em torno de dois estilos visuais distintos. Cada um traz uma energia diferente — use-os individualmente ou em combinação.',
-        'pv-h3': 'Vetores Rosa',
-        'pv-p': 'Linhas, curvas e formas geométricas em magenta. Use em fundos escuros para máximo impacto.',
-        'pv-tag': '✅ Combinar com: somente imagens de Água',
-        'fl-h3': 'Luz Focada',
-        'fl-p': 'Efeitos de luz concentrada, brilhos e destaques radiais que criam profundidade e drama.',
-        'fl-tag': '✅ Combinar com: somente imagens Tropicais',
-        'pairing-title': 'Como Combinar Elementos + Imagens',
-        'pairing-intro': 'Cada estilo de elemento gráfico é projetado para ser combinado com uma categoria de imagem específica. Siga estas regras para um resultado visual consistente e intencional.',
-        'rule1-header': '✅ Vetores Rosa combinam exclusivamente com imagens de Água',
-        'rule1-note': 'A energia elétrica dos Vetores Rosa combina com o movimento bruto da água. Nunca use Vetores Rosa com imagens Tropicais ou Corpo.',
-        'rule2-header': '✅ Luz Focada combina exclusivamente com imagens Tropicais',
-        'rule2-note': 'Os brilhos suaves da Luz Focada complementam as texturas orgânicas da natureza tropical. Nunca use Luz Focada com imagens de Água ou Corpo.',
-        'rule3-header': '⚠️ Ambos podem ser usados com imagens de Corpo — mas nunca ao mesmo tempo',
-        'rule3-note': 'Escolha um ou outro — nunca misture Vetores Rosa e Luz Focada na mesma composição.',
-        'rule4-header': '💡 Recomendado: use apenas UM elemento gráfico por imagem',
-        'rule4-body': 'Mais de um elemento é possível, mas use com parcimônia e intenção. Muitos elementos em uma composição rapidamente se tornam avassaladores.',
-        'photos-h2': 'Fotos & Imagens',
-        'photos-p': 'Nossas imagens estão organizadas em três territórios visuais, cada um capturando uma dimensão diferente do mundo FOAMS.',
-        'tropical-h3': 'Tropical',
-        'tropical-p': 'Imagens de plantas, florestas e ambientes naturais exuberantes.',
-        'tropical-tag': '✅ Usar com: somente Luz Focada',
-        'water-h3': 'Água',
-        'water-p': 'Ondas com espuma, água em movimento, texturas aquáticas.',
-        'water-tag': '✅ Usar com: somente Vetores Rosa',
-        'body-h3': 'Corpo',
-        'body-p': 'Pessoas, performers, presença e movimento humanos.',
-        'body-tag': '⚠️ Usar com: Vetores Rosa OU Luz Focada — nunca os dois',
-        'examples-h2': 'Exemplos de Uso',
-        'examples-p': 'Veja a marca em ação em diferentes formatos e contextos — combinando logo, elementos gráficos e fotografia.',
-        'landscape-h3': 'Paisagem',
-        'portrait-h3': 'Retrato',
-        'closing-h2': 'Seja fluido.',
-        'closing-p1': 'FOAMS é uma marca viva. O logo se transforma, as imagens respiram e os elementos fluem. Estas diretrizes existem não para restringir, mas para dar uma base a partir da qual explorar.',
-        'closing-p2': 'Na dúvida: seja ousado, seja fluido e use o gerador.',
-        'closing-btn-gen': 'Abrir Gerador de Logo',
-        'closing-btn-dl': 'Baixar Logo Base',
-      }
-    };
-
-    let currentLang = localStorage.getItem('foams-lang') || 'pt';
-
-    function setLang(lang) {
-      currentLang = lang;
-      localStorage.setItem('foams-lang', lang);
-      applyLang(lang);
-      document.getElementById('btn-en').classList.toggle('active', lang === 'en');
-      document.getElementById('btn-pt').classList.toggle('active', lang === 'pt');
-    }
-
-    function applyLang(lang) {
-      const t = translations[lang];
-      // Nav
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        if (t[key] !== undefined) {
-          if (el.getAttribute('data-html')) {
-            el.innerHTML = t[key];
-          } else {
-            el.textContent = t[key];
-          }
-        }
-      });
-    }
-
-    // Apply on load
-    setLang(currentLang);
-
-    // ── SCROLLSPY ──
+    // Scrollspy
     const sections = document.querySelectorAll('.section');
     const navLinks = document.querySelectorAll('.sidebar nav a');
 
-    // Set Overview as active immediately on load
-    navLinks.forEach(l => l.classList.remove('active'));
-    const overviewLink = document.querySelector('.sidebar nav a[href="#brand-guidelines"]');
-    if (overviewLink) overviewLink.classList.add('active');
-
-    // Delay starting the observer so it doesn't instantly override Overview on load
-    let observerActive = false;
-    setTimeout(() => { observerActive = true; }, 800);
-
     const observer = new IntersectionObserver((entries) => {
-      if (!observerActive) return;
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           navLinks.forEach(link => link.classList.remove('active'));
@@ -1731,21 +1359,17 @@
 
     sections.forEach(s => observer.observe(s));
 
-    // ── BACK TO TOP — iframe-safe via IntersectionObserver ──
-    // Works even when the iframe itself doesn't scroll (Squarespace embeds)
+    // Back to top visibility
     const backToTop = document.getElementById('back-to-top');
-    const firstSection = document.getElementById('brand-guidelines');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 400) {
+        backToTop.classList.add('visible');
+      } else {
+        backToTop.classList.remove('visible');
+      }
+    });
 
-    // Show button when first section leaves view (user has scrolled past it)
-    const topObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        backToTop.classList.toggle('visible', !entry.isIntersecting);
-      });
-    }, { threshold: 0, rootMargin: '0px' });
-
-    if (firstSection) topObserver.observe(firstSection);
-
-    // Sidebar nav smooth scroll
+    // Sidebar nav smooth scroll (fixes iframe anchor issues)
     navLinks.forEach(link => {
       link.addEventListener('click', (e) => {
         e.preventDefault();
@@ -1757,99 +1381,11 @@
       });
     });
 
-    // Back to top — scrollIntoView works inside iframes
+    // Back to top smooth scroll
     backToTop.addEventListener('click', (e) => {
       e.preventDefault();
-      if (firstSection) {
-        firstSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else {
-        try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(err) {}
-        try { document.documentElement.scrollTop = 0; } catch(err) {}
-      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
-
-    // ── DOWNLOAD ICON OVERLAYS ──
-    const dlIcon = `<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M8 11.5l-4.5-4.5h3V2h3v5h3L8 11.5z"/><rect x="2" y="13" width="12" height="1.5" rx="0.75"/></svg>`;
-
-    function wrapWithDownload(img) {
-      const src = img.getAttribute('src');
-      if (!src || img.closest('.dl-wrap') || img.closest('.example-wrap')) return;
-
-      const wrapper = document.createElement('div');
-      wrapper.className = 'dl-wrap';
-
-      // carry over any inline styles from the img
-      const inlineStyle = img.getAttribute('style') || '';
-      if (inlineStyle) {
-        wrapper.setAttribute('style', inlineStyle);
-        img.removeAttribute('style');
-      }
-
-      img.parentNode.insertBefore(wrapper, img);
-      wrapper.appendChild(img);
-
-      const btn = document.createElement('a');
-      btn.className = 'dl-btn';
-      btn.href = src;
-      btn.download = src.split('/').pop();
-      btn.title = 'Download image';
-      btn.innerHTML = dlIcon;
-      wrapper.appendChild(btn);
-    }
-
-    function wrapExampleWithDownload(img) {
-      const src = img.getAttribute('src');
-      if (!src || img.closest('.example-wrap') || img.closest('.dl-wrap')) return;
-
-      const wrapper = document.createElement('div');
-      wrapper.className = 'example-wrap';
-
-      // copy border-radius from inline style if present
-      const inlineStyle = img.getAttribute('style') || '';
-      img.removeAttribute('style');
-
-      img.parentNode.insertBefore(wrapper, img);
-      wrapper.appendChild(img);
-
-      const btn = document.createElement('a');
-      btn.className = 'dl-btn';
-      btn.href = src;
-      btn.download = src.split('/').pop();
-      btn.title = 'Download image';
-      btn.innerHTML = dlIcon;
-      wrapper.appendChild(btn);
-    }
-
-    // Wrap element-item images (pink vectors, focus light, different usage logos)
-    document.querySelectorAll('.element-item img').forEach(wrapWithDownload);
-
-    // Wrap photo-grid images (tropical, water, body)
-    document.querySelectorAll('.photo-grid img').forEach(wrapWithDownload);
-
-    // Wrap logo-box images (primary, secondary, logo-with-title)
-    document.querySelectorAll('.logo-box img').forEach(img => {
-      const src = img.getAttribute('src');
-      if (!src) return;
-      const box = img.closest('.logo-box');
-      if (!box) return;
-      // Make logo-box relatively positioned for the overlay
-      box.style.position = 'relative';
-      box.style.overflow = 'hidden';
-
-      const btn = document.createElement('a');
-      btn.className = 'dl-btn';
-      btn.href = src;
-      btn.download = src.split('/').pop();
-      btn.title = 'Download image';
-      btn.innerHTML = dlIcon;
-      box.appendChild(btn);
-
-      box.addEventListener('mouseenter', () => btn.style.opacity = '1');
-      box.addEventListener('mouseleave', () => btn.style.opacity = '0');
-    });
-
-    // Wrap examples of usage images
-    document.querySelectorAll('#examples-of-usage img').forEach(wrapExampleWithDownload);
   </script>
 
 </body>
