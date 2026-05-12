@@ -120,7 +120,7 @@
   </defs>
 </svg>
 
-<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v9.9</div>
+<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v10.0</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -1467,8 +1467,8 @@ async function exportAPNG(logoColor) {
     });
   }
 
-  function buildHole(positions) {
-    if (!aHoleVisible) return '';
+  function buildHoleSVG(positions) {
+    if (!aHoleVisible) return null;
     const sz2 = parseInt(document.getElementById('aHoleSize').value)*SCALE;
     const mc2 = document.getElementById('measure'); mc2.width=300; mc2.height=150;
     const mc2c = mc2.getContext('2d'); mc2c.font=`900 ${baseSz}px "Trebuchet MS",sans-serif`;
@@ -1478,8 +1478,14 @@ async function exportAPNG(logoColor) {
     const ahCX=(ahX+panOffsetX+OX)*SCALE, ahCY=(ahY+panOffsetY+OY)*SCALE-sz2*0.35;
     const w=sz2*0.30,h=sz2*0.55;
     const d=`M ${ahCX} ${ahCY-h} C ${ahCX+w*0.15} ${ahCY-h}, ${ahCX+w} ${ahCY-h*0.1}, ${ahCX+w} ${ahCY+h*0.15} C ${ahCX+w} ${ahCY+h*0.65}, ${ahCX+w*0.6} ${ahCY+h}, ${ahCX} ${ahCY+h} C ${ahCX-w*0.6} ${ahCY+h}, ${ahCX-w} ${ahCY+h*0.65}, ${ahCX-w} ${ahCY+h*0.15} C ${ahCX-w} ${ahCY-h*0.1}, ${ahCX-w*0.15} ${ahCY-h}, ${ahCX} ${ahCY-h} Z`;
-    // Use destination-out to cut a transparent hole through the logo
-    return `<g style="mix-blend-mode:destination-out"><path d="${d}" fill="rgba(0,0,0,1)" filter="url(#blob)"/></g>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${BIGW}" height="${BIGH}">
+  <defs><filter id="blob" color-interpolation-filters="sRGB" x="-30%" y="-30%" width="160%" height="160%">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="${blobSVG}" result="blur"/>
+    <feColorMatrix in="blur" mode="matrix" values="${vals}" result="sharp"/>
+    <feComposite in="SourceGraphic" in2="sharp" operator="atop" result="crisp"/>
+  </filter></defs>
+  <path d="${d}" fill="black" filter="url(#blob)"/>
+</svg>`;
   }
 
   function buildSVGFrame(positions, word, opacity) {
@@ -1514,7 +1520,7 @@ async function exportAPNG(logoColor) {
     <feComposite in="SourceGraphic" in2="sharp" operator="atop" result="crisp"/>
     ${defocusStep}
   </filter></defs>
-  <g filter="url(#blob)">${els}</g>${buildHole(positions)}${titleEl}</svg>`;
+  <g filter="url(#blob)">${els}</g>${titleEl}</svg>`;
   }
 
   function svgToCanvasTransparent(svgStr) {
@@ -1558,8 +1564,25 @@ async function exportAPNG(logoColor) {
     const fc=document.createElement('canvas'); fc.width=outW; fc.height=outH;
     const fctx=fc.getContext('2d');
     fctx.drawImage(big,cropBounds.minX,cropBounds.minY,cw,ch,0,0,outW,outH);
+    // Cut A hole using destination-out on the canvas
+    const holeSVG = buildHoleSVG(positions);
+    if (holeSVG) {
+      await new Promise(res => {
+        const hb=new Blob([holeSVG],{type:'image/svg+xml;charset=utf-8'});
+        const hurl=URL.createObjectURL(hb);
+        const himg=new Image();
+        himg.onload=()=>{
+          fctx.globalCompositeOperation='destination-out';
+          fctx.drawImage(himg,cropBounds.minX,cropBounds.minY,cw,ch,0,0,outW,outH);
+          fctx.globalCompositeOperation='source-over';
+          URL.revokeObjectURL(hurl); res();
+        };
+        himg.onerror=()=>{URL.revokeObjectURL(hurl);res();};
+        himg.src=hurl;
+      });
+    }
     const imgData = fctx.getImageData(0,0,outW,outH);
-    frameBuffers.push(imgData.data.buffer.slice(0)); // ArrayBuffer copy
+    frameBuffers.push(imgData.data.buffer.slice(0));
     frameDelays.push(FRAME_MS);
   }
 
