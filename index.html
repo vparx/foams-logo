@@ -119,7 +119,7 @@
   </defs>
 </svg>
 
-<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v8.9</div>
+<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v9.0</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -214,6 +214,7 @@
     <button class="btn"        id="btn-pt"          onclick="setLanguage('pt')">Português</button>
     <button class="btn"        id="btn-en"           onclick="setLanguage('en')">English</button>
     <button class="btn"        id="btn-pause"        onclick="togglePause()">⏸ Pause</button>
+    <button class="btn"        id="btn-lock-title"   onclick="toggleTitleLock()" title="Title stays in place, doesn't follow the logo">📌 Lock</button>
   </div>
   <div id="titleSizeRow">
     <label>Title size: <span id="titleSzOut">12</span>px</label>
@@ -933,6 +934,7 @@ let wordTagStageY = 0;
 let wordTagStageSz = 12; // font size in unscaled stage px (= screen px / zoomScale)
 
 function positionWordTag() {
+  if (titleLocked) return; // locked: title stays where user placed it
   const outer = document.getElementById('stageOuter');
   const stage = document.getElementById('stage');
   const tag   = document.getElementById('wordTag');
@@ -1024,6 +1026,14 @@ let currentLang = 'none';
 let wordCycleIndex = 0;
 let wordCycleTimer = null;
 let wordCyclePaused = false;
+let titleLocked = false; // when true, title stays in fixed position, doesn't follow F
+
+function toggleTitleLock() {
+  titleLocked = !titleLocked;
+  const btn = document.getElementById('btn-lock-title');
+  btn.classList.toggle('active', titleLocked);
+  btn.textContent = titleLocked ? '📌 Locked' : '📌 Lock';
+}
 
 function togglePause() {
   wordCyclePaused = !wordCyclePaused;
@@ -1114,7 +1124,7 @@ requestAnimationFrame(() => {
 function exportGif(logoColor, bgColor) {
   bgColor = bgColor || (logoColor === 'white' ? 'black' : 'white');
   const hasMotion = motionMode !== 'none' && !motionPaused;
-  const hasTitle  = currentLang !== 'none';
+  const hasTitle  = currentLang !== 'none' && !wordCyclePaused;
 
   const progress = document.getElementById('gifProgress');
   progress.style.display = 'block';
@@ -1172,7 +1182,7 @@ function exportGif(logoColor, bgColor) {
   function buildAHoleEl(positions) {
     if (!aHoleVisible) return '';
     const aHoleSz = parseInt(document.getElementById('aHoleSize').value) * SCALE;
-    const ahColor = logoColor === 'black' ? 'white' : logoColor === 'white' ? 'black' : 'white';
+    const ahColor = bgColor === 'black' ? 'black' : 'white';
 
     // Compute A hole position tracking the animated A letter
     const aPos2 = positions[2]; // A is index 2
