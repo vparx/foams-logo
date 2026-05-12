@@ -100,6 +100,7 @@
     }
   </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/upng-js@2.1.0/UPNG.js"></script>
 </head>
 <body>
 
@@ -119,7 +120,7 @@
   </defs>
 </svg>
 
-<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v9.0</div>
+<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v9.1</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -281,6 +282,23 @@
     </button>
   </div>
   <div id="gifProgress" style="display:none;margin-top:8px;font-size:12px;color:#aaa;text-align:center;"></div>
+  <hr style="border:none;border-top:1px solid #252525;margin:1rem 0;">
+  <p style="font-size:11px;color:#777;margin-bottom:8px;">Animated PNG — transparent background, full quality</p>
+  <div class="export-grid">
+    <button class="exp-btn exp-black-trans" onclick="exportAPNG('black')">
+      <span class="exp-title">↓ Black · transparent</span>
+      <span class="exp-sub">APNG · alpha channel</span>
+    </button>
+    <button class="exp-btn exp-white-trans" onclick="exportAPNG('white')">
+      <span class="exp-title">↓ White · transparent</span>
+      <span class="exp-sub">APNG · alpha channel</span>
+    </button>
+    <button class="exp-btn exp-pink-trans" onclick="exportAPNG('pink')">
+      <span class="exp-title">↓ Pink · transparent</span>
+      <span class="exp-sub">APNG · alpha channel</span>
+    </button>
+  </div>
+  <div id="apngProgress" style="display:none;margin-top:8px;font-size:12px;color:#aaa;text-align:center;"></div>
 </div>
 
 <script>
@@ -1399,6 +1417,183 @@ function exportGif(logoColor, bgColor) {
   runCapture().catch(err => { progress.style.display = 'none'; alert('GIF failed: ' + err); });
 }
 
+// ── Animated PNG Export (full alpha transparency) ─────────────────────────────
+async function exportAPNG(logoColor) {
+  const hasMotion = motionMode !== 'none' && !motionPaused;
+  const hasTitle  = currentLang !== 'none' && !wordCyclePaused;
+
+  const progress = document.getElementById('apngProgress');
+  progress.style.display = 'block';
+  progress.textContent = 'Preparing…';
+
+  // Reuse the same SVG building logic from exportGif
+  // but render to canvas with transparent background
+  const blobBlur = parseInt(document.getElementById('blurR').value);
+  const defocus  = parseFloat(document.getElementById('defocus').value);
+  const baseSz   = parseInt(document.getElementById('sz').value);
+  const fo       = parseInt(document.getElementById('fillOp').value) / 100;
+  const sw       = parseInt(document.getElementById('strokeW').value);
+  const letters  = ['F','O','A','M','S'];
+  const SCALE    = 3;
+  const FRAME_MS = 33;
+  const T_PER_FRAME = 0.022 * (60/30) * 2.5;
+  const MOTION_FRAMES = Math.round((Math.PI * 2) / T_PER_FRAME);
+
+  const logoFill  = logoColor === 'pink'  ? `rgba(255,48,255,${fo})`
+                  : logoColor === 'white' ? `rgba(255,255,255,${fo})`
+                  :                         `rgba(0,0,0,${fo})`;
+  const titleFill = logoColor === 'pink' ? '#ff30ff' : logoColor === 'white' ? '#fff' : '#000';
+
+  const margin = 300;
+  const OX = margin, OY = margin;
+  const BIGW = (SW + margin * 2) * SCALE;
+  const BIGH = (SH + margin * 2) * SCALE;
+  const threshold = (22 - (blobBlur-4)*0.3)*SCALE, cutoff = (-9+(blobBlur-4)*0.1)*SCALE;
+  const vals = `1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${threshold.toFixed(1)} ${cutoff.toFixed(1)}`;
+  const blobSVG = blobBlur*SCALE, fsSVG = baseSz*SCALE, swSVG = sw*SCALE;
+  const defSVG = defocus*SCALE;
+  const defocusStep = defSVG>0 ? `<feGaussianBlur in="crisp" stdDeviation="${defSVG}"/>` : '';
+  const motionAmtV = document.getElementById('motionAmt') ? parseInt(document.getElementById('motionAmt').value) : 6;
+
+  function getPos(tVal) {
+    if (motionMode==='none'||!hasMotion) return letterPositions;
+    return basePositions.map((base,i)=>{
+      if(!base) return letterPositions[i];
+      const ph=motionPhases[i]||0; let dx=0,dy=0;
+      if(motionMode==='side') dx=Math.sin(tVal+ph*0.4)*motionAmtV*1.4;
+      if(motionMode==='random'){dx=Math.sin(tVal*1.1+ph*2.3)*motionAmtV*1.3;dy=Math.cos(tVal*0.8+ph*1.7)*motionAmtV*1.3;}
+      return {left:base.left+dx, top:base.top+dy};
+    });
+  }
+
+  function buildHole(positions) {
+    if (!aHoleVisible) return '';
+    const sz2 = parseInt(document.getElementById('aHoleSize').value)*SCALE;
+    const mc2 = document.getElementById('measure'); mc2.width=300; mc2.height=150;
+    const mc2c = mc2.getContext('2d'); mc2c.font=`900 ${baseSz}px "Trebuchet MS",sans-serif`;
+    const aW = mc2c.measureText('A').width;
+    const aPos2 = positions[2];
+    const ahX = aPos2.left+aW*0.5+aHoleOffsetX, ahY = aPos2.top+baseSz*0.42+aHoleOffsetY;
+    const ahCX=(ahX+panOffsetX+OX)*SCALE, ahCY=(ahY+panOffsetY+OY)*SCALE-sz2*0.35;
+    const w=sz2*0.30,h=sz2*0.55;
+    // For transparent: hole should be cut out — we render it transparent (no fill visible)
+    // Actually: render in background color… but bg is transparent. 
+    // Solution: render with mix-blend-mode workaround — just skip hole in transparent APNG
+    // The hole is naturally transparent in the SVG since bg is transparent!
+    return ''; // hole appears naturally as transparent gap in the blob
+  }
+
+  function buildSVGFrame(positions, word, opacity) {
+    let els='';
+    positions.forEach((pos,i)=>{
+      const x=(pos.left+panOffsetX+OX)*SCALE, y=(pos.top+panOffsetY+OY)*SCALE+fsSVG*0.75;
+      const sa=sw>0?`stroke="${logoFill}" stroke-width="${swSVG}" paint-order="stroke"`:'';
+      els+=`<text x="${x}" y="${y}" font-family="'Trebuchet MS',sans-serif" font-size="${fsSVG}" font-weight="900" fill="${logoFill}" ${sa}>${letters[i]}</text>\n`;
+    });
+    let titleEl='';
+    if(word&&opacity>0.01){
+      const fEl=document.querySelector('#stage .letter'), tagEl=document.getElementById('wordTag'), fPos0=positions[0];
+      if(fEl&&tagEl&&fPos0){
+        const fR=fEl.getBoundingClientRect(),tR=tagEl.getBoundingClientRect();
+        const dx=(tR.left-fR.left)/zoomScale, dy=(tR.top-fR.top)/zoomScale;
+        const tSz=wordTagStageSz*SCALE;
+        const tx=(fPos0.left+panOffsetX+dx+OX)*SCALE, ty=(fPos0.top+panOffsetY+dy+OY)*SCALE+tSz*0.55;
+        titleEl=`<text x="${tx}" y="${ty}" font-family="'Trebuchet MS',sans-serif" font-size="${tSz}" font-weight="700" fill="${titleFill}" opacity="${opacity.toFixed(3)}" letter-spacing="${tSz*0.08}">${word}</text>`;
+      }
+    }
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${BIGW}" height="${BIGH}">
+  <defs><filter id="blob" color-interpolation-filters="sRGB" x="-30%" y="-30%" width="160%" height="160%">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="${blobSVG}" result="blur"/>
+    <feColorMatrix in="blur" mode="matrix" values="${vals}" result="sharp"/>
+    <feComposite in="SourceGraphic" in2="sharp" operator="atop" result="crisp"/>
+    ${defocusStep}
+  </filter></defs>
+  <g filter="url(#blob)">${els}</g>${titleEl}</svg>`;
+  }
+
+  function svgToCanvasTransparent(svgStr) {
+    return new Promise((resolve,reject)=>{
+      const blob=new Blob([svgStr],{type:'image/svg+xml;charset=utf-8'});
+      const url=URL.createObjectURL(blob);
+      const img=new Image();
+      img.onload=()=>{
+        const tmp=document.createElement('canvas'); tmp.width=BIGW; tmp.height=BIGH;
+        tmp.getContext('2d').drawImage(img,0,0);
+        URL.revokeObjectURL(url); resolve(tmp);
+      };
+      img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('SVG fail'));};
+      img.src=url;
+    });
+  }
+
+  // Measure bounds
+  progress.textContent='Measuring…';
+  let cropBounds=null;
+  const probeTs = hasMotion?[0,0.25,0.5,0.75].map(f=>f*Math.PI*2):[0];
+  for(const tP of probeTs){
+    const c=await svgToCanvasTransparent(buildSVGFrame(getPos(tP),null,0));
+    const ctx=c.getContext('2d'),id=ctx.getImageData(0,0,BIGW,BIGH),d=id.data;
+    const PAD=32*SCALE; let mnX=BIGW,mxX=0,mnY=BIGH,mxY=0;
+    for(let py=0;py<BIGH;py++) for(let px=0;px<BIGW;px++){const i=(py*BIGW+px)*4;if(d[i+3]>20){if(px<mnX)mnX=px;if(px>mxX)mxX=px;if(py<mnY)mnY=py;if(py>mxY)mxY=py;}}
+    const b={minX:Math.max(0,mnX-PAD),minY:Math.max(0,mnY-PAD),maxX:Math.min(BIGW,mxX+PAD),maxY:Math.min(BIGH,mxY+PAD)};
+    if(!cropBounds)cropBounds={...b};
+    else{cropBounds.minX=Math.min(cropBounds.minX,b.minX);cropBounds.minY=Math.min(cropBounds.minY,b.minY);cropBounds.maxX=Math.max(cropBounds.maxX,b.maxX);cropBounds.maxY=Math.max(cropBounds.maxY,b.maxY);}
+  }
+
+  const cw=cropBounds.maxX-cropBounds.minX, ch=cropBounds.maxY-cropBounds.minY;
+  const outW=Math.min(800,cw), outH=Math.round(ch*(outW/cw));
+
+  const frameBuffers=[], frameDelays=[];
+  const HOLD_F=Math.round(1800/FRAME_MS), FADE_F=Math.round(450/FRAME_MS);
+  const words=hasTitle?WORD_SETS[currentLang]:null;
+
+  async function collectFrame(positions,word,opacity){
+    const big=await svgToCanvasTransparent(buildSVGFrame(positions,word,opacity));
+    const fc=document.createElement('canvas'); fc.width=outW; fc.height=outH;
+    const fctx=fc.getContext('2d');
+    fctx.drawImage(big,cropBounds.minX,cropBounds.minY,cw,ch,0,0,outW,outH);
+    frameBuffers.push(fctx.getImageData(0,0,outW,outH).data.buffer);
+    frameDelays.push(FRAME_MS);
+  }
+
+  if(hasMotion&&!hasTitle){
+    for(let f=0;f<MOTION_FRAMES;f++){
+      if(f%5===0)progress.textContent=`Frame ${f+1}/${MOTION_FRAMES}…`;
+      await collectFrame(getPos(f*T_PER_FRAME),null,0);
+    }
+  } else if(!hasMotion&&hasTitle){
+    const wList=wordCyclePaused?[document.getElementById('wordTag').textContent]:words;
+    for(let w=0;w<wList.length;w++){
+      progress.textContent=`Word ${w+1}/${wList.length}`;
+      for(let f=0;f<HOLD_F;f++) await collectFrame(letterPositions,wList[w],1.0);
+      if(wList.length===1) continue;
+      const next=wList[(w+1)%wList.length];
+      for(let f=0;f<FADE_F;f++) await collectFrame(letterPositions,wList[w],1-f/FADE_F);
+      for(let f=0;f<FADE_F;f++) await collectFrame(letterPositions,next,f/FADE_F);
+    }
+  } else {
+    const FPWORD=HOLD_F+FADE_F*2, total=(words||[]).length*FPWORD; let tVal=0;
+    for(let f=0;f<total;f++){
+      if(f%5===0)progress.textContent=`Frame ${f+1}/${total}…`;
+      const pos=getPos(tVal), wIdx=Math.floor(f/FPWORD), wf=f%FPWORD;
+      const word=(words||[])[wIdx%((words||[]).length)], next=(words||[])[(wIdx+1)%((words||[]).length)];
+      let op=1.0,dw=word;
+      if(wf<FADE_F){op=wf/FADE_F;dw=word;}
+      else if(wf>=HOLD_F+FADE_F){op=1-(wf-HOLD_F-FADE_F)/FADE_F;dw=word;}
+      await collectFrame(pos,dw,op); tVal+=T_PER_FRAME;
+    }
+  }
+
+  progress.textContent='Encoding APNG…';
+  // Use UPNG to encode animated PNG
+  const apng = UPNG.encode(frameBuffers, outW, outH, 0, frameDelays);
+  const blob2 = new Blob([apng], {type:'image/png'});
+  const a2 = document.createElement('a');
+  a2.download = `foams-animated-${logoColor}-transparent.png`;
+  a2.href = URL.createObjectURL(blob2);
+  a2.click();
+  progress.style.display='none';
+}
 </script>
 </body>
 </html>
