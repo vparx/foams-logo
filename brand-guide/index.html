@@ -1020,9 +1020,13 @@
       background: var(--bg);
     }
 
-    .pairing-tag.pink { background: #FF30FF; color: #000; }
-    .pairing-tag.dark { background: #111; color: #fff; }
-    .pairing-tag.grey { background: var(--bg-light); color: var(--text); border: 1px solid var(--border-color); }
+    .pairing-tag.pink  { background: #FF30FF; color: #000; }
+    .pairing-tag.dark  { background: #111; color: #fff; }
+    .pairing-tag.grey  { background: var(--bg-light); color: var(--text); border: 1px solid var(--border-color); }
+    .pairing-tag.blue  { background: #1a8cff; color: #fff; }
+    .pairing-tag.green { background: #2ec27e; color: #000; }
+    .pairing-tag.skin  { background: #c97a4a; color: #fff; }
+    .pairing-tag.teal  { background: #7ecac9; color: #000; }
 
     .pairing-arrow {
       font-size: 1.1rem;
@@ -1079,7 +1083,7 @@
         <a href="#examples-of-usage" data-i18n="nav-examples">Examples of Usage</a>
         <a href="#closing" data-i18n="nav-closing">↓ Keep it fluid</a>
       </nav>
-      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v2.7</div>
+      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v2.8</div>
 
       <!-- BACK TO TOP — inside sticky sidebar so it's always in viewport -->
       <div id="back-to-top-wrap">
@@ -1169,7 +1173,12 @@
         <!-- Logo with Title -->
         <div class="subsection">
           <h3 data-i18n="logo-withtitle">Logo with Title</h3>
-          <p style="color:#666; font-size:0.9rem; max-width:520px; margin-bottom:1.5rem;" data-i18n="logo-withtitle-p">A title text can also be added. In case of Portuguese it should be located on the top left corner. In case of English it should be located on the bottom right corner.</p>
+          <p style="color:#666; font-size:0.9rem; max-width:520px; margin-bottom:1rem;" data-i18n="logo-withtitle-p">A title text can also be added. In case of Portuguese it should be located on the top left corner. In case of English it should be located on the bottom right corner.</p>
+
+          <div class="guidelines-note" style="margin-bottom:1.5rem;" data-i18n="logo-withtitle-note-wrap">
+            <strong data-i18n="logo-withtitle-note-title">Diretrizes</strong>
+            <p data-i18n="logo-withtitle-note-p">FOAMS não possui um único título, sinta-se livre para usar diferentes títulos em diferentes contextos, como Casa, Espaço, Coletivo, Base, Estúdios, etc.. — no gerador de logo é possível escolher diferentes títulos.</p>
+          </div>
 
           <p style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#888; margin-bottom:0.75rem;" data-i18n="logo-pt-label">Portuguese — top left</p>
           <div class="logo-display" style="grid-template-columns: repeat(3, 1fr);">
@@ -1374,11 +1383,11 @@
           </div>
         </div>
 
-        <!-- Focus Light -->
+        <!-- Luz Desfocada -->
         <div class="subsection">
           <h3 data-i18n="fl-h3">Focus Light</h3>
           <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;" data-i18n="fl-p">Concentrated light effects, glows, and radial highlights creating depth and drama.</p>
-          <p style="margin-bottom:1.25rem;"><span class="pairing-tag grey" style="font-size:0.72rem;" data-i18n="fl-tag">✅ Pair with: Tropical images only</span></p>
+          <p style="margin-bottom:1.25rem;"><span class="pairing-tag teal" style="font-size:0.72rem;" data-i18n="fl-tag">✅ Pair with: Tropical images only</span></p>
           <div class="elements-grid">
             <div class="element-item"><img src="focus-light__1_.png" alt="Focus light element"></div>
             <div class="element-item"><img src="focus-light__2_.png" alt="Focus light element"></div>
@@ -1406,7 +1415,7 @@
             <div class="pairing-combo-body">
               <span class="pairing-tag pink" data-i18n="pv-h3">Pink Vectors</span>
               <span class="pairing-arrow">→</span>
-              <span class="pairing-tag dark" data-i18n="water-h3">Water</span>
+              <span class="pairing-tag blue" data-i18n="water-h3">Water</span>
             </div>
             <div class="pairing-note" data-i18n="rule1-note">The electric energy of Pink Vectors matches the raw movement of water. Never use Pink Vectors with Tropical or Body images.</div>
           </div>
@@ -1414,9 +1423,9 @@
           <div class="pairing-combo">
             <div class="pairing-combo-header allowed" data-i18n="rule2-header"><span class="badge">✅</span> Focus Light pairs exclusively with Tropical images</div>
             <div class="pairing-combo-body">
-              <span class="pairing-tag grey" data-i18n="fl-h3">Focus Light</span>
+              <span class="pairing-tag teal" data-i18n="fl-h3">Focus Light</span>
               <span class="pairing-arrow">→</span>
-              <span class="pairing-tag grey" data-i18n="tropical-h3">Tropical</span>
+              <span class="pairing-tag green" data-i18n="tropical-h3">Tropical</span>
             </div>
             <div class="pairing-note" data-i18n="rule2-note">The soft glows of Focus Light complement the organic textures of tropical nature. Never use Focus Light with Water or Body images.</div>
           </div>
@@ -1426,9 +1435,9 @@
             <div class="pairing-combo-body">
               <span class="pairing-tag pink" data-i18n="pv-h3">Pink Vectors</span>
               <span style="font-size:0.8rem; color:#aaa; font-weight:700;" data-i18n-or="or">or</span>
-              <span class="pairing-tag grey" data-i18n="fl-h3">Focus Light</span>
+              <span class="pairing-tag teal" data-i18n="fl-h3">Focus Light</span>
               <span class="pairing-arrow">→</span>
-              <span class="pairing-tag dark" data-i18n="body-h3">Body</span>
+              <span class="pairing-tag skin" data-i18n="body-h3">Body</span>
             </div>
             <div class="pairing-note" data-i18n="rule3-note">Choose one or the other — never mix Pink Vectors and Focus Light in the same composition.</div>
           </div>
@@ -1451,7 +1460,7 @@
         <div class="subsection">
           <h3 data-i18n="tropical-h3">Tropical</h3>
           <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;" data-i18n="tropical-p">Images of plants, forest, lush natural environments.</p>
-          <p style="margin-bottom:1rem;"><span class="pairing-tag grey" style="font-size:0.72rem;" data-i18n="tropical-tag">✅ Use with: Focus Light only</span></p>
+          <p style="margin-bottom:1rem;"><span class="pairing-tag green" style="font-size:0.72rem;" data-i18n="tropical-tag">✅ Use with: Focus Light only</span></p>
           <div class="photo-grid">
             <img src="Foams-Brand-Images-Tropical__1_.jpg" alt="Tropical">
             <img src="Foams-Brand-Images-Tropical__2_.jpg" alt="Tropical">
@@ -1466,7 +1475,7 @@
         <div class="subsection">
           <h3 data-i18n="water-h3">Water</h3>
           <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;" data-i18n="water-p">Foaming waves, water in motion, aquatic textures.</p>
-          <p style="margin-bottom:1rem;"><span class="pairing-tag pink" style="font-size:0.72rem;" data-i18n="water-tag">✅ Use with: Pink Vectors only</span></p>
+          <p style="margin-bottom:1rem;"><span class="pairing-tag blue" style="font-size:0.72rem;" data-i18n="water-tag">✅ Use with: Pink Vectors only</span></p>
           <div class="photo-grid">
             <img src="Foams-Brand-Images-Water__1_.jpg" alt="Water">
             <img src="Foams-Brand-Images-Water__2_.jpg" alt="Water">
@@ -1481,7 +1490,7 @@
         <div class="subsection">
           <h3 data-i18n="body-h3">Body</h3>
           <p style="color:#666; font-size:0.9rem; margin-bottom:0.5rem;" data-i18n="body-p">People, performers, human presence and movement.</p>
-          <p style="margin-bottom:1rem;"><span class="pairing-tag dark" style="font-size:0.72rem;" data-i18n="body-tag">⚠️ Use with: Pink Vectors OR Focus Light — never both</span></p>
+          <p style="margin-bottom:1rem;"><span class="pairing-tag skin" style="font-size:0.72rem;" data-i18n="body-tag">⚠️ Use with: Pink Vectors OR Focus Light — never both</span></p>
           <div class="photo-grid">
             <img src="Foams-Brand-Images-Body__1_.jpg" alt="Body">
             <img src="Foams-Brand-Images-Body__2_.jpg" alt="Body">
@@ -1609,30 +1618,32 @@
         'pv-h3': 'Pink Vectors',
         'pv-p': 'Bold magenta lines, curves, and geometric forms. Use on dark backgrounds for maximum impact.',
         'pv-tag': '✅ Pair with: Water images only',
-        'fl-h3': 'Focus Light',
+        'fl-h3': 'Defocused Light',
         'fl-p': 'Concentrated light effects, glows, and radial highlights creating depth and drama.',
         'fl-tag': '✅ Pair with: Tropical images only',
         'pairing-title': 'How to Combine Elements + Images',
         'pairing-intro': 'Each graphic element style is designed to pair with a specific image category. Follow these rules for a consistent and intentional visual result.',
         'rule1-header': '✅ Pink Vectors pair exclusively with Water images',
         'rule1-note': 'The electric energy of Pink Vectors matches the raw movement of water. Never use Pink Vectors with Tropical or Body images.',
-        'rule2-header': '✅ Focus Light pairs exclusively with Tropical images',
-        'rule2-note': 'The soft glows of Focus Light complement the organic textures of tropical nature. Never use Focus Light with Water or Body images.',
+        'rule2-header': '✅ Defocused Light pairs exclusively with Tropical images',
+        'rule2-note': 'The soft glows of Defocused Light complement the organic textures of tropical nature. Never use Defocused Light with Water or Body images.',
         'rule3-header': '⚠️ Both can be used with Body images — but never at the same time',
-        'rule3-note': 'Choose one or the other — never mix Pink Vectors and Focus Light in the same composition.',
+        'rule3-note': 'Choose one or the other — never mix Pink Vectors and Defocused Light in the same composition.',
         'rule4-header': '💡 Recommended: use only ONE graphic element per image',
         'rule4-body': 'More than one element is possible, but use it sparingly and with intention. Too many elements in one composition quickly becomes overwhelming.',
         'photos-h2': 'Photos & Images',
         'photos-p': 'Our imagery is organized into three visual territories, each capturing a different dimension of the FOAMS world.',
         'tropical-h3': 'Tropical',
         'tropical-p': 'Images of plants, forest, lush natural environments.',
-        'tropical-tag': '✅ Use with: Focus Light only',
+        'tropical-tag': '✅ Use with: Defocused Light only',
         'water-h3': 'Water',
         'water-p': 'Foaming waves, water in motion, aquatic textures.',
         'water-tag': '✅ Use with: Pink Vectors only',
         'body-h3': 'Body',
         'body-p': 'People, performers, human presence and movement.',
-        'body-tag': '⚠️ Use with: Pink Vectors OR Focus Light — never both',
+        'body-tag': '⚠️ Use with: Pink Vectors OR Defocused Light — never both',
+        'logo-withtitle-note-title': 'Guidelines',
+        'logo-withtitle-note-p': 'FOAMS does not have a single title — feel free to use different titles in different contexts, such as House, Space, Collective, Base, Studios, etc. — in the logo generator you can choose different titles.',
         'examples-h2': 'Examples of Usage',
         'examples-p': 'See the brand in action across different formats and contexts — combining logo, graphic elements, and photography.',
         'landscape-h3': 'Landscape',
@@ -1683,30 +1694,32 @@
         'pv-h3': 'Vetores Rosa',
         'pv-p': 'Linhas, curvas e formas geométricas em magenta. Use em fundos escuros para máximo impacto.',
         'pv-tag': '✅ Combinar com: somente imagens de Água',
-        'fl-h3': 'Luz Focada',
+        'fl-h3': 'Luz Desfocada',
         'fl-p': 'Efeitos de luz concentrada, brilhos e destaques radiais que criam profundidade e drama.',
         'fl-tag': '✅ Combinar com: somente imagens Tropicais',
         'pairing-title': 'Como Combinar Elementos + Imagens',
         'pairing-intro': 'Cada estilo de elemento gráfico é projetado para ser combinado com uma categoria de imagem específica. Siga estas regras para um resultado visual consistente e intencional.',
         'rule1-header': '✅ Vetores Rosa combinam exclusivamente com imagens de Água',
         'rule1-note': 'A energia elétrica dos Vetores Rosa combina com o movimento bruto da água. Nunca use Vetores Rosa com imagens Tropicais ou Corpo.',
-        'rule2-header': '✅ Luz Focada combina exclusivamente com imagens Tropicais',
-        'rule2-note': 'Os brilhos suaves da Luz Focada complementam as texturas orgânicas da natureza tropical. Nunca use Luz Focada com imagens de Água ou Corpo.',
+        'rule2-header': '✅ Luz Desfocada combina exclusivamente com imagens Tropicais',
+        'rule2-note': 'Os brilhos suaves da Luz Desfocada complementam as texturas orgânicas da natureza tropical. Nunca use Luz Desfocada com imagens de Água ou Corpo.',
         'rule3-header': '⚠️ Ambos podem ser usados com imagens de Corpo — mas nunca ao mesmo tempo',
-        'rule3-note': 'Escolha um ou outro — nunca misture Vetores Rosa e Luz Focada na mesma composição.',
+        'rule3-note': 'Escolha um ou outro — nunca misture Vetores Rosa e Luz Desfocada na mesma composição.',
         'rule4-header': '💡 Recomendado: use apenas UM elemento gráfico por imagem',
         'rule4-body': 'Mais de um elemento é possível, mas use com parcimônia e intenção. Muitos elementos em uma composição rapidamente se tornam avassaladores.',
         'photos-h2': 'Fotos & Imagens',
         'photos-p': 'Nossas imagens estão organizadas em três territórios visuais, cada um capturando uma dimensão diferente do mundo FOAMS.',
         'tropical-h3': 'Tropical',
         'tropical-p': 'Imagens de plantas, florestas e ambientes naturais exuberantes.',
-        'tropical-tag': '✅ Usar com: somente Luz Focada',
+        'tropical-tag': '✅ Usar com: somente Luz Desfocada',
         'water-h3': 'Água',
         'water-p': 'Ondas com espuma, água em movimento, texturas aquáticas.',
         'water-tag': '✅ Usar com: somente Vetores Rosa',
         'body-h3': 'Corpo',
         'body-p': 'Pessoas, performers, presença e movimento humanos.',
-        'body-tag': '⚠️ Usar com: Vetores Rosa OU Luz Focada — nunca os dois',
+        'body-tag': '⚠️ Usar com: Vetores Rosa OU Luz Desfocada — nunca os dois',
+        'logo-withtitle-note-title': 'Diretrizes',
+        'logo-withtitle-note-p': 'FOAMS não possui um único título, sinta-se livre para usar diferentes títulos em diferentes contextos, como Casa, Espaço, Coletivo, Base, Estúdios, etc.. — no gerador de logo é possível escolher diferentes títulos.',
         'examples-h2': 'Exemplos de Uso',
         'examples-p': 'Veja a marca em ação em diferentes formatos e contextos — combinando logo, elementos gráficos e fotografia.',
         'landscape-h3': 'Paisagem',
