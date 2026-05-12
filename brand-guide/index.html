@@ -540,7 +540,7 @@
     }
 
     .logo-box.on-white { background: #ffffff; border: 1px solid var(--border-color); }
-    .logo-box.on-black { background: #111111; }
+    .logo-box.on-black { background: #000000; }
     .logo-box.on-transparent {
       background-color: #ffffff;
       background-image:
@@ -585,23 +585,24 @@
       position: fixed;
       bottom: 2rem;
       right: 2rem;
-      width: 44px;
-      height: 44px;
-      background: var(--black);
-      color: var(--white);
-      border: none;
+      width: 48px;
+      height: 48px;
+      background: var(--bg);
+      color: var(--brand);
+      border: 2px solid var(--brand);
       border-radius: 50%;
-      font-size: 1.2rem;
+      font-size: 1.3rem;
+      font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 200;
+      z-index: 9999;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.3s, background 0.2s;
+      transition: opacity 0.3s, background 0.2s, color 0.2s;
       text-decoration: none;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+      box-shadow: 0 2px 16px rgba(0,0,0,0.35);
     }
 
     #back-to-top.visible {
@@ -611,7 +612,7 @@
 
     #back-to-top:hover {
       background: var(--brand);
-      color: var(--black);
+      color: #000;
     }
 
     /* ── DOWNLOAD OVERLAY ── */
@@ -995,6 +996,12 @@
   </style>
 </head>
 <body>
+  <script>
+    // Force scroll to top on every load (fixes iframe mid-scroll issue)
+    try { window.scrollTo(0, 0); } catch(e) {}
+    try { document.documentElement.scrollTop = 0; } catch(e) {}
+    try { document.body.scrollTop = 0; } catch(e) {}
+  </script>
 
   <!-- CONTROL BAR -->
   <div class="control-bar">
@@ -1018,15 +1025,15 @@
         <a href="#examples-of-usage" data-i18n="nav-examples">Examples of Usage</a>
         <a href="#closing" data-i18n="nav-closing">↓ Keep it fluid</a>
       </nav>
-      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v1.6</div>
+      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v1.7</div>
     </aside>
 
     <!-- MAIN -->
     <main>
 
       <!-- BRAND GUIDELINES -->
-      <section class="section" id="brand-guidelines">
-        <div class="section-header">
+      <section class="section" id="brand-guidelines" style="padding-bottom: 2rem;">
+        <div class="section-header" style="margin-bottom:0;">
           <h2 data-i18n="overview-h2">FOAMS Brand Guidelines</h2>
           <p data-i18n="overview-p">We've created a set of guidelines to help you bring our brand to life consistently across every touchpoint. On this page you'll find our high-level guidelines and the assets you'll need.</p>
         </div>
@@ -1671,6 +1678,10 @@
     const sections = document.querySelectorAll('.section');
     const navLinks = document.querySelectorAll('.sidebar nav a');
 
+    // Set Overview as active on load
+    const overviewLink = document.querySelector('.sidebar nav a[href="#brand-guidelines"]');
+    if (overviewLink) overviewLink.classList.add('active');
+
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -1684,20 +1695,31 @@
 
     sections.forEach(s => observer.observe(s));
 
-    // Back to top visibility — works both standalone and inside iframe
+    // ── BACK TO TOP — iframe-safe ──
     const backToTop = document.getElementById('back-to-top');
     const scrollRoot = document.scrollingElement || document.documentElement;
 
     function getScrollTop() {
-      return window.scrollY || scrollRoot.scrollTop || 0;
+      return Math.max(
+        window.scrollY || 0,
+        scrollRoot.scrollTop || 0,
+        document.body.scrollTop || 0
+      );
     }
 
-    function onScroll() {
-      backToTop.classList.toggle('visible', getScrollTop() > 400);
+    function updateBackToTop() {
+      const show = getScrollTop() > 300;
+      backToTop.classList.toggle('visible', show);
     }
 
-    window.addEventListener('scroll', onScroll, { passive: true });
-    document.addEventListener('scroll', onScroll, { passive: true });
+    // Listen on every possible scroll target
+    window.addEventListener('scroll', updateBackToTop, { passive: true });
+    document.addEventListener('scroll', updateBackToTop, { passive: true });
+    document.documentElement.addEventListener('scroll', updateBackToTop, { passive: true });
+    document.body.addEventListener('scroll', updateBackToTop, { passive: true });
+
+    // Polling fallback for iframes that swallow scroll events
+    setInterval(updateBackToTop, 300);
 
     // Sidebar nav smooth scroll
     navLinks.forEach(link => {
@@ -1705,16 +1727,24 @@
         e.preventDefault();
         const targetId = link.getAttribute('href').replace('#', '');
         const target = document.getElementById(targetId);
-        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       });
     });
 
-    // Back to top smooth scroll — works in iframe
+    // Back to top — scroll to very top, all methods
     backToTop.addEventListener('click', (e) => {
       e.preventDefault();
       try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(err) {}
       try { scrollRoot.scrollTo({ top: 0, behavior: 'smooth' }); } catch(err) {}
-      scrollRoot.scrollTop = 0;
+      try { document.body.scrollTo({ top: 0, behavior: 'smooth' }); } catch(err) {}
+      // Hard fallback
+      setTimeout(() => {
+        scrollRoot.scrollTop = 0;
+        document.body.scrollTop = 0;
+        window.scrollY && (window.scrollY = 0);
+      }, 50);
     });
 
     // ── DOWNLOAD ICON OVERLAYS ──
