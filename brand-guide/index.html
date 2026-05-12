@@ -165,7 +165,6 @@
       justify-content: center;
       text-decoration: none;
       transition: background 0.2s, color 0.2s;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
       cursor: pointer;
     }
     .section-top-link a:hover {
@@ -177,7 +176,7 @@
     main {
       flex: 1;
       min-width: 0;
-      padding: 5rem 5rem 8rem;
+      padding: 2rem 5rem 8rem;
     }
 
     /* ── SECTIONS ── */
@@ -188,7 +187,7 @@
     }
 
     .section:first-child {
-      padding-top: 3rem;
+      padding-top: 1rem;
     }
 
     .section:last-child {
@@ -668,7 +667,6 @@
       pointer-events: none;
       transition: opacity 0.3s, background 0.2s, color 0.2s;
       text-decoration: none;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
     }
 
     #back-to-top.visible {
@@ -1081,9 +1079,10 @@
         <a href="#graphic-elements" data-i18n="nav-graphic">Graphic Elements</a>
         <a href="#photos-images" data-i18n="nav-photos">Photos &amp; Images</a>
         <a href="#examples-of-usage" data-i18n="nav-examples">Examples of Usage</a>
+        <a href="#generative-examples" data-i18n="nav-gen-examples">Exemplos Generativos</a>
         <a href="#closing" data-i18n="nav-closing">↓ Keep it fluid</a>
       </nav>
-      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v2.8</div>
+      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v3.1</div>
 
       <!-- BACK TO TOP — inside sticky sidebar so it's always in viewport -->
       <div id="back-to-top-wrap">
@@ -1112,6 +1111,7 @@
         <div class="btn-row">
           <a href="foams-logo-options.zip" download class="btn" data-i18n="logo-dl">Download Base Logo</a>
           <a href="http://casafoams.com/foams-logo" target="_blank" class="btn-generator" data-i18n="generator-btn">Open Logo Generator</a>
+          <a href="https://www.casafoams.com/brand-image" target="_blank" class="btn-generator" data-i18n="brand-image-btn">Brand Image Generator</a>
         </div>
 
         <!-- Primary Logo -->
@@ -1446,6 +1446,11 @@
             <div class="pairing-combo-header conditional" data-i18n="rule4-header"><span class="badge">💡</span> Recommended: use only ONE graphic element per image</div>
             <div class="pairing-combo-body" style="font-size:0.9rem; color:#555; padding-top:1rem; padding-bottom:1rem;" data-i18n="rule4-body">More than one element is possible, but use it sparingly and with intention. Too many elements in one composition quickly becomes overwhelming.</div>
           </div>
+
+          <div class="pairing-combo">
+            <div class="pairing-combo-header conditional" data-i18n="rule5-header"><span class="badge">🎨</span> Blending Modes are welcome — use with discretion</div>
+            <div class="pairing-combo-body" style="font-size:0.9rem; padding-top:1rem; padding-bottom:1rem;" data-i18n="rule5-body">Feel free to use blending modes like Multiply, Overlay, Screen, etc. when it works well with the composition. However, use it with discretion — don't make it too strong or it will overpower the image.</div>
+          </div>
         </div>
 
       </section>
@@ -1528,6 +1533,56 @@
             <img src="foams-example-usage-portrait-04.png" alt="Example of usage portrait" style="width:100%; border-radius:8px; display:block;">
           </div>
         </div>
+      </section>
+
+      <!-- GENERATIVE EXAMPLES -->
+      <section class="section" id="generative-examples">
+        <div class="section-header">
+          <h2 data-i18n="gen-examples-h2">Exemplos Generativos</h2>
+          <p data-i18n="gen-examples-p">Pode-se também usar ferramentas generativas para criar imagens facilmente utilizando os diferentes elementos, sempre seguindo as regras de uso. Abaixo estão exemplos generativos, incluindo uma ferramenta para criar diferentes imagens para usar em rede sociais e divulgações.</p>
+        </div>
+
+        <a href="https://www.casafoams.com/brand-image" target="_blank" class="btn-generator" style="margin-bottom: 2.5rem; display: inline-block;" data-i18n="brand-image-btn">Brand Image Generator</a>
+
+        <!-- Generative example images — landscape 2-col -->
+        <div class="subsection" style="margin-top: 1.5rem;">
+          <h3 data-i18n="gen-landscape-h3">Paisagem</h3>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top:1rem;">
+            <img src="foams-generative-landscape-01.png" alt="Generative example landscape" style="width:100%; border-radius:8px; display:block;">
+            <img src="foams-generative-landscape-02.png" alt="Generative example landscape" style="width:100%; border-radius:8px; display:block;">
+            <img src="foams-generative-landscape-03.png" alt="Generative example landscape" style="width:100%; border-radius:8px; display:block;">
+            <img src="foams-generative-landscape-04.png" alt="Generative example landscape" style="width:100%; border-radius:8px; display:block;">
+          </div>
+        </div>
+
+        <!-- Generative example images — portrait 4-col -->
+        <div class="subsection">
+          <h3 data-i18n="gen-portrait-h3">Retrato</h3>
+          <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top:1rem;">
+            <img src="foams-generative-portrait-01.png" alt="Generative example portrait" style="width:100%; border-radius:8px; display:block;">
+            <img src="foams-generative-portrait-02.png" alt="Generative example portrait" style="width:100%; border-radius:8px; display:block;">
+            <img src="foams-generative-portrait-03.png" alt="Generative example portrait" style="width:100%; border-radius:8px; display:block;">
+            <img src="foams-generative-portrait-04.png" alt="Generative example portrait" style="width:100%; border-radius:8px; display:block;">
+          </div>
+        </div>
+
+        <!-- Prompt Guidelines -->
+        <div class="generator-block" style="margin-top: 3rem;">
+          <h3 data-i18n="prompt-h3">PROMPT GUIDELINES</h3>
+          <div class="guidelines-note" style="margin-top: 1rem;">
+            <strong data-i18n="prompt-note-title">Use estas diretrizes ao usar uma ferramenta generativa com prompt:</strong>
+            <ul style="margin-top: 0.75rem; padding-left: 1.25rem; line-height: 2; font-size: 0.9rem; color: var(--text-muted);">
+              <li data-i18n="prompt-1">O logo deve ser posicionado em um local agradável, como em tríade. Não exatamente no centro</li>
+              <li data-i18n="prompt-2">Use a imagem e o elemento gráfico apenas uma vez cada</li>
+              <li data-i18n="prompt-3">O elemento gráfico deve estar sobre a imagem, não separado</li>
+              <li data-i18n="prompt-4">Sinta-se livre para usar modos de mesclagem, mas não é obrigatório</li>
+              <li data-i18n="prompt-5">Mantenha a vibe elegante, moderna e um pouco misteriosa</li>
+              <li data-i18n="prompt-6">Para paisagem use resolução: 1920 × 1080</li>
+              <li data-i18n="prompt-7">Para retrato use resolução: 1080 × 1920</li>
+            </ul>
+          </div>
+        </div>
+
       </section>
 
       <!-- CLOSING -->
@@ -1631,6 +1686,8 @@
         'rule3-note': 'Choose one or the other — never mix Pink Vectors and Defocused Light in the same composition.',
         'rule4-header': '💡 Recommended: use only ONE graphic element per image',
         'rule4-body': 'More than one element is possible, but use it sparingly and with intention. Too many elements in one composition quickly becomes overwhelming.',
+        'rule5-header': '🎨 Blending Modes are welcome — use with discretion',
+        'rule5-body': 'Feel free to use blending modes like Multiply, Overlay, Screen, etc. when it works well with the composition. However, use it with discretion — don\'t make it too strong or it will overpower the image.',
         'photos-h2': 'Photos & Images',
         'photos-p': 'Our imagery is organized into three visual territories, each capturing a different dimension of the FOAMS world.',
         'tropical-h3': 'Tropical',
@@ -1648,6 +1705,21 @@
         'examples-p': 'See the brand in action across different formats and contexts — combining logo, graphic elements, and photography.',
         'landscape-h3': 'Landscape',
         'portrait-h3': 'Portrait',
+        'nav-gen-examples': 'Generative Examples',
+        'gen-examples-h2': 'Generative Examples',
+        'gen-examples-p': 'You can also use generative tools to easily create images using the different elements, always following the usage rules. Below are generative examples, including a tool to create different images for social media and promotion.',
+        'brand-image-btn': 'Brand Image Generator',
+        'gen-landscape-h3': 'Landscape',
+        'gen-portrait-h3': 'Portrait',
+        'prompt-h3': 'PROMPT GUIDELINES',
+        'prompt-note-title': 'Use these guidelines when using a generative tool with a prompt:',
+        'prompt-1': 'The logo should be placed in a nice position, like triad. Not exactly in the center',
+        'prompt-2': 'Use both image and graphical element only once each',
+        'prompt-3': 'The graphical element should be on top of the image, not separated',
+        'prompt-4': 'Feel free to use blend modes, but it\'s not mandatory',
+        'prompt-5': 'Keep the vibe elegant, modern and a bit mysterious',
+        'prompt-6': 'For landscape use resolution: 1920 × 1080',
+        'prompt-7': 'For portrait use resolution: 1080 × 1920',
         'closing-h2': 'Keep it fluid.',
         'closing-p1': 'FOAMS is a living brand. The logo shifts, the images breathe, and the elements flow. These guidelines exist not to constrain but to give you a foundation to explore from.',
         'closing-p2': 'When in doubt: stay bold, stay fluid, and use the generator.',
@@ -1707,6 +1779,8 @@
         'rule3-note': 'Escolha um ou outro — nunca misture Vetores Rosa e Luz Desfocada na mesma composição.',
         'rule4-header': '💡 Recomendado: use apenas UM elemento gráfico por imagem',
         'rule4-body': 'Mais de um elemento é possível, mas use com parcimônia e intenção. Muitos elementos em uma composição rapidamente se tornam avassaladores.',
+        'rule5-header': '🎨 Modos de Mesclagem são bem-vindos — use com discrição',
+        'rule5-body': 'Sinta-se livre para usar modos de mesclagem como Multiplicar, Overlay, Tela, etc. quando funcionar bem com a composição. No entanto, use com discrição — não exagere na intensidade para não sobrepor a imagem.',
         'photos-h2': 'Fotos & Imagens',
         'photos-p': 'Nossas imagens estão organizadas em três territórios visuais, cada um capturando uma dimensão diferente do mundo FOAMS.',
         'tropical-h3': 'Tropical',
@@ -1724,6 +1798,20 @@
         'examples-p': 'Veja a marca em ação em diferentes formatos e contextos — combinando logo, elementos gráficos e fotografia.',
         'landscape-h3': 'Paisagem',
         'portrait-h3': 'Retrato',
+        'nav-gen-examples': 'Exemplos Generativos',
+        'gen-examples-h2': 'Exemplos Generativos',
+        'gen-examples-p': 'Pode-se também usar ferramentas generativas para criar imagens facilmente utilizando os diferentes elementos, sempre seguindo as regras de uso. Abaixo estão exemplos generativos, incluindo uma ferramenta para criar diferentes imagens para usar em rede sociais e divulgações.',
+        'brand-image-btn': 'Abrir Gerador de Imagens',
+        'gen-portrait-h3': 'Retrato',
+        'prompt-h3': 'DIRETRIZES DE PROMPT',
+        'prompt-note-title': 'Use estas diretrizes ao usar uma ferramenta generativa com prompt:',
+        'prompt-1': 'O logo deve ser posicionado em um local agradável, como em tríade. Não exatamente no centro',
+        'prompt-2': 'Use a imagem e o elemento gráfico apenas uma vez cada',
+        'prompt-3': 'O elemento gráfico deve estar sobre a imagem, não separado',
+        'prompt-4': 'Sinta-se livre para usar modos de mesclagem, mas não é obrigatório',
+        'prompt-5': 'Mantenha a vibe elegante, moderna e um pouco misteriosa',
+        'prompt-6': 'Para paisagem use resolução: 1920 × 1080',
+        'prompt-7': 'Para retrato use resolução: 1080 × 1920',
         'closing-h2': 'Seja fluido.',
         'closing-p1': 'FOAMS é uma marca viva. O logo se transforma, as imagens respiram e os elementos fluem. Estas diretrizes existem não para restringir, mas para dar uma base a partir da qual explorar.',
         'closing-p2': 'Na dúvida: seja ousado, seja fluido e use o gerador.',
@@ -1754,9 +1842,9 @@
           }
         }
       });
-      // Update section top links text
-      document.querySelectorAll('.section-top-link').forEach(el => {
-        el.textContent = lang === 'pt' ? '↑ Início' : '↑ Back to top';
+      // Update section top links — always just ↑, no text
+      document.querySelectorAll('.section-top-link a').forEach(el => {
+        el.textContent = '↑';
       });
     }
 
@@ -1928,10 +2016,10 @@
     });
 
     // Wrap examples of usage images
-    document.querySelectorAll('#examples-of-usage img').forEach(wrapExampleWithDownload);
+    document.querySelectorAll('#examples-of-usage img, #generative-examples img').forEach(wrapExampleWithDownload);
 
     // ── SECTION BACK-TO-TOP LINKS ──
-    const topLinkSections = ['logo', 'color', 'typography', 'graphic-elements', 'photos-images', 'examples-of-usage'];
+    const topLinkSections = ['logo', 'color', 'typography', 'graphic-elements', 'photos-images', 'examples-of-usage', 'generative-examples'];
     topLinkSections.forEach(id => {
       const sec = document.getElementById(id);
       if (!sec) return;
