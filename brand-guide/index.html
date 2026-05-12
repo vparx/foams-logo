@@ -504,7 +504,7 @@
     .element-item {
       background: #111;
       border-radius: 8px;
-      overflow: hidden;
+      overflow: visible;       /* allows dl-btn to not be clipped */
       aspect-ratio: 1;
       display: flex;
       align-items: center;
@@ -512,9 +512,20 @@
       position: relative;
     }
 
+    /* inner clip so the image itself stays rounded but dl-btn isn't cut */
+    .element-item .img-clip {
+      position: absolute;
+      inset: 0;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     .element-item img {
-      width: 100%;
-      height: 100%;
+      width: 90%;
+      height: 90%;
       object-fit: contain;
       display: block;
     }
@@ -1038,7 +1049,7 @@
         <a href="#examples-of-usage" data-i18n="nav-examples">Examples of Usage</a>
         <a href="#closing" data-i18n="nav-closing">↓ Keep it fluid</a>
       </nav>
-      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v2.1</div>
+      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v2.2</div>
 
       <!-- BACK TO TOP — inside sticky sidebar so it's always in viewport -->
       <div id="back-to-top-wrap">
@@ -1814,8 +1825,28 @@
       wrapper.appendChild(btn);
     }
 
-    // Wrap element-item images (pink vectors, focus light, different usage logos)
-    document.querySelectorAll('.element-item img').forEach(wrapWithDownload);
+    // Wrap element-item images — img goes inside .img-clip, dl-btn sits on .element-item (not clipped)
+    document.querySelectorAll('.element-item img').forEach(img => {
+      const src = img.getAttribute('src');
+      if (!src) return;
+      const item = img.closest('.element-item');
+      if (!item) return;
+
+      // Wrap img in .img-clip so the image is clipped but btn is not
+      const clip = document.createElement('div');
+      clip.className = 'img-clip';
+      img.parentNode.insertBefore(clip, img);
+      clip.appendChild(img);
+
+      // Add dl-btn directly on .element-item (outside .img-clip, not clipped)
+      const btn = document.createElement('a');
+      btn.className = 'dl-btn';
+      btn.href = src;
+      btn.download = src.split('/').pop();
+      btn.title = 'Download image';
+      btn.innerHTML = dlIcon;
+      item.appendChild(btn);
+    });
 
     // Wrap photo-grid images (tropical, water, body)
     document.querySelectorAll('.photo-grid img').forEach(wrapWithDownload);
