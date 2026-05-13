@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FOAMS Image Generator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: sans-serif;
+      background: #111;
+      min-height: 100vh;
+      padding: 1.5rem;
+      padding-bottom: 5rem;
+      color: #ccc;
+    }
+
+    .version { font-size: 10px; color: #3a3a3a; font-family: monospace; margin-bottom: 8px; }
+
+    /* ════════════ STICKY TOP ════════════ */
+    .sticky-top {
+      position: sticky; top: 0; z-index: 100;
+      background: #111;
+      padding-top: 6px; padding-bottom: 10px; margin-bottom: 6px;
+    }
+
+    .play-area-outer {
+      border-radius: 10px; width: 100%;
+      overflow: hidden; background: #000; position: relative;
+      transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
+    }
+    .play-area-outer.landscape { aspect-ratio: 1920/1080; max-height: 290px; }
+    .play-area-outer.portrait  {
+      aspect-ratio: 1080/1920; max-height: 460px;
+      max-width: 258px; margin-left: auto; margin-right: auto;
+    }
+
+    .play-area-inner {
+      width: 100%; height: 100%; position: relative;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+
+    #bgImage {
+      position: absolute; inset: 0;
+      background-size: cover; background-position: center;
+      opacity: 0; transition: opacity 0.7s ease;
+    }
+    #bgImage.visible { opacity: 1; }
+
+    /* ── Logo layer — full canvas, no overflow clip ── */
+    #logoLayer {
+      position: absolute; inset: 0;
+      pointer-events: none;
+      /* No overflow:hidden — title text needs to peek outside logo bounds */
+    }
+
+    /* ── Draggable group: logo img + title text live here together ── */
+    #logoDraggable {
+      position: absolute;
+      cursor: grab; user-select: none; touch-action: none;
+      pointer-events: all; display: none;
+      /* overflow visible so title text can extend beyond logo box */
+      overflow: visible;
+    }
+    #logoDraggable:active { cursor: grabbing; }
+
+    /* Logo image fills the draggable box */
+    #logoImg {
+      display: none;
+      width: 100%; height: 100%;
+      object-fit: contain; pointer-events: none;
+      position: relative; z-index: 1;
+    }
+
+    /* Dashed placeholder when no real image */
+    #logoPlaceholder {
+      position: absolute; inset: 0; z-index: 1;
+      border: 1.5px dashed rgba(255,255,255,0.2);
+      border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 8px; font-weight: 800; letter-spacing: 0.14em;
+      text-transform: uppercase; color: rgba(255,255,255,0.2);
+      pointer-events: none;
+    }
+
+    /*
+      Title label — child of #logoDraggable, so it moves with it.
+      Positioned outside the logo box via negative offsets.
+      PT: top-left corner of the logo  →  bottom of text touches top-left of logo
+      EN: bottom-right corner of logo  →  top of text touches bottom-right of logo
+    */
+    #logoTitle {
+      display: none;
+      position: absolute;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+      font-weight: 700;
+      text-transform: uppercase;
+      white-space: nowrap;
+      line-height: 1;
+      letter-spacing: 0.06em;
+      pointer-events: none;
+      z-index: 2;
+    }
+    /* PT: sits at top-left. We anchor its bottom-left to the top-left of the logo. */
+    #logoTitle.pos-pt {
+      left: 0;
+      bottom: 100%; /* above the logo box */
+      transform: translateY(-6%); /* small gap */
+    }
+    /* EN: sits at bottom-right. We anchor its top-right to the bottom-right of the logo. */
+    #logoTitle.pos-en {
+      right: 0;
+      top: 100%; /* below the logo box */
+      transform: translateY(6%);
+    }
+
+    .play-area-label {
+      font-size: 10px; color: #2a2a2a;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      font-weight: 700; pointer-events: none; transition: opacity 0.3s;
+    }
+    .play-area-label.hidden { opacity: 0; }
+
+    /* Controls bar */
+    .play-controls-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding-top: 7px; flex-wrap: nowrap;
+    }
+    .orient-btn {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 600; padding: 5px 12px;
+      background: #1a1a1a; color: #777;
+      border: 1px solid #2d2d2d; border-radius: 20px;
+      cursor: pointer; transition: all 0.15s;
+      letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0;
+    }
+    .orient-btn:hover { border-color: #555; color: #ccc; }
+
+    .scale-strip { display: none; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+    .scale-strip.visible { display: flex; }
+    .scale-strip label { font-size: 10px; color: #555; white-space: nowrap; letter-spacing: 0.06em; }
+    .scale-strip input[type=range] { flex: 1; accent-color: #fff; }
+
+    .orient-info {
+      font-size: 10px; color: #333; font-family: monospace;
+      margin-left: auto; white-space: nowrap; flex-shrink: 0;
+    }
+
+    /* ════════════ SECTIONS ════════════ */
+    .section {
+      margin-bottom: 8px; border: 1px solid #1d1d1d;
+      border-radius: 10px; overflow: hidden; transition: opacity 0.25s;
+    }
+    .section.locked { opacity: 0.28; pointer-events: none; }
+
+    .section-header {
+      display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+      cursor: pointer; background: #161616;
+      transition: background 0.15s; user-select: none;
+    }
+    .section-header:hover { background: #1c1c1c; }
+    .section.locked .section-header { cursor: default; }
+    .section.locked .section-header:hover { background: #161616; }
+
+    .step-badge {
+      font-size: 9px; font-weight: 800; letter-spacing: 0.14em; color: #333;
+      background: #1f1f1f; border-radius: 4px; padding: 2px 7px;
+      text-transform: uppercase; flex-shrink: 0; transition: all 0.2s;
+    }
+    .step-badge.active { background: #fff; color: #111; }
+    .step-badge.done   { background: #1a1a1a; color: #3a3a3a; }
+
+    .section-title {
+      font-size: 11px; font-weight: 700; color: #333;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      transition: color 0.2s; flex: 1;
+    }
+    .section-title.active { color: #999; }
+    .section-title.done   { color: #333; }
+
+    .section-summary {
+      font-size: 10px; color: #3a3a3a; letter-spacing: 0.06em;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px;
+    }
+    .collapse-arrow {
+      color: #2d2d2d; flex-shrink: 0; transition: transform 0.25s, color 0.2s;
+      display: flex; align-items: center;
+    }
+    .section.active .collapse-arrow { color: #555; }
+    .section.open   .collapse-arrow { transform: rotate(180deg); }
+
+    .section-body { padding: 14px; display: none; }
+    .section.open .section-body { display: block; }
+
+    /* ════════════ BASE CATEGORY ════════════ */
+    .base-choices { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 12px; }
+    .base-choice {
+      position: relative; border-radius: 8px; overflow: hidden;
+      cursor: pointer; border: 2px solid #222; transition: border-color 0.15s; aspect-ratio: 16/9;
+    }
+    .base-choice:hover { border-color: #555; }
+    .base-choice.selected { border-color: #fff; }
+    .ph-bg { width: 100%; height: 100%; }
+    .ph-bg.tropical { background: linear-gradient(135deg,#1a3a1a,#3a6a2a); }
+    .ph-bg.water    { background: linear-gradient(135deg,#0a1a3a,#1a4a7a); }
+    .ph-bg.body     { background: linear-gradient(135deg,#2a1515,#5a2a2a); }
+    .base-choice .choice-label {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent,rgba(0,0,0,0.9));
+      font-size: 9px; font-weight: 800; letter-spacing: 0.14em;
+      color: #fff; text-align: center; padding: 12px 6px 6px; text-transform: uppercase;
+    }
+
+    /* ════════════ IMAGE GRIDS ════════════ */
+    .picker-label { font-size: 10px; color: #444; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; }
+    .grid-5x2 { display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; }
+    .grid-4x4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; }
+
+    .img-tile {
+      aspect-ratio: 1; border-radius: 7px; border: 2px solid #1e1e1e;
+      cursor: pointer; overflow: hidden; position: relative;
+      transition: border-color 0.15s; background: #181818;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 3px;
+    }
+    .img-tile:hover  { border-color: #555; }
+    .img-tile.selected { border-color: #fff; }
+    .img-tile .t-num { font-size: 13px; font-weight: 800; color: #252525; font-family: monospace; line-height: 1; }
+    .img-tile .t-lbl { font-size: 7px; color: #252525; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; }
+    .img-tile.defocus { background: radial-gradient(ellipse,#0e0e22,#080810); }
+    .img-tile.defocus .t-num, .img-tile.defocus .t-lbl { color: #222240; }
+    .img-tile.pinkvec { background: radial-gradient(ellipse,#180a18,#0d040d); }
+    .img-tile.pinkvec .t-num, .img-tile.pinkvec .t-lbl { color: #35103a; }
+
+    /* ════════════ STEP 2 DIVIDERS ════════════ */
+    .el-divider {
+      font-size: 9px; font-weight: 800; color: #333; letter-spacing: 0.14em;
+      text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin: 12px 0 8px;
+    }
+    .el-divider::after { content: ''; flex: 1; height: 1px; background: #1d1d1d; }
+    .body-note { font-size: 10px; color: #3a3a3a; margin-bottom: 10px; font-style: italic; }
+
+    /* ════════════ LOGO SECTION ════════════ */
+    .logo-ctrl-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+    .ctrl-lbl { font-size: 10px; color: #444; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+
+    .tgl-group { display: flex; border: 1px solid #222; border-radius: 6px; overflow: hidden; }
+    .tgl {
+      font-size: 10px; font-weight: 700; padding: 5px 11px;
+      background: #181818; color: #444; border: none; cursor: pointer;
+      letter-spacing: 0.08em; transition: all 0.12s; font-family: sans-serif;
+    }
+    .tgl:not(:last-child) { border-right: 1px solid #1e1e1e; }
+    .tgl.on-w { background: #fff;    color: #111; }
+    .tgl.on-b { background: #000;    color: #fff; }
+    .tgl.on-p { background: #ff30ff; color: #fff; }
+    .tgl.on   { background: #fff;    color: #111; }
+
+    .logo-sub {
+      font-size: 9px; font-weight: 800; color: #333; letter-spacing: 0.14em;
+      text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin: 10px 0 8px;
+    }
+    .logo-sub::after { content: ''; flex: 1; height: 1px; background: #1d1d1d; }
+
+    /* 6-slot grid: upload + 5 presets */
+    .logo-grid-6 { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }
+
+    .logo-tile {
+      aspect-ratio: 1; border-radius: 7px; border: 2px solid #1e1e1e;
+      cursor: pointer; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.15s; background: #181818; position: relative;
+    }
+    .logo-tile:hover  { border-color: #555; }
+    .logo-tile.selected { border-color: #fff; }
+    .logo-tile.bg-blk { background: #000; }
+    .logo-tile.bg-pnk { background: #130013; }
+    .logo-tile .tile-in {
+      font-size: 7px; font-weight: 800; letter-spacing: 0.1em;
+      text-transform: uppercase; text-align: center; color: #282828; padding: 6px; line-height: 1.5;
+    }
+    .logo-tile.c-w .tile-in { color: rgba(255,255,255,0.18); }
+    .logo-tile.c-b .tile-in { color: rgba(255,255,255,0.1); }
+    .logo-tile.c-p .tile-in { color: rgba(255,48,255,0.28); }
+    .logo-tile img { width: 70%; height: 70%; object-fit: contain; pointer-events: none; display: block; }
+
+    /* Upload tile */
+    .logo-tile.upload-tile {
+      border-style: dashed; border-color: #2d2d2d;
+      flex-direction: column; gap: 5px; overflow: hidden;
+    }
+    .logo-tile.upload-tile:hover { border-color: #666; }
+    .up-icon { color: #3a3a3a; transition: color 0.15s; display: block; }
+    .logo-tile.upload-tile:hover .up-icon { color: #888; }
+    .up-lbl {
+      font-size: 8px; font-weight: 700; color: #3a3a3a; letter-spacing: 0.1em;
+      text-transform: uppercase; transition: color 0.15s;
+    }
+    .logo-tile.upload-tile:hover .up-lbl { color: #888; }
+    .logo-tile.upload-tile.has-upload { border-style: solid; border-color: #555; }
+    #uploadPreview { width: 85%; height: 85%; object-fit: contain; display: none; }
+    .logo-tile.upload-tile.has-upload .up-icon,
+    .logo-tile.upload-tile.has-upload .up-lbl { display: none; }
+
+    #uploadInput { display: none; }
+
+    /* ════════════ TITLE CHOOSER ════════════ */
+    .title-chooser {
+      margin-top: 14px; padding-top: 14px;
+      border-top: 1px solid #1d1d1d;
+      display: none;
+    }
+    .title-chooser.visible { display: block; }
+
+    .title-grid {
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-top: 10px;
+    }
+    .title-chip {
+      padding: 8px 4px; border-radius: 6px; border: 1px solid #1e1e1e;
+      cursor: pointer;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+      font-size: 10px; font-weight: 700;
+      text-align: center; color: #444;
+      background: #181818; transition: all 0.14s;
+      letter-spacing: 0.05em; text-transform: uppercase;
+    }
+    .title-chip:hover   { border-color: #555; color: #aaa; }
+    .title-chip.selected { border-color: #fff; color: #fff; background: #1f1f1f; }
+    .title-chip.none-chip {
+      font-family: sans-serif; font-size: 9px; letter-spacing: 0.1em;
+      color: #333; text-transform: uppercase;
+    }
+    .title-chip.none-chip.selected { color: #aaa; }
+
+    /* ════════════ ACTION BUTTONS ════════════ */
+    .action-area { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+
+    .gen-btn {
+      width: 100%; font-size: 13px; font-weight: 800;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 15px; border-radius: 10px; border: none;
+      cursor: pointer; font-family: sans-serif; transition: all 0.2s;
+      background: #181818; color: #2a2a2a;
+    }
+    .gen-btn:disabled { cursor: not-allowed; }
+    .gen-btn.ready {
+      background: linear-gradient(135deg,#fff,#ddd);
+      color: #111; box-shadow: 0 4px 20px rgba(255,255,255,0.1);
+    }
+    .gen-btn.ready:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(255,255,255,0.18); }
+    .gen-btn.running {
+      background: #181818; color: #555; cursor: wait;
+      animation: blink 1.3s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+    .export-btn {
+      width: 100%; font-size: 13px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 13px; border-radius: 10px;
+      border: 1px solid #222; cursor: pointer; font-family: sans-serif;
+      background: #141414; color: #333; transition: all 0.2s; display: none;
+    }
+    .export-btn.show { display: block; color: #888; border-color: #333; }
+    .export-btn.show:hover { border-color: #666; color: #ccc; }
+
+    @media (max-width:560px) {
+      body { padding: 0.75rem; padding-bottom: 5rem; }
+      .grid-5x2 { grid-template-columns: repeat(4,1fr); }
+      .title-grid { grid-template-columns: repeat(3,1fr); }
+      .play-area-outer.portrait { max-width: 200px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="version">v3.1 · FOAMS Image Generator</div>
+
+<!-- ══════════════════════════════════════════
+     STICKY PLAY AREA
+═══════════════════════════════════════════ -->
+<div class="sticky-top">
+  <div class="play-area-outer landscape" id="playAreaOuter">
+    <div class="play-area-inner" id="playAreaInner">
+
+      <div id="bgImage"></div>
+
+      <div id="logoLayer">
+        <!--
+          #logoDraggable contains BOTH the logo image AND the title text.
+          The title is absolutely positioned relative to this box,
+          so it always moves with the logo.
+        -->
+        <div id="logoDraggable">
+          <div id="logoPlaceholder">LOGO</div>
+          <img id="logoImg" src="" alt="">
+          <!-- Title label — positioned outside the logo box via CSS -->
+          <span id="logoTitle"></span>
+        </div>
+      </div>
+
+      <span class="play-area-label" id="playAreaLabel">1920 × 1080</span>
+    </div>
+  </div>
+
+  <div class="play-controls-bar">
+    <button class="orient-btn" onclick="toggleOrientation()">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <rect x="0.5" y="2.5" width="7" height="9" rx="1" stroke="#777" stroke-width="1.1"/>
+        <rect x="4.5" y="0.5" width="7" height="9" rx="1" stroke="#444" stroke-width="1.1" stroke-dasharray="2 1"/>
+      </svg>
+      <span id="orientBtnTxt">Portrait</span>
+    </button>
+
+    <div class="scale-strip" id="scaleStrip">
+      <label>Scale&nbsp;<span id="scaleVal">30</span>%</label>
+      <input type="range" id="scaleSlider" min="5" max="80" value="30" step="1"
+        oninput="updateLogoScale(this.value)">
+    </div>
+
+    <span class="orient-info" id="orientInfo">Landscape · 1920×1080</span>
+  </div>
+</div>
+
+<input type="file" id="uploadInput" accept="image/png,image/jpeg,image/svg+xml,image/webp"
+  onchange="handleUpload(this)">
+
+<!-- ══════════════════════════════════════════
+     STEP 1
+═══════════════════════════════════════════ -->
+<div class="section open active" id="step1Section">
+  <div class="section-header" onclick="toggleSection('step1Section')">
+    <span class="step-badge active" id="badge1">STEP 1</span>
+    <span class="section-title active" id="title1">Choose the Base Image</span>
+    <span class="section-summary" id="summary1"></span>
+    <span class="collapse-arrow"><svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+  </div>
+  <div class="section-body">
+    <div class="base-choices">
+      <div class="base-choice" id="basebtn-tropical" onclick="selectCat('tropical')">
+        <img src="Foams-Brand-Images-Tropical-Landscape-03.jpg" style="width:100%;height:100%;object-fit:cover;display:block;"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div class="ph-bg tropical" style="display:none"></div>
+        <span class="choice-label">Tropical</span>
+      </div>
+      <div class="base-choice" id="basebtn-water" onclick="selectCat('water')">
+        <img src="Foams-Brand-Images-Water-Landscape-02.jpg" style="width:100%;height:100%;object-fit:cover;display:block;"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div class="ph-bg water" style="display:none"></div>
+        <span class="choice-label">Water</span>
+      </div>
+      <div class="base-choice" id="basebtn-body" onclick="selectCat('body')">
+        <img src="Foams-Brand-Images-Body-Landscape-04.jpg" style="width:100%;height:100%;object-fit:cover;display:block;"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+        <div class="ph-bg body" style="display:none"></div>
+        <span class="choice-label">Body</span>
+      </div>
+    </div>
+    <div id="baseImgPicker" style="display:none">
+      <div class="picker-label" id="basePickerLbl">Choose one image</div>
+      <div class="grid-5x2" id="baseImgGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     STEP 2
+═══════════════════════════════════════════ -->
+<div class="section locked" id="step2Section">
+  <div class="section-header" onclick="toggleSection('step2Section')">
+    <span class="step-badge" id="badge2">STEP 2</span>
+    <span class="section-title" id="title2">Choose a Graphical Element</span>
+    <span class="section-summary" id="summary2"></span>
+    <span class="collapse-arrow"><svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+  </div>
+  <div class="section-body" id="step2Body"></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     STEP 3
+═══════════════════════════════════════════ -->
+<div class="section locked" id="step3Section">
+  <div class="section-header" onclick="toggleSection('step3Section')">
+    <span class="step-badge" id="badge3">STEP 3</span>
+    <span class="section-title" id="title3">Choose a Logo</span>
+    <span class="section-summary" id="summary3"></span>
+    <span class="collapse-arrow"><svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+  </div>
+  <div class="section-body" id="step3Body">
+
+    <!-- Color toggle -->
+    <div class="logo-ctrl-row">
+      <span class="ctrl-lbl">Color</span>
+      <div class="tgl-group" id="colorTgl">
+        <button class="tgl on-w" onclick="setLogoColor('white')">White</button>
+        <button class="tgl"      onclick="setLogoColor('black')">Black</button>
+        <button class="tgl"      onclick="setLogoColor('pink')">Pink</button>
+      </div>
+    </div>
+
+    <!-- Logo grid: slot 0=upload, 1-5=presets -->
+    <div class="logo-sub">Logo</div>
+    <div class="logo-grid-6" id="lgGrid"></div>
+
+    <!-- Title chooser — revealed after logo chosen -->
+    <div class="title-chooser" id="titleChooser">
+      <div class="logo-ctrl-row">
+        <span class="ctrl-lbl">Title</span>
+        <div class="tgl-group" id="titleLangTgl">
+          <button class="tgl on" onclick="setTitleLang('PT')">PT</button>
+          <button class="tgl"    onclick="setTitleLang('EN')">EN</button>
+          <button class="tgl"    onclick="setTitleLang('NONE')">None</button>
+        </div>
+      </div>
+      <div class="title-grid" id="titleGrid"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     ACTIONS
+═══════════════════════════════════════════ -->
+<div class="action-area">
+  <button class="gen-btn" id="genBtn" disabled onclick="generateImage()">Generate Image</button>
+  <button class="export-btn" id="exportBtn" onclick="exportImage()">↓ Export Image</button>
+</div>
+
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+const TITLES_PT = ['CASA','ESPAÇO','NÚCLEO','ESTÚDIOS','COLETIVO','RESIDÊNCIA','LABORATÓRIO','RESISTÊNCIA'];
+const TITLES_EN = ['HOUSE','SPACE','HUB','STUDIOS','COLLECTIVE','RESIDENCY','LABORATORY','RESISTANCE'];
+
+function logoFilename(color, n) {
+  return `foams-${color}-on-transparent-variation-0${n}.png`;
+}
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let orientation  = 'landscape';
+let selCat       = null;
+let selBaseImg   = null;
+let selEl        = null;
+let selLogo      = null;   // 'upload' | 'preset-N'
+let selBaseFile  = null;   // actual filename of chosen base image
+let uploadedSrc  = null;
+let logoColor    = 'white';
+let titleLang    = 'PT';
+let selTitle     = null;   // word string (already uppercased) or null
+let imgGenerated = false;
+
+let logoPctX = 18, logoPctY = 78;  // center of logo as % of play-area
+let logoScale = 30;                 // % of min(aW,aH)
+let dragging = false, dOffX = 0, dOffY = 0;
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function $id(id) { return document.getElementById(id); }
+
+// ─── ORIENTATION ─────────────────────────────────────────────────────────────
+function toggleOrientation() {
+  orientation = orientation === 'landscape' ? 'portrait' : 'landscape';
+  const outer = $id('playAreaOuter');
+  if (orientation === 'landscape') {
+    outer.className = 'play-area-outer landscape';
+    $id('playAreaLabel').textContent = '1920 × 1080';
+    $id('orientInfo').textContent    = 'Landscape · 1920×1080';
+    $id('orientBtnTxt').textContent  = 'Portrait';
+  } else {
+    outer.className = 'play-area-outer portrait';
+    $id('playAreaLabel').textContent = '1080 × 1920';
+    $id('orientInfo').textContent    = 'Portrait · 1080×1920';
+    $id('orientBtnTxt').textContent  = 'Landscape';
+  }
+  // After CSS transition settles, reposition using same % coords
+  setTimeout(() => { if (selLogo) { applyLogoPos(); applyTitleStyle(); } }, 420);
+}
+
+// ─── SECTIONS ────────────────────────────────────────────────────────────────
+function toggleSection(id) {
+  const s = $id(id);
+  if (s.classList.contains('locked')) return;
+  s.classList.toggle('open');
+}
+function activateSection(id, n) {
+  const s = $id(id);
+  s.classList.remove('locked'); s.classList.add('open','active');
+  $id('badge'+n).className = 'step-badge active';
+  $id('title'+n).className = 'section-title active';
+  $id('summary'+n).textContent = '';
+}
+function markDone(id, n, txt) {
+  $id(id).classList.remove('active','open');
+  $id('badge'+n).className = 'step-badge done';
+  $id('title'+n).className = 'section-title done';
+  $id('summary'+n).textContent = txt;
+}
+function lockSection(id, n) {
+  const s = $id(id);
+  s.classList.add('locked'); s.classList.remove('open','active');
+  $id('badge'+n).className = 'step-badge';
+  $id('title'+n).className = 'section-title';
+  $id('summary'+n).textContent = '';
+}
+
+// ─── STEP 1 ──────────────────────────────────────────────────────────────────
+function selectCat(cat) {
+  selCat = cat; selBaseImg = null; selEl = null; selLogo = null;
+  imgGenerated = false;
+  lockSection('step2Section',2); lockSection('step3Section',3);
+  clearLogoFromPlayArea();
+  updateGenBtn(); updateExportBtn();
+
+  ['tropical','water','body'].forEach(c =>
+    $id('basebtn-'+c).classList.toggle('selected', c===cat)
+  );
+  $id('basePickerLbl').textContent = cat.toUpperCase() + ' — Pick one of 10 images';
+  buildBaseGrid(cat);
+  $id('baseImgPicker').style.display = 'block';
+}
+
+function buildBaseGrid(cat) {
+  // Files: Landscape 01-05 then Portrait 01-05
+  // Display order: 1-5 = Landscape, 6-10 = Portrait
+  const catName = { tropical:'Tropical', water:'Water', body:'Body' }[cat];
+  const files = [
+    ...Array.from({length:5}, (_,i) => `Foams-Brand-Images-${catName}-Landscape-0${i+1}.jpg`),
+    ...Array.from({length:5}, (_,i) => `Foams-Brand-Images-${catName}-Portrait-0${i+1}.jpg`),
+  ];
+  const labels = [
+    ...Array.from({length:5}, (_,i) => `L${String(i+1).padStart(2,'0')}`),
+    ...Array.from({length:5}, (_,i) => `P${String(i+1).padStart(2,'0')}`),
+  ];
+
+  const grid = $id('baseImgGrid');
+  grid.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    const t = document.createElement('div');
+    t.className = 'img-tile'; t.id = 'bimg-'+(i+1);
+    t.style.position = 'relative'; t.style.overflow = 'hidden';
+    t.innerHTML = `
+      <img src="${files[i]}" alt="${labels[i]}"
+        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <span class="t-num" style="display:none">${labels[i]}</span>
+      <span class="t-lbl" style="position:absolute;bottom:3px;left:0;right:0;text-align:center;
+        font-size:7px;font-weight:800;letter-spacing:0.1em;color:rgba(255,255,255,0.7);
+        text-shadow:0 1px 3px rgba(0,0,0,0.8);text-transform:uppercase;pointer-events:none;">
+        ${labels[i]}
+      </span>
+    `;
+    t.onclick = () => selectBaseImg(i+1);
+    grid.appendChild(t);
+  }
+}
+
+function selectBaseImg(n) {
+  selBaseImg = n;
+  // Determine the actual filename (1-5 = Landscape, 6-10 = Portrait)
+  const catName = { tropical:'Tropical', water:'Water', body:'Body' }[selCat];
+  if (n <= 5) {
+    selBaseFile = `Foams-Brand-Images-${catName}-Landscape-0${n}.jpg`;
+  } else {
+    selBaseFile = `Foams-Brand-Images-${catName}-Portrait-0${n-5}.jpg`;
+  }
+  $id('baseImgGrid').querySelectorAll('.img-tile').forEach(t => t.classList.remove('selected'));
+  $id('bimg-'+n).classList.add('selected');
+  const catLabel = {tropical:'Tropical',water:'Water',body:'Body'}[selCat];
+  markDone('step1Section',1, catLabel+' · Image '+n);
+  buildStep2(selCat);
+  activateSection('step2Section',2);
+  $id('step2Section').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ─── STEP 2 ──────────────────────────────────────────────────────────────────
+function buildStep2(cat) {
+  const body = $id('step2Body');
+  body.innerHTML = ''; selEl = null;
+  if (cat === 'tropical') {
+    $id('title2').textContent = 'Graphical Element — Light Defocus';
+    body.appendChild(makeElGrid('defocus'));
+  } else if (cat === 'water') {
+    $id('title2').textContent = 'Graphical Element — Pink Vectors';
+    body.appendChild(makeElGrid('pinkvec'));
+  } else {
+    $id('title2').textContent = 'Graphical Element';
+    const note = document.createElement('p');
+    note.className = 'body-note';
+    note.textContent = 'Choose one element from either category below.';
+    body.appendChild(note);
+    const d1 = document.createElement('div'); d1.className='el-divider'; d1.textContent='Light Defocus'; body.appendChild(d1);
+    body.appendChild(makeElGrid('defocus'));
+    const d2 = document.createElement('div'); d2.className='el-divider'; d2.textContent='Pink Vectors'; body.appendChild(d2);
+    body.appendChild(makeElGrid('pinkvec'));
+  }
+}
+function makeElGrid(type) {
+  const filePrefix = type === 'defocus'
+    ? 'Foams-Brand-Graphic-DefocusLight-'
+    : 'Foams-Brand-Graphic-PinkVectors-';
+
+  const g = document.createElement('div'); g.className = 'grid-4x4';
+  for (let i = 1; i <= 16; i++) {
+    const fname = filePrefix + String(i).padStart(2,'0') + '.png';
+    const t = document.createElement('div');
+    t.className = 'img-tile '+type; t.id = 'el-'+type+'-'+i;
+    t.style.position = 'relative'; t.style.overflow = 'hidden';
+    t.innerHTML = `
+      <img src="${fname}" alt="${i}"
+        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <span class="t-num" style="display:none">${String(i).padStart(2,'0')}</span>
+    `;
+    t.onclick = () => selectEl(type,i,t);
+    g.appendChild(t);
+  }
+  return g;
+}
+function selectEl(type, n, tile) {
+  $id('step2Body').querySelectorAll('.img-tile').forEach(t => t.classList.remove('selected'));
+  tile.classList.add('selected');
+  selEl = type+'-'+n;
+  markDone('step2Section',2,(type==='defocus'?'Light Defocus':'Pink Vector')+' #'+n);
+  buildStep3();
+  activateSection('step3Section',3);
+  $id('step3Section').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ─── STEP 3: LOGO ────────────────────────────────────────────────────────────
+function buildStep3() {
+  buildLogoGrid();
+  updateLogoTileColors();
+  $id('titleChooser').classList.remove('visible');
+  selTitle = null;
+  titleLang = 'PT';
+  hideTitle();
+}
+
+function buildLogoGrid() {
+  const grid = $id('lgGrid');
+  grid.innerHTML = '';
+
+  // Slot 0: Upload
+  const uploadTile = document.createElement('div');
+  uploadTile.className = 'logo-tile upload-tile';
+  uploadTile.id = 'lg-upload';
+  uploadTile.innerHTML = `
+    <svg class="up-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <path d="M10 13V4M10 4L7 7M10 4l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M4 14v1a2 2 0 002 2h8a2 2 0 002-2v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <span class="up-lbl">Upload</span>
+    <img id="uploadPreview" src="" alt="">
+  `;
+  if (uploadedSrc) {
+    const prev = uploadTile.querySelector('#uploadPreview');
+    prev.src = uploadedSrc; prev.style.display = 'block';
+    uploadTile.classList.add('has-upload');
+    if (selLogo === 'upload') uploadTile.classList.add('selected');
+  }
+  uploadTile.onclick = () => $id('uploadInput').click();
+  grid.appendChild(uploadTile);
+
+  // Slots 1-5: preset logos
+  for (let i = 1; i <= 5; i++) {
+    const t = document.createElement('div');
+    t.className = 'logo-tile c-w'; t.id = 'lg-preset-'+i;
+    const fname = logoFilename(logoColor, i);
+    t.innerHTML = `
+      <img src="${fname}" alt="Logo ${i}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+      <div class="tile-in" style="display:none">Var. ${i}</div>
+    `;
+    if (selLogo === 'preset-'+i) t.classList.add('selected');
+    t.onclick = () => selectLogo('preset-'+i, t);
+    grid.appendChild(t);
+  }
+}
+
+function setLogoColor(color) {
+  logoColor = color;
+  const [bW,bB,bP] = $id('colorTgl').querySelectorAll('.tgl');
+  bW.className = 'tgl'+(color==='white'?' on-w':'');
+  bB.className = 'tgl'+(color==='black'?' on-b':'');
+  bP.className = 'tgl'+(color==='pink' ?' on-p':'');
+  updateLogoTileColors();
+  // Refresh preset img src
+  for (let i=1; i<=5; i++) {
+    const tile = $id('lg-preset-'+i);
+    if (!tile) continue;
+    const img = tile.querySelector('img');
+    if (img) { img.style.display=''; img.src = logoFilename(color,i); }
+    const fb = tile.querySelector('.tile-in');
+    if (fb) fb.style.display = 'none';
+  }
+  // Update live logo if preset active
+  if (selLogo && selLogo.startsWith('preset-')) {
+    setLogoSrc(logoFilename(color, parseInt(selLogo.split('-')[1])));
+  }
+  // Update title color
+  applyTitleStyle();
+}
+
+function updateLogoTileColors() {
+  document.querySelectorAll('.logo-tile:not(.upload-tile)').forEach(t => {
+    t.classList.remove('bg-blk','bg-pnk','c-w','c-b','c-p');
+    if (logoColor==='black')     t.classList.add('bg-blk','c-b');
+    else if (logoColor==='pink') t.classList.add('bg-pnk','c-p');
+    else                          t.classList.add('c-w');
+  });
+}
+
+function handleUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    uploadedSrc = e.target.result;
+    const tile = $id('lg-upload');
+    if (tile) {
+      tile.classList.add('has-upload');
+      const prev = tile.querySelector('#uploadPreview');
+      if (prev) { prev.src = uploadedSrc; prev.style.display = 'block'; }
+    }
+    selectLogo('upload', tile);
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function selectLogo(logoId, tile) {
+  selLogo = logoId;
+  document.querySelectorAll('.logo-tile').forEach(t => t.classList.remove('selected'));
+  if (tile) tile.classList.add('selected');
+
+  const src = logoId === 'upload'
+    ? (uploadedSrc || '')
+    : logoFilename(logoColor, parseInt(logoId.split('-')[1]));
+  setLogoSrc(src);
+
+  // Only reset position on first logo pick, not when swapping
+  if (!$id('logoDraggable').style.display || $id('logoDraggable').style.display === 'none') {
+    logoPctX = 18; logoPctY = 78;
+    logoScale = 30;
+    $id('scaleSlider').value = 30;
+    $id('scaleVal').textContent = 30;
+  }
+
+  showLogoInPlayArea();
+
+  // Show title chooser and scroll to it — keep section OPEN
+  $id('titleChooser').classList.add('visible');
+  buildTitleGrid();
+  // Small delay so the title chooser is rendered before scrolling
+  setTimeout(() => {
+    $id('titleChooser').scrollIntoView({behavior:'smooth', block:'nearest'});
+  }, 80);
+
+  // Update summary text but do NOT collapse the section
+  const lbl = logoId==='upload' ? 'Uploaded' : 'Variation '+logoId.split('-')[1];
+  $id('summary3').textContent = lbl+' · '+logoColor;
+
+  updateGenBtn();
+}
+
+function setLogoSrc(src) {
+  const img = $id('logoImg');
+  const ph  = $id('logoPlaceholder');
+  if (src) {
+    img.src = src; img.style.display = 'block'; ph.style.display = 'none';
+  } else {
+    img.style.display = 'none'; ph.style.display = 'flex';
+  }
+}
+
+// ─── TITLE CHOOSER ───────────────────────────────────────────────────────────
+function buildTitleGrid() {
+  const grid = $id('titleGrid');
+  grid.innerHTML = '';
+
+  // Sync lang toggle buttons
+  const tglBtns = $id('titleLangTgl').querySelectorAll('.tgl');
+  ['PT','EN','NONE'].forEach((l,i) => {
+    tglBtns[i].className = 'tgl' + (l===titleLang?' on':'');
+  });
+
+  const words = titleLang==='PT' ? TITLES_PT : titleLang==='EN' ? TITLES_EN : [];
+
+  // "None" chip
+  const none = document.createElement('div');
+  none.className = 'title-chip none-chip' + (selTitle===null?' selected':'');
+  none.textContent = 'None';
+  none.onclick = () => { selTitle=null; refreshTitleChips(); hideTitle(); };
+  grid.appendChild(none);
+
+  words.forEach(word => {
+    const chip = document.createElement('div');
+    chip.className = 'title-chip' + (selTitle===word?' selected':'');
+    chip.textContent = word;   // already uppercase in our arrays
+    chip.onclick = () => { selTitle=word; refreshTitleChips(); applyTitleStyle(); };
+    grid.appendChild(chip);
+  });
+
+  // If switching to NONE lang, clear title
+  if (titleLang === 'NONE') { selTitle=null; hideTitle(); }
+}
+
+function setTitleLang(lang) {
+  titleLang = lang; selTitle = null;
+  buildTitleGrid();
+}
+
+function refreshTitleChips() {
+  $id('titleGrid').querySelectorAll('.title-chip').forEach(c => {
+    const isNone = c.classList.contains('none-chip');
+    c.classList.toggle('selected', isNone ? selTitle===null : c.textContent===selTitle);
+  });
+}
+
+// ─── TITLE INSIDE LOGO DRAGGABLE ─────────────────────────────────────────────
+/*
+  #logoTitle is a child of #logoDraggable, so it moves with the logo automatically.
+  We position it:
+    PT → top-left corner of the logo box  (bottom of text = top of logo)
+    EN → bottom-right corner of the logo box (top of text = bottom of logo)
+
+  Font size scales with the logo's rendered pixel size so it always looks proportional.
+*/
+function applyTitleStyle() {
+  const titleEl = $id('logoTitle');
+  if (!titleEl) return;
+
+  if (!selTitle) { hideTitle(); return; }
+
+  // Font size: proportional to the logo's rendered px size
+  const area    = $id('playAreaInner');
+  const aW      = area.offsetWidth;
+  const aH      = area.offsetHeight;
+  const baseSize = Math.min(aW, aH);
+  const logoPx   = baseSize * (logoScale / 100);  // logo width/height in px
+  // Title is roughly 14% of the logo size — adjust this ratio to taste
+  const fontSize = Math.max(8, Math.round(logoPx * 0.16));
+
+  titleEl.textContent = selTitle;
+  titleEl.style.display    = 'block';
+  titleEl.style.fontSize   = fontSize + 'px';
+
+  // Color matches logo color
+  const colorMap = { white:'#ffffff', black:'#000000', pink:'#ff30ff' };
+  titleEl.style.color = colorMap[logoColor] || '#ffffff';
+
+  // Remove both position classes, apply the right one
+  titleEl.classList.remove('pos-pt','pos-en');
+  if (titleLang === 'PT') {
+    titleEl.classList.add('pos-pt');
+  } else {
+    titleEl.classList.add('pos-en');
+  }
+}
+
+function hideTitle() {
+  const titleEl = $id('logoTitle');
+  if (titleEl) titleEl.style.display = 'none';
+}
+
+// ─── LOGO IN PLAY AREA ───────────────────────────────────────────────────────
+function showLogoInPlayArea() {
+  $id('logoDraggable').style.display = 'block';
+  $id('playAreaLabel').classList.add('hidden');
+  $id('scaleStrip').classList.add('visible');
+  applyLogoPos();
+}
+
+function clearLogoFromPlayArea() {
+  selLogo = null; selTitle = null;
+  $id('logoDraggable').style.display = 'none';
+  $id('playAreaLabel').classList.remove('hidden');
+  $id('scaleStrip').classList.remove('visible');
+  hideTitle();
+}
+
+function applyLogoPos() {
+  const area = $id('playAreaInner');
+  const aW = area.offsetWidth, aH = area.offsetHeight;
+  if (!aW || !aH) return;
+
+  const baseSize = Math.min(aW, aH);
+  const px = baseSize * (logoScale / 100);
+
+  const d = $id('logoDraggable');
+  d.style.width  = px + 'px';
+  d.style.height = px + 'px';
+  d.style.left   = ((logoPctX/100)*aW - px/2) + 'px';
+  d.style.top    = ((logoPctY/100)*aH - px/2) + 'px';
+
+  // Re-apply title style so font size stays in sync with logo size
+  if (selTitle) applyTitleStyle();
+}
+
+function updateLogoScale(val) {
+  logoScale = parseInt(val);
+  $id('scaleVal').textContent = val;
+  if (selLogo) applyLogoPos();
+}
+
+// ─── DRAG ────────────────────────────────────────────────────────────────────
+(function initDrag() {
+  const el   = $id('logoDraggable');
+  const area = $id('playAreaInner');
+
+  function xy(e) {
+    return e.touches
+      ? {x:e.touches[0].clientX, y:e.touches[0].clientY}
+      : {x:e.clientX, y:e.clientY};
+  }
+
+  el.addEventListener('mousedown',  start);
+  el.addEventListener('touchstart', start, {passive:false});
+
+  function start(e) {
+    e.preventDefault(); dragging = true;
+    const p = xy(e), r = el.getBoundingClientRect();
+    dOffX = p.x - (r.left + r.width/2);
+    dOffY = p.y - (r.top  + r.height/2);
+  }
+
+  document.addEventListener('mousemove', move);
+  document.addEventListener('touchmove',  move, {passive:false});
+
+  function move(e) {
+    if (!dragging) return; e.preventDefault();
+    const p = xy(e), r = area.getBoundingClientRect();
+    logoPctX = Math.min(100, Math.max(0, ((p.x-r.left-dOffX)/r.width )*100));
+    logoPctY = Math.min(100, Math.max(0, ((p.y-r.top -dOffY)/r.height)*100));
+    applyLogoPos();
+  }
+
+  document.addEventListener('mouseup',  () => { dragging = false; });
+  document.addEventListener('touchend', () => { dragging = false; });
+})();
+
+// ─── GENERATE ────────────────────────────────────────────────────────────────
+function updateGenBtn() {
+  const btn = $id('genBtn');
+  const ready = !!(selCat && selBaseImg && selEl && selLogo);
+  btn.disabled = !ready;
+  btn.classList.toggle('ready', ready);
+}
+function updateExportBtn() {
+  $id('exportBtn').classList.toggle('show', imgGenerated);
+}
+
+async function generateImage() {
+  if (!selCat || !selBaseImg || !selEl || !selLogo) return;
+  const btn = $id('genBtn');
+  btn.disabled=true; btn.classList.remove('ready'); btn.classList.add('running');
+  btn.textContent = 'Generating…';
+  try {
+    const prompt = buildPrompt();
+    console.log('Prompt:', prompt);
+
+    // ── REPLACE: actual image API call goes here ───────────────────────────
+    // const size = orientation==='landscape' ? '1792x1024' : '1024x1792';
+    // const res  = await fetch('https://api.openai.com/v1/images/generations', {
+    //   method:'POST',
+    //   headers:{'Content-Type':'application/json','Authorization':'Bearer YOUR_KEY'},
+    //   body: JSON.stringify({model:'dall-e-3', prompt, size, n:1})
+    // });
+    // const data = await res.json();
+    // const bg = $id('bgImage');
+    // bg.style.backgroundImage = `url(${data.data[0].url})`;
+    // bg.classList.add('visible');
+    // ──────────────────────────────────────────────────────────────────────
+
+    await new Promise(r => setTimeout(r, 2000));
+    const grads = {
+      tropical:'linear-gradient(150deg,#0c2010,#1c4a22,#2d6a33)',
+      water:   'linear-gradient(150deg,#04101e,#0a2a4a,#103060)',
+      body:    'linear-gradient(150deg,#1a0808,#3a1212,#541a1a)',
+    };
+    const bg = $id('bgImage');
+    bg.style.background = grads[selCat];
+    bg.classList.add('visible');
+
+    imgGenerated = true; updateExportBtn();
+    btn.textContent = 'Regenerate Image';
+    btn.classList.remove('running'); btn.classList.add('ready'); btn.disabled=false;
+  } catch(err) {
+    console.error(err);
+    btn.textContent = 'Error — Try Again';
+    btn.classList.remove('running'); btn.classList.add('ready'); btn.disabled=false;
+  }
+}
+
+function buildPrompt() {
+  const baseMap = {
+    tropical:`lush tropical rainforest, image variant ${selBaseImg}, dense green foliage, golden hour light shafts`,
+    water:   `serene water surface, image variant ${selBaseImg}, soft reflections, blue-teal tones, caustic light`,
+    body:    `artistic human body forms, image variant ${selBaseImg}, skin texture close-up, soft studio light`,
+  };
+  const elType = selEl.startsWith('defocus') ? 'defocus' : 'pinkvec';
+  const elHint = elType==='defocus'
+    ? 'with overlapping soft bokeh light orbs and lens defocus glow'
+    : 'with pink magenta abstract vector graphic overlays';
+  const orient = orientation==='landscape' ? 'wide cinematic 16:9' : 'tall portrait 9:16';
+  return `${baseMap[selCat]}, ${elHint}, ${orient}, editorial photography, 8K, FOAMS brand aesthetic, photorealistic`;
+}
+
+// ─── EXPORT ──────────────────────────────────────────────────────────────────
+function exportImage() {
+  // TODO: composite bgImage + logo + title onto canvas at full res and download
+  alert('Export: TODO — composite canvas at 1920×1080 or 1080×1920 and download PNG.');
+}
+
+// ─── RESIZE ──────────────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  if (selLogo) applyLogoPos();  // applyLogoPos calls applyTitleStyle internally
+});
+</script>
+</body>
+</html>
