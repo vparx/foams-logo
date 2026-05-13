@@ -62,6 +62,7 @@
     .t-handle[data-corner="tr"], .t-handle[data-corner="bl"] { cursor: nesw-resize; }
     .el-handle { background: #fff; }
     .bg-handle { background: #ffc864; }
+    .logo-handle { background: #ff64b4; }
     #elPreview:active, #basePreview:active { cursor: grabbing; }
 
     #logoLayer { position: absolute; inset: 0; pointer-events: none; }
@@ -364,6 +365,35 @@
       display: flex; align-items: center; gap: 8px;
     }
 
+    /* Tooltip wrapper for gen button */
+    .gen-btn-wrap {
+      position: relative; display: inline-flex;
+    }
+    .gen-btn-wrap .gen-tooltip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 8px);
+      right: 0;
+      white-space: nowrap;
+      background: rgba(20,20,20,0.95);
+      color: rgba(255,255,255,0.75);
+      font-size: 10px; font-weight: 600;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+      letter-spacing: 0.07em;
+      padding: 5px 10px; border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.1);
+      pointer-events: none;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+    }
+    .gen-btn-wrap .gen-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%; right: 14px;
+      border: 5px solid transparent;
+      border-top-color: rgba(20,20,20,0.95);
+    }
+    .gen-btn-wrap:hover .gen-tooltip { display: block; }
+
     /* Base button style — disabled/waiting state */
     .gen-btn {
       font-size: 13px; font-weight: 700;
@@ -380,32 +410,32 @@
     }
     .gen-btn:disabled { cursor: not-allowed; }
 
-    /* Generate: prominent white pill */
+    /* Remix: violet/purple pill */
     .gen-btn.ready {
-      background: rgba(255,255,255,0.95); color: #111;
-      border-color: transparent;
-      box-shadow: 0 3px 20px rgba(0,0,0,0.5);
+      background: linear-gradient(135deg, rgba(140,80,255,0.92), rgba(100,40,220,0.96));
+      color: #fff; border-color: rgba(180,120,255,0.4);
+      box-shadow: 0 3px 20px rgba(120,60,220,0.5);
     }
     .gen-btn.ready:hover {
-      background: #fff; transform: translateY(-1px);
-      box-shadow: 0 5px 28px rgba(0,0,0,0.6);
+      background: linear-gradient(135deg, rgba(155,95,255,0.98), rgba(115,55,235,1));
+      transform: translateY(-1px);
+      box-shadow: 0 5px 28px rgba(120,60,220,0.65);
     }
 
-    /* Regenerate: clearly readable but secondary */
+    /* ↺ Remix after generation: faded violet */
     .gen-btn.regenerate {
-      background: rgba(0,0,0,0.6); color: rgba(255,255,255,0.5);
-      border-color: rgba(255,255,255,0.22);
-      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      background: rgba(80,30,160,0.45); color: rgba(200,160,255,0.7);
+      border-color: rgba(160,100,255,0.25);
     }
     .gen-btn.regenerate:hover {
-      background: rgba(30,30,30,0.8); color: rgba(255,255,255,0.75);
-      border-color: rgba(255,255,255,0.4);
+      background: rgba(100,40,180,0.6); color: rgba(220,180,255,0.9);
+      border-color: rgba(180,120,255,0.45);
       transform: translateY(-1px);
     }
 
     .gen-btn.running {
-      background: rgba(0,0,0,0.7); color: rgba(255,255,255,0.45);
-      cursor: wait; border-color: rgba(255,255,255,0.15);
+      background: rgba(60,20,130,0.7); color: rgba(200,160,255,0.6);
+      cursor: wait; border-color: rgba(160,100,255,0.2);
       animation: pulse 1.4s ease-in-out infinite;
     }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.45} }
@@ -485,7 +515,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v6.4 · FOAMS Image Generator</div>
+<div class="version">v6.7 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -534,17 +564,25 @@
       </div>
 
       <div id="logoLayer">
-        <!--
-          #logoDraggable contains BOTH the logo image AND the title text.
-          The title is absolutely positioned relative to this box,
-          so it always moves with the logo.
-        -->
         <div id="logoDraggable">
           <div id="logoPlaceholder">LOGO</div>
           <img id="logoImg" src="" alt="">
         </div>
-        <!-- Title: independent draggable, sibling of logoDraggable -->
         <span id="logoTitle"></span>
+
+        <!-- Logo transform handles (pink) — shown when logo selected -->
+        <div id="logoHandles" style="display:none;position:absolute;pointer-events:none;
+          border:1.5px dashed rgba(255,100,180,0.7);box-sizing:border-box;z-index:5;">
+          <div class="t-handle logo-handle" data-corner="tl" style="top:-5px;left:-5px"></div>
+          <div class="t-handle logo-handle" data-corner="tr" style="top:-5px;right:-5px"></div>
+          <div class="t-handle logo-handle" data-corner="bl" style="bottom:-5px;left:-5px"></div>
+          <div class="t-handle logo-handle" data-corner="br" style="bottom:-5px;right:-5px"></div>
+          <div id="logoRotHandle" style="position:absolute;top:-26px;left:50%;transform:translateX(-50%);
+            width:10px;height:10px;background:#ff64b4;border-radius:50%;cursor:crosshair;
+            pointer-events:all;box-shadow:0 1px 4px rgba(0,0,0,0.5);z-index:6;"></div>
+          <div style="position:absolute;top:-20px;left:50%;width:1px;height:14px;
+            background:rgba(255,100,180,0.4);transform:translateX(-50%);"></div>
+        </div>
       </div>
 
       <span class="play-area-label" id="playAreaLabel">1920 × 1080</span>
@@ -567,7 +605,10 @@
 
   <!-- Action buttons: absolute inside sticky-top, always bottom-right of play area -->
   <div class="play-area-btns" id="playAreaBtns">
-    <button class="gen-btn" id="genBtn" disabled onclick="generateImage()">Remix Image</button>
+    <div class="gen-btn-wrap" id="genBtnWrap">
+      <span class="gen-tooltip" id="genTooltip" style="display:none"></span>
+      <button class="gen-btn" id="genBtn" disabled onclick="generateImage()">✦ Remix Image</button>
+    </div>
     <button class="export-btn" id="exportBtn" onclick="exportImage()">↓ Export Image</button>
   </div>
 
@@ -580,20 +621,8 @@
       <span id="orientBtnTxt">Portrait</span>
     </button>
 
-    <!-- Logo + Text sliders share the same flex row -->
-    <div class="scale-strip" id="scaleStrip">
-      <label class="scale-lbl">Logo</label>
-      <input type="range" id="scaleSlider" min="5" max="80" value="30" step="1"
-        oninput="updateLogoScale(this.value)">
-      <span class="scale-val" id="scaleVal">30</span>
-
-      <!-- Text slider — hidden until title is active, sits inline -->
-      <span class="scale-divider" id="scaleDivider" style="display:none">·</span>
-      <label class="scale-lbl" id="titleScaleLbl" style="display:none">Text</label>
-      <input type="range" id="titleScaleSlider" min="40" max="200" value="100" step="5"
-        style="display:none" oninput="updateTitleScale(this.value)">
-      <span class="scale-val" id="titleScaleVal" style="display:none">100</span>
-    </div>
+    <!-- Sliders replaced by transform handles on canvas -->
+    <div class="scale-strip visible" id="scaleStrip" style="flex:1"></div>
 
     <span class="orient-info" id="orientInfo">Landscape · 1920×1080</span>
   </div>
@@ -740,9 +769,19 @@ let bgRotating = false, bgRotStartAngle = 0, bgRotStartRot = 0;
 let bgScaling  = false, bgScaleStartDist = 0, bgScaleStart = 1.0;
 let bgSelected = false;  // whether bg transform handles are shown
 
-let logoPctX = 18, logoPctY = 78;  // center of logo as % of play-area
-let logoScale = 30;                 // % of min(aW,aH)
+let logoPctX = 26, logoPctY = 70;  // center of logo as % of play-area
+let logoScale = 55;                 // % of min(aW,aH) — kept for export math
 let dragging = false, dOffX = 0, dOffY = 0;
+
+// Logo transform (mirrors elX/elY system — position in play-area px)
+let logoTX = 0, logoTY = 0;      // center in play-area px
+let logoTW = 0, logoTH = 0;      // natural size of the logo img in play-area px
+let logoTScale = 1.0;
+let logoTRot   = 0;
+let logoSelected = false;
+let logoDragging2 = false, logoDragOff2X = 0, logoDragOff2Y = 0;
+let logoRotating2 = false, logoRotStart2 = 0, logoRotStartRot2 = 0;
+let logoScaling2  = false, logoScaleStart2Dist = 0, logoScaleStart2 = 1.0;
 
 // Title drag state
 // titleOffPx = offset from logo center to title top-left, in play-area pixels.
@@ -754,6 +793,43 @@ let titleScale = 100; // extra multiplier on top of logo scale, 40-200
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 function $id(id) { return document.getElementById(id); }
+
+// ─── LOGO TRANSFORM ──────────────────────────────────────────────────────────
+function applyLogoTransform() {
+  const ld = $id('logoDraggable');
+  const lh = $id('logoHandles');
+  if (!ld || ld.style.display === 'none') return;
+
+  const w = logoTW * logoTScale;
+  const h = logoTH * logoTScale;
+
+  ld.style.width     = w + 'px';
+  ld.style.height    = h + 'px';
+  ld.style.left      = (logoTX - w/2) + 'px';
+  ld.style.top       = (logoTY - h/2) + 'px';
+  ld.style.transform = `rotate(${logoTRot}deg)`;
+
+  // Keep logoPctX/Y in sync for legacy export code
+  const area = $id('playAreaInner');
+  const aW = area.offsetWidth, aH = area.offsetHeight;
+  if (aW && aH) {
+    logoPctX = (logoTX / aW) * 100;
+    logoPctY = (logoTY / aH) * 100;
+    logoScale = (w / Math.min(aW, aH)) * 100;
+  }
+
+  // Sync handles box
+  if (lh && logoSelected) {
+    lh.style.width     = w + 'px';
+    lh.style.height    = h + 'px';
+    lh.style.left      = (logoTX - w/2) + 'px';
+    lh.style.top       = (logoTY - h/2) + 'px';
+    lh.style.transform = `rotate(${logoTRot}deg)`;
+  }
+
+  // Keep title in sync
+  if (selTitle) applyTitlePos();
+}
 
 // ─── BASE IMAGE TRANSFORM ─────────────────────────────────────────────────────
 function applyBgTransform() {
@@ -808,20 +884,29 @@ function applyElTransform() {
   }
 
   function selectEl() {
-    elSelected = true; bgSelected = false;
-    const eh = $id('elHandles'); if (eh) eh.style.display = 'block';
-    const bh = $id('bgHandles'); if (bh) bh.style.display = 'none';
+    elSelected=true; bgSelected=false; logoSelected=false;
+    const eh=$id('elHandles'); if(eh) eh.style.display='block';
+    const bh=$id('bgHandles'); if(bh) bh.style.display='none';
+    const lh=$id('logoHandles'); if(lh) lh.style.display='none';
     applyElTransform();
   }
   function selectBg() {
-    bgSelected = true; elSelected = false;
-    const bh = $id('bgHandles'); if (bh) { bh.style.display = 'block'; applyBgTransform(); }
-    const eh = $id('elHandles'); if (eh) eh.style.display = 'none';
+    bgSelected=true; elSelected=false; logoSelected=false;
+    const bh=$id('bgHandles'); if(bh){ bh.style.display='block'; applyBgTransform(); }
+    const eh=$id('elHandles'); if(eh) eh.style.display='none';
+    const lh=$id('logoHandles'); if(lh) lh.style.display='none';
+  }
+  function selectLogo() {
+    logoSelected=true; elSelected=false; bgSelected=false;
+    const lh=$id('logoHandles'); if(lh){ lh.style.display='block'; applyLogoTransform(); }
+    const eh=$id('elHandles'); if(eh) eh.style.display='none';
+    const bh=$id('bgHandles'); if(bh) bh.style.display='none';
   }
   function deselect() {
-    elSelected = false; bgSelected = false;
-    const eh = $id('elHandles'); if (eh) eh.style.display = 'none';
-    const bh = $id('bgHandles'); if (bh) bh.style.display = 'none';
+    elSelected=false; bgSelected=false; logoSelected=false;
+    const eh=$id('elHandles'); if(eh) eh.style.display='none';
+    const bh=$id('bgHandles'); if(bh) bh.style.display='none';
+    const lh=$id('logoHandles'); if(lh) lh.style.display='none';
   }
 
   // Expose deselect for external use
@@ -834,12 +919,18 @@ function applyElTransform() {
     const ep = $id('elPreview');
     const bp = $id('basePreview');
     const p  = xy(e);
-    const isElHandle  = e.target.classList.contains('el-handle');
-    const isElRot     = e.target.id === 'rotHandle';
-    const isBgHandle  = e.target.classList.contains('bg-handle');
-    const isBgRot     = e.target.id === 'bgRotHandle';
-    const isEl        = ep && ep.style.display !== 'none' && e.target === ep;
-    const isBg        = bp && bp.style.display !== 'none' && e.target === bp;
+    const ld = $id('logoDraggable');
+    const isElHandle    = e.target.classList.contains('el-handle');
+    const isElRot       = e.target.id === 'rotHandle';
+    const isBgHandle    = e.target.classList.contains('bg-handle');
+    const isBgRot       = e.target.id === 'bgRotHandle';
+    const isLogoHandle  = e.target.classList.contains('logo-handle');
+    const isLogoRot     = e.target.id === 'logoRotHandle';
+    const isEl          = ep && ep.style.display !== 'none' && e.target === ep;
+    const isBg          = bp && bp.style.display !== 'none' && e.target === bp;
+    const isLogo        = ld && ld.style.display !== 'none' &&
+                          (e.target === ld || ld.contains(e.target)) &&
+                          !isLogoHandle && !isLogoRot;
 
     // ── Click on element → select it ──
     if (isEl) {
@@ -882,6 +973,39 @@ function applyElTransform() {
       const cx = r.left + r.width/2, cy = r.top + r.height/2;
       bgRotStartAngle = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI;
       bgRotStartRot   = bgRot;
+      return;
+    }
+
+    // ── Click on logo → select + drag ──
+    if (isLogo) {
+      e.preventDefault(); e.stopPropagation();
+      selectLogo();
+      logoDragging2 = true;
+      const r = ld.getBoundingClientRect();
+      logoDragOff2X = p.x - (r.left + r.width/2);
+      logoDragOff2Y = p.y - (r.top  + r.height/2);
+      return;
+    }
+
+    // ── Logo rotate handle ──
+    if (isLogoRot) {
+      e.preventDefault(); e.stopPropagation();
+      logoRotating2 = true;
+      const r  = ld.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      logoRotStart2    = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI;
+      logoRotStartRot2 = logoTRot;
+      return;
+    }
+
+    // ── Logo corner handle ──
+    if (isLogoHandle) {
+      e.preventDefault(); e.stopPropagation();
+      logoScaling2 = true;
+      const r  = ld.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      logoScaleStart2Dist = Math.hypot(p.x - cx, p.y - cy);
+      logoScaleStart2     = logoTScale;
       return;
     }
 
@@ -961,6 +1085,24 @@ function applyElTransform() {
       bgScale = Math.max(0.05, bgScaleStart * (Math.hypot(p.x-cx, p.y-cy) / bgScaleStartDist));
       applyBgTransform();
     }
+    if (logoDragging2) {
+      logoTX = p.x - ar.left - logoDragOff2X;
+      logoTY = p.y - ar.top  - logoDragOff2Y;
+      applyLogoTransform();
+    }
+    if (logoRotating2) {
+      const ld = $id('logoDraggable'), r = ld.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      const angle = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI;
+      logoTRot = logoRotStartRot2 + (angle - logoRotStart2);
+      applyLogoTransform();
+    }
+    if (logoScaling2) {
+      const ld = $id('logoDraggable'), r = ld.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      logoTScale = Math.max(0.05, logoScaleStart2 * (Math.hypot(p.x-cx, p.y-cy) / logoScaleStart2Dist));
+      applyLogoTransform();
+    }
   }
 
   document.addEventListener('mouseup',  onUp);
@@ -968,6 +1110,7 @@ function applyElTransform() {
   function onUp() {
     elDragging=false; elRotating=false; elScaling=false;
     bgDragging=false; bgRotating=false; bgScaling=false;
+    logoDragging2=false; logoRotating2=false; logoScaling2=false;
   }
 })();
 
@@ -1220,10 +1363,19 @@ function selectEl(type, n, tile) {
 function buildStep3() {
   buildLogoGrid();
   updateLogoTileColors();
-  $id('titleChooser').classList.remove('visible');
-  selTitle = null;
-  titleLang = 'PT';
-  hideTitle();
+
+  // If logo already chosen, keep title selection and show chooser
+  if (selLogo) {
+    $id('titleChooser').classList.add('visible');
+    buildTitleGrid();
+    if (selTitle) applyTitleStyle(false);
+  } else {
+    // First time through — reset title
+    $id('titleChooser').classList.remove('visible');
+    selTitle = null;
+    titleLang = 'PT';
+    hideTitle();
+  }
 }
 
 function buildLogoGrid() {
@@ -1512,10 +1664,38 @@ function hideTitle() {
 
 // ─── LOGO IN PLAY AREA ───────────────────────────────────────────────────────
 function showLogoInPlayArea() {
-  $id('logoDraggable').style.display = 'block';
+  const ld = $id('logoDraggable');
+  ld.style.display = 'block';
   $id('playAreaLabel').classList.add('hidden');
-  $id('scaleStrip').classList.add('visible');
-  applyLogoPos();
+
+  // Set initial transform position if first time
+  const area = $id('playAreaInner');
+  const aW = area.offsetWidth, aH = area.offsetHeight;
+  const img = $id('logoImg');
+
+  function initLogoTransform() {
+    const nat = (img.naturalWidth && img.naturalHeight)
+      ? img.naturalWidth / img.naturalHeight : 1;
+    const initSize = Math.min(aW, aH) * 0.55;  // 55% of min dimension
+    logoTW = initSize; logoTH = initSize / nat;
+    logoTScale = 1.0; logoTRot = 0;
+    logoTX = (logoPctX / 100) * aW;
+    logoTY = (logoPctY / 100) * aH;
+    applyLogoTransform();
+  }
+
+  if (img.style.display !== 'none') {
+    if (img.complete && img.naturalWidth) { initLogoTransform(); }
+    else { img.onload = initLogoTransform; }
+  } else {
+    // placeholder — just set box size
+    logoTW = Math.min(aW, aH) * 0.55;
+    logoTH = logoTW;
+    logoTX = (logoPctX / 100) * aW;
+    logoTY = (logoPctY / 100) * aH;
+    logoTScale = 1.0; logoTRot = 0;
+    applyLogoTransform();
+  }
 }
 
 function clearLogoFromPlayArea() {
@@ -1557,41 +1737,7 @@ function updateTitleScale(val) {
   if (selTitle) applyTitleStyle(false);
 }
 
-// ─── DRAG ────────────────────────────────────────────────────────────────────
-(function initDrag() {
-  const el   = $id('logoDraggable');
-  const area = $id('playAreaInner');
-
-  function xy(e) {
-    return e.touches
-      ? {x:e.touches[0].clientX, y:e.touches[0].clientY}
-      : {x:e.clientX, y:e.clientY};
-  }
-
-  el.addEventListener('mousedown',  start);
-  el.addEventListener('touchstart', start, {passive:false});
-
-  function start(e) {
-    e.preventDefault(); dragging = true;
-    const p = xy(e), r = el.getBoundingClientRect();
-    dOffX = p.x - (r.left + r.width/2);
-    dOffY = p.y - (r.top  + r.height/2);
-  }
-
-  document.addEventListener('mousemove', move);
-  document.addEventListener('touchmove',  move, {passive:false});
-
-  function move(e) {
-    if (!dragging) return; e.preventDefault();
-    const p = xy(e), r = area.getBoundingClientRect();
-    logoPctX = Math.min(100, Math.max(0, ((p.x-r.left-dOffX)/r.width )*100));
-    logoPctY = Math.min(100, Math.max(0, ((p.y-r.top -dOffY)/r.height)*100));
-    applyLogoPos();
-  }
-
-  document.addEventListener('mouseup',  () => { dragging = false; });
-  document.addEventListener('touchend', () => { dragging = false; });
-})();
+// Logo drag now handled by unified transform system (initTransforms)
 
 // ─── TITLE DRAG ───────────────────────────────────────────────────────────────
 (function initTitleDrag() {
@@ -1648,10 +1794,25 @@ function updateTitleScale(val) {
 
 // ─── GENERATE ────────────────────────────────────────────────────────────────
 function updateGenBtn() {
-  const btn = $id('genBtn');
-  const ready = !!(selCat && selBaseImg && selEl && selLogo);
+  const btn     = $id('genBtn');
+  const tooltip = $id('genTooltip');
+  const isBody  = selCat === 'body';
+  const ready   = !!(selCat && selBaseImg && selEl && selLogo) && !isBody;
+
   btn.disabled = !ready;
   btn.classList.toggle('ready', ready);
+
+  // Body images: keep button visible but permanently disabled with tooltip
+  if (isBody && selBaseImg) {
+    btn.classList.remove('ready');
+    btn.disabled = true;
+    if (tooltip) {
+      tooltip.textContent = "Images containing people can't be remixed";
+      tooltip.style.display = '';  // let CSS :hover control visibility
+    }
+  } else {
+    if (tooltip) tooltip.style.display = 'none';
+  }
 }
 function updateExportBtn() {
   // Show export if we have a generated image OR a composed preview the user can export
