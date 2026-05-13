@@ -1181,6 +1181,8 @@
       img { max-width: 100%; }
       /* Overview eye candy: 2x2 on mobile */
       .overview-eyecandy { grid-template-columns: repeat(2, 1fr) !important; }
+      /* Header image: full width on mobile */
+      .header-eyecandy { width: 100% !important; }
       table { width: 100%; }
       .highlight-card, .outline-card { padding: 1.5rem; min-height: 120px; }
       .highlight-card span { font-size: 1.8rem; }
@@ -1218,7 +1220,7 @@
         <a href="#generative-examples" data-i18n="nav-gen-examples">Exemplos Generativos</a>
         <a href="#closing" data-i18n="nav-closing">↓ Keep it fluid</a>
       </nav>
-      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v5.2</div>
+      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v5.3</div>
 
       <!-- BACK TO TOP — inside sticky sidebar so it's always in viewport -->
       <div id="back-to-top-wrap">
@@ -1235,7 +1237,7 @@
           <h2 data-i18n="overview-h2">FOAMS Brand Guidelines</h2>
           <p data-i18n="overview-p">We've created a set of guidelines to help you bring our brand to life consistently across every touchpoint. On this page you'll find our high-level guidelines and the assets you'll need.</p>
         </div>
-        <img src="header-image.png" alt="" style="width:70%; display:block; border-radius:8px; margin-top:1rem;">
+        <img src="header-image.png" alt="" class="header-eyecandy" style="width:70%; display:block; border-radius:8px; margin-top:1rem;">
       </section>
 
       <!-- LOGO -->
