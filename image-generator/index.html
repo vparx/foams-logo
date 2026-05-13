@@ -46,11 +46,11 @@
     }
 
     #bgImage {
-      position: absolute; inset: 0;
-      background-size: cover; background-position: center;
-      opacity: 0; transition: opacity 0.7s ease;
+      position: absolute;
+      opacity: 0; transition: opacity 0.5s ease;
     }
-    #bgImage.visible { opacity: 1; }
+    #bgImage[src]:not([src=""]) { opacity: 1; }
+
 
     /* Transform corner handles */
     .t-handle {
@@ -62,6 +62,7 @@
     .t-handle[data-corner="tr"], .t-handle[data-corner="bl"] { cursor: nesw-resize; }
     .el-handle { background: #fff; }
     .logo-handle { background: #ff64b4; }
+    .gen-handle { background: #64dcff; }
     #elPreview:active, #basePreview:active { cursor: grabbing; }
 
     #logoLayer { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
@@ -513,13 +514,24 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v7.5 · FOAMS Image Generator</div>
+<div class="version">v7.7 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
 
-      <!-- Generated result (after hitting Generate) -->
-      <div id="bgImage"></div>
+      <!-- Generated (remixed) result — draggable/scalable/rotatable after generation -->
+      <img id="bgImage" src="" alt=""
+        style="display:none;position:absolute;transform-origin:center center;
+        cursor:default;user-select:none;touch-action:none;max-width:none;max-height:none;"
+        draggable="false">
+      <!-- Handles for generated image (cyan) -->
+      <div id="genHandles" style="display:none;position:absolute;pointer-events:none;
+        border:1.5px dashed rgba(100,220,255,0.7);box-sizing:border-box;">
+        <div class="t-handle gen-handle" data-corner="tl" style="top:-5px;left:-5px"></div>
+        <div class="t-handle gen-handle" data-corner="tr" style="top:-5px;right:-5px"></div>
+        <div class="t-handle gen-handle" data-corner="bl" style="bottom:-5px;left:-5px"></div>
+        <div class="t-handle gen-handle" data-corner="br" style="bottom:-5px;right:-5px"></div>
+      </div>
 
       <!-- Base image — static, fills play area -->
       <img id="basePreview" src="" alt=""
@@ -746,6 +758,11 @@ let titleLang    = 'PT';
 let selTitle     = null;   // word string (already uppercased) or null
 let imgGenerated = false;
 let generatedImageUrl = null;  // stores the last generated image for export
+// Generated (remixed) image transform state
+let genX = 0, genY = 0, genW = 0, genH = 0, genScale = 1.0, genRot = 0;
+let genDragging = false, genDragOffX = 0, genDragOffY = 0;
+let genScaling  = false, genScaleStartDist = 0, genScaleStart = 1.0;
+let genSelected = false;
 
 // Graphical element transform state (all relative to play-area)
 let elX = 0, elY = 0;       // center position in play-area px
@@ -791,40 +808,60 @@ let titleScale = 100; // extra multiplier on top of logo scale, 40-200
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 function $id(id) { return document.getElementById(id); }
 
+// ─── GENERATED IMAGE TRANSFORM ───────────────────────────────────────────────
+function applyGenTransform() {
+  const gi = $id('bgImage');
+  const gh = $id('genHandles');
+  if (!gi || gi.style.display === 'none') return;
+  const w = genW * genScale, h = genH * genScale;
+  gi.style.width  = w + 'px'; gi.style.height = h + 'px';
+  gi.style.left   = (genX - w/2) + 'px'; gi.style.top = (genY - h/2) + 'px';
+  gi.style.transform = `rotate(${genRot}deg)`;
+  if (gh && genSelected) {
+    gh.style.width  = w + 'px'; gh.style.height  = h + 'px';
+    gh.style.left   = (genX - w/2) + 'px'; gh.style.top = (genY - h/2) + 'px';
+    gh.style.transform = `rotate(${genRot}deg)`;
+  }
+}
+
 // ─── LOGO TRANSFORM ──────────────────────────────────────────────────────────
 function applyLogoTransform() {
   const ld = $id('logoDraggable');
   const lh = $id('logoHandles');
   if (!ld || ld.style.display === 'none') return;
 
-  const w = logoTW * logoTScale;
-  const h = logoTH * logoTScale;
+  // Keep box at NATURAL size (logoTW × logoTH).
+  // Apply scale + rotation via CSS transform — everything inside (logo img, title text)
+  // scales together automatically without any JS font-size math.
+  ld.style.width     = logoTW + 'px';
+  ld.style.height    = logoTH + 'px';
+  ld.style.left      = (logoTX - logoTW/2) + 'px';
+  ld.style.top       = (logoTY - logoTH/2) + 'px';
+  ld.style.transform = `scale(${logoTScale}) rotate(${logoTRot}deg)`;
+  ld.style.transformOrigin = 'center center';
 
-  ld.style.width     = w + 'px';
-  ld.style.height    = h + 'px';
-  ld.style.left      = (logoTX - w/2) + 'px';
-  ld.style.top       = (logoTY - h/2) + 'px';
-  ld.style.transform = `rotate(${logoTRot}deg)`;
-
-  // Keep logoPctX/Y in sync for legacy export code
+  // Keep logoPctX/Y in sync for export code
   const area = $id('playAreaInner');
   const aW = area.offsetWidth, aH = area.offsetHeight;
   if (aW && aH) {
     logoPctX = (logoTX / aW) * 100;
     logoPctY = (logoTY / aH) * 100;
-    logoScale = (w / Math.min(aW, aH)) * 100;
+    logoScale = (logoTW * logoTScale / Math.min(aW, aH)) * 100;
   }
 
-  // Sync handles box
+  // Sync handles box — handles sit at the SCALED size around the box
   if (lh && logoSelected) {
-    lh.style.width     = w + 'px';
-    lh.style.height    = h + 'px';
-    lh.style.left      = (logoTX - w/2) + 'px';
-    lh.style.top       = (logoTY - h/2) + 'px';
+    const sw = logoTW * logoTScale;
+    const sh = logoTH * logoTScale;
+    lh.style.width     = sw + 'px';
+    lh.style.height    = sh + 'px';
+    lh.style.left      = (logoTX - sw/2) + 'px';
+    lh.style.top       = (logoTY - sh/2) + 'px';
     lh.style.transform = `rotate(${logoTRot}deg)`;
   }
 
-  // Keep title in sync
+  // Title is inside logoDraggable — it scales automatically with the CSS transform.
+  // Just update position offset in natural coords.
   if (selTitle) applyTitlePos();
 }
 
@@ -920,6 +957,9 @@ function applyElTransform() {
     const bp = $id('basePreview');
     const p  = xy(e);
     const ld = $id('logoDraggable');
+    const gi = $id('bgImage');
+    const isGenHandle   = e.target.classList.contains('gen-handle');
+    const isGen         = gi && gi.style.display !== 'none' && gi.src && e.target === gi;
     const isElHandle    = e.target.classList.contains('el-handle');
     const isElRot       = e.target.id === 'rotHandle';
     const isBgHandle    = false;  // no bg handles
@@ -976,6 +1016,30 @@ function applyElTransform() {
       const cx = r.left + r.width/2, cy = r.top + r.height/2;
       bgRotStartAngle = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI;
       bgRotStartRot   = bgRot;
+      return;
+    }
+
+    // ── Click on generated image → select + drag ──
+    if (isGen) {
+      e.preventDefault(); e.stopPropagation();
+      genSelected = true;
+      const gh = $id('genHandles');
+      if (gh) { gh.style.display = 'block'; applyGenTransform(); }
+      genDragging = true;
+      const r = gi.getBoundingClientRect();
+      genDragOffX = p.x - (r.left + r.width/2);
+      genDragOffY = p.y - (r.top  + r.height/2);
+      return;
+    }
+
+    // ── Gen image corner handle ──
+    if (isGenHandle) {
+      e.preventDefault(); e.stopPropagation();
+      genScaling = true;
+      const r  = gi.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      genScaleStartDist = Math.hypot(p.x - cx, p.y - cy);
+      genScaleStart = genScale;
       return;
     }
 
@@ -1039,6 +1103,8 @@ function applyElTransform() {
     const area = $id('playAreaInner');
     if (area && area.contains(e.target) && e.target.tagName !== 'BUTTON') {
       deselect();
+      genSelected = false;
+      const gh2 = $id('genHandles'); if(gh2) gh2.style.display='none';
     }
   }
 
@@ -1046,7 +1112,7 @@ function applyElTransform() {
   document.addEventListener('touchmove', onMove, {passive:false});
 
   function onMove(e) {
-    const anyActive = elDragging || elRotating || elScaling || bgDragging || bgRotating || bgScaling || logoDragging2 || logoRotating2 || logoScaling2;
+    const anyActive = elDragging || elRotating || elScaling || bgDragging || bgRotating || bgScaling || logoDragging2 || logoRotating2 || logoScaling2 || genDragging || genScaling;
     if (!anyActive) return;
     e.preventDefault();
     const p  = xy(e);
@@ -1089,6 +1155,17 @@ function applyElTransform() {
       bgScale = Math.max(0.05, bgScaleStart * (Math.hypot(p.x-cx, p.y-cy) / bgScaleStartDist));
       applyBgTransform();
     }
+    if (genDragging) {
+      genX = p.x - ar.left - genDragOffX;
+      genY = p.y - ar.top  - genDragOffY;
+      applyGenTransform();
+    }
+    if (genScaling) {
+      const gi2 = $id('bgImage'), r = gi2.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      genScale = Math.max(0.05, genScaleStart * (Math.hypot(p.x-cx, p.y-cy) / genScaleStartDist));
+      applyGenTransform();
+    }
     if (logoDragging2) {
       logoTX = p.x - ar.left - logoDragOff2X;
       logoTY = p.y - ar.top  - logoDragOff2Y;
@@ -1115,6 +1192,7 @@ function applyElTransform() {
     elDragging=false; elRotating=false; elScaling=false;
     bgDragging=false; bgRotating=false; bgScaling=false;
     logoDragging2=false; logoRotating2=false; logoScaling2=false;
+    genDragging=false; genScaling=false;
   }
 })();
 
@@ -1146,7 +1224,9 @@ function toggleOrientation() {
       const ratio   = (logoScale / 100);
       logoTW = newBase * ratio / logoTScale;
       applyLogoTransform();
-      applyTitleStyle(false);
+      // Reset title position so it recalculates for new orientation
+      titleManuallyMoved = false; titleOffDx = 0; titleOffDy = 0;
+      applyTitleStyle(true);
     }
 
   }, 420);
@@ -1264,9 +1344,10 @@ function selectBaseImg(n) {
   const _ep2 = $id('elPreview'); if (_ep2) { _ep2.style.display='none'; _ep2.src=''; }
   const _eh2 = $id('elHandles'); if (_eh2) _eh2.style.display='none';
   elX=0; elY=0; elScale=1; elRot=0; elFile='';
-  generatedImageUrl = null;
-  imgGenerated = false;
-  // Export stays available — user can export the composed preview
+  generatedImageUrl = null; imgGenerated = false;
+  const _gi = $id('bgImage'); if (_gi) { _gi.style.display='none'; _gi.src=''; }
+  const _gh = $id('genHandles'); if (_gh) _gh.style.display='none';
+  genX=0; genY=0; genW=0; genH=0; genScale=1; genRot=0; genSelected=false;
   updateExportBtn();
 
   markDone('step1Section',1, catLabel+' · Image '+n);
@@ -1579,11 +1660,14 @@ function setTitleDefaultOffset() {
   const aW = area.offsetWidth, aH = area.offsetHeight;
   if (!aW || !aH) { titleOffDx = 0; titleOffDy = 0; return; }
 
-  const logoPx  = Math.min(aW, aH) * (logoScale / 100);   // logo side in px
+  // Screen size of logo = natural size * scale
+  const logoPx  = logoTW > 0 ? logoTW * logoTScale : Math.min(aW, aH) * (logoScale / 100);
   const halfPx  = logoPx / 2;
   const titleEl = $id('logoTitle');
-  const titleH  = titleEl.offsetHeight || Math.round(logoPx * 0.08 * 1.3);
-  const titleW  = titleEl.offsetWidth  || Math.round(logoPx * 0.55);
+  // offsetHeight/Width are in natural coords — multiply by scale for screen px
+  const s       = logoTScale || 1;
+  const titleH  = (titleEl.offsetHeight * s) || Math.round(logoPx * 0.08 * 1.3);
+  const titleW  = (titleEl.offsetWidth  * s) || Math.round(logoPx * 0.55);
 
   if (titleLang === 'PT') {
     // PT (CASA style): inside the logo image, upper-left area.
@@ -1614,9 +1698,9 @@ function applyTitleStyle(resetOffset) {
   const aW = area.offsetWidth, aH = area.offsetHeight;
   if (!aW || !aH) return;
 
-  // Font size based on logoTW (natural box size) — the box itself is already
-  // sized to logoTW*logoTScale px, so title inherits visual scale from the box.
-  const logoPx   = logoTW > 0 ? logoTW : Math.min(aW, aH) * (logoScale / 100);
+  // Font size in natural box coords — CSS transform:scale on logoDraggable
+  // handles the visual scaling automatically.
+  const logoPx   = logoTW > 0 ? logoTW : Math.min(aW, aH) * 0.55;
   const fontSize = Math.max(5, Math.round(logoPx * 0.08));
 
   titleEl.textContent    = selTitle;
@@ -1642,15 +1726,15 @@ function _applyTitlePos(aW, aH) {
   const titleEl = $id('logoTitle');
   if (!titleEl || titleEl.style.display === 'none') return;
 
-  // Title is inside logoDraggable. The box is sized at logoTW*logoTScale px,
-  // so CSS left/top are in actual px (no scaling needed).
-  // Box center in px = (logoTW*s/2, logoTH*s/2).
+  // Title is inside logoDraggable which now uses CSS transform:scale.
+  // CSS left/top are in NATURAL (unscaled) box coords.
+  // Box center = (logoTW/2, logoTH/2) in natural coords.
+  // titleOffDx/Dy are in screen px — divide by logoTScale to get natural coords.
   const s  = logoTScale || 1;
-  const cx = (logoTW || 0) * s / 2;
-  const cy = (logoTH || 0) * s / 2;
-  // titleOffDx/Dy are screen px offsets from logo center.
-  titleEl.style.left   = (cx + titleOffDx) + 'px';
-  titleEl.style.top    = (cy + titleOffDy) + 'px';
+  const cx = (logoTW || 0) / 2;
+  const cy = (logoTH || 0) / 2;
+  titleEl.style.left   = (cx + titleOffDx / s) + 'px';
+  titleEl.style.top    = (cy + titleOffDy / s) + 'px';
   titleEl.style.right  = 'auto';
   titleEl.style.bottom = 'auto';
 }
@@ -1780,14 +1864,16 @@ function updateTitleScale(val) {
     const p  = xy(e);
     const lr = ld.getBoundingClientRect();
     const s  = logoTScale || 1;
-    const cx = (logoTW || 0) * s / 2;
-    const cy = (logoTH || 0) * s / 2;
-    // Mouse position within the box in screen px
+    // lr is the screen rect of the scaled box.
+    // Mouse position within scaled box in screen px:
     const mouseInBoxX = p.x - lr.left - tOffX;
     const mouseInBoxY = p.y - lr.top  - tOffY;
-    // Store offset from box center in screen px
-    titleOffDx = mouseInBoxX - cx;
-    titleOffDy = mouseInBoxY - cy;
+    // Scaled box center in screen px:
+    const scCX = lr.width / 2;
+    const scCY = lr.height / 2;
+    // titleOffDx/Dy = screen px offset from logo center
+    titleOffDx = mouseInBoxX - scCX;
+    titleOffDy = mouseInBoxY - scCY;
     titleManuallyMoved = true;
     _applyTitlePos(0, 0);
   }
@@ -2006,13 +2092,23 @@ async function generateImage() {
       throw new Error('No image in API response — check console');
     }
 
-    // Display in play area
+    // Display generated image as a moveable <img>
     const bg = $id('bgImage');
-    generatedImageUrl = imageUrl;  // save for export
-    bg.style.backgroundImage = `url('${imageUrl}')`;
-    bg.style.backgroundSize  = 'cover';
-    bg.style.backgroundPosition = 'center';
-    bg.classList.add('visible');
+    generatedImageUrl = imageUrl;
+    bg.src = imageUrl;
+    bg.style.display = 'block';
+    bg.style.cursor = 'grab';
+    // Initialize transform: cover-fit the play area
+    bg.onload = () => {
+      const area3 = $id('playAreaInner');
+      const aW3 = area3.offsetWidth, aH3 = area3.offsetHeight;
+      const sc = Math.max(aW3 / bg.naturalWidth, aH3 / bg.naturalHeight);
+      genW = bg.naturalWidth; genH = bg.naturalHeight;
+      genScale = sc; genRot = 0;
+      genX = aW3 / 2; genY = aH3 / 2;
+      genSelected = false;
+      applyGenTransform();
+    };
 
     // Hide composition layers — generated image takes over
     const _bp2 = $id('basePreview'); if (_bp2) _bp2.style.display = 'none';
@@ -2092,9 +2188,21 @@ async function exportImage() {
     // 1a. If we have a generated (remixed) result, draw that first
     if (generatedImageUrl) {
       const bgImg = await loadImg(generatedImageUrl);
-      const scale = Math.max(outW / bgImg.width, outH / bgImg.height);
-      const dw = bgImg.width * scale, dh = bgImg.height * scale;
-      ctx.drawImage(bgImg, (outW-dw)/2, (outH-dh)/2, dw, dh);
+      // If user repositioned the generated image, use that transform
+      if (genW > 0) {
+        const gDrawW = genW * genScale * scX;
+        const gDrawH = genH * genScale * scY;
+        const gcx = genX * scX, gcy = genY * scY;
+        ctx.save();
+        ctx.translate(gcx, gcy);
+        ctx.rotate(genRot * Math.PI / 180);
+        ctx.drawImage(bgImg, -gDrawW/2, -gDrawH/2, gDrawW, gDrawH);
+        ctx.restore();
+      } else {
+        const scale = Math.max(outW / bgImg.width, outH / bgImg.height);
+        const dw = bgImg.width * scale, dh = bgImg.height * scale;
+        ctx.drawImage(bgImg, (outW-dw)/2, (outH-dh)/2, dw, dh);
+      }
     }
 
     // 1b. Otherwise draw the composed preview (base + element at their transforms)
