@@ -16,8 +16,8 @@
     }
 
     .version {
-      font-size: 10px; color: #444; font-family: monospace;
-      margin-bottom: 5px; letter-spacing: 0.05em;
+      font-size: 10px; color: rgba(255,255,255,0.2); font-family: monospace;
+      letter-spacing: 0.05em;
     }
 
     /* ════════════ STICKY TOP ════════════ */
@@ -515,9 +515,9 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v8.0 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
+    <div class="version" id="versionTag" style="position:absolute;top:8px;left:10px;z-index:20;pointer-events:none;">v8.1 · FOAMS Image Generator</div>
     <div class="play-area-inner" id="playAreaInner">
 
       <!-- Generated (remixed) result — draggable/scalable/rotatable after generation -->
@@ -856,35 +856,34 @@ function applyTitleTransform() {
   const titleEl = $id('logoTitle');
   if (!td || td.style.display === 'none') return;
 
-  // Font size scales with titleTScale — base = logoTW * 0.08 if logo shown, else fixed
+  // Font size in actual screen px — titleTScale applied via font size, not CSS transform
   const baseFontPx = (logoTW > 0 ? logoTW * logoTScale : 80) * 0.08;
   const fontSize   = Math.max(4, Math.round(baseFontPx * titleTScale));
   if (titleEl) {
     titleEl.style.fontSize = fontSize + 'px';
+    titleEl.style.whiteSpace = 'nowrap';
     const colorMap = { white:'#ffffff', black:'#000000', pink:'#ff30ff' };
     titleEl.style.color = colorMap[logoColor] || '#ffffff';
   }
 
-  // Measure rendered size after font update
-  requestAnimationFrame(() => {
-    if (!titleEl) return;
-    titleTW = titleEl.offsetWidth  || titleTW || 80;
-    titleTH = titleEl.offsetHeight || titleTH || 20;
+  // Use actual rendered size (post font-size update) — no CSS scale, just font size change
+  const w = titleEl ? (titleEl.offsetWidth  || titleTW || 80) : (titleTW || 80);
+  const h = titleEl ? (titleEl.offsetHeight || titleTH || 20) : (titleTH || 20);
+  titleTW = w; titleTH = h;
 
-    td.style.width           = titleTW + 'px';
-    td.style.height          = titleTH + 'px';
-    td.style.left            = (titleTX - titleTW/2) + 'px';
-    td.style.top             = (titleTY - titleTH/2) + 'px';
-    td.style.transform       = `scale(${titleTScale}) rotate(${titleTRot}deg)`;
-    td.style.transformOrigin = 'center center';
+  // Position directly — no transform:scale so getBoundingClientRect matches css left/top
+  td.style.width           = w + 'px';
+  td.style.height          = h + 'px';
+  td.style.left            = (titleTX - w/2) + 'px';
+  td.style.top             = (titleTY - h/2) + 'px';
+  td.style.transform       = `rotate(${titleTRot}deg)`;
+  td.style.transformOrigin = 'center center';
 
-    if (th && titleSelected) {
-      const sw = titleTW * titleTScale, sh = titleTH * titleTScale;
-      th.style.width  = sw + 'px'; th.style.height  = sh + 'px';
-      th.style.left   = (titleTX - sw/2) + 'px'; th.style.top = (titleTY - sh/2) + 'px';
-      th.style.transform = `rotate(${titleTRot}deg)`;
-    }
-  });
+  if (th && titleSelected) {
+    th.style.width  = w + 'px'; th.style.height  = h + 'px';
+    th.style.left   = (titleTX - w/2) + 'px'; th.style.top = (titleTY - h/2) + 'px';
+    th.style.transform = `rotate(${titleTRot}deg)`;
+  }
 }
 
 function showTitleInPlayArea() {
@@ -1164,6 +1163,7 @@ function applyElTransform() {
       const lh=$id('logoHandles'); if(lh) lh.style.display='none';
       const gh=$id('genHandles'); if(gh) gh.style.display='none';
       titleDragging2 = true;
+      // Get fresh position after any pending rAF from applyTitleTransform
       const r = td.getBoundingClientRect();
       titleDragOff2X = p.x - (r.left + r.width/2);
       titleDragOff2Y = p.y - (r.top  + r.height/2);
@@ -2463,7 +2463,6 @@ _ro.observe(document.body);
 // "ResizeObserver loop completed with undelivered notifications" error.
 (function initFixedPlayArea() {
   const stickyEl  = document.querySelector('.sticky-top');
-  const versionEl = document.querySelector('.version');
   if (!stickyEl) return;
 
   const bodyStyle = getComputedStyle(document.body);
@@ -2482,8 +2481,7 @@ _ro.observe(document.body);
       stickyEl.style.width      = 'auto';
       stickyEl.style.zIndex     = '999';
       stickyEl.style.background = '#111';
-      const totalH = stickyEl.offsetHeight + (versionEl ? versionEl.offsetHeight + 6 : 0);
-      document.body.style.paddingTop = totalH + 'px';
+      document.body.style.paddingTop = stickyEl.offsetHeight + 'px';
     });
   }
 
