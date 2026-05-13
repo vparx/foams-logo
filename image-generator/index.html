@@ -517,7 +517,7 @@
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
-    <div class="version" id="versionTag" style="position:absolute;top:8px;left:10px;z-index:20;pointer-events:none;">v8.1 · FOAMS Image Generator</div>
+    <div class="version" id="versionTag" style="position:absolute;top:8px;left:10px;z-index:20;pointer-events:none;">v8.2 · FOAMS Image Generator</div>
     <div class="play-area-inner" id="playAreaInner">
 
       <!-- Generated (remixed) result — draggable/scalable/rotatable after generation -->
@@ -850,28 +850,52 @@ function applyGenTransform() {
 }
 
 // ─── TITLE TRANSFORM ─────────────────────────────────────────────────────────
-function applyTitleTransform() {
-  const td = $id('titleDraggable');
-  const th = $id('titleHandles');
+// Measure and lock title size — only called when font changes, not during drag
+function measureTitleSize() {
   const titleEl = $id('logoTitle');
-  if (!td || td.style.display === 'none') return;
+  const td = $id('titleDraggable');
+  if (!titleEl || !td) return;
+  // Temporarily make visible off-screen to measure
+  const prevLeft = td.style.left, prevTop = td.style.top;
+  td.style.left = '-9999px'; td.style.top = '-9999px';
+  td.style.width = 'auto'; td.style.height = 'auto';
+  const w = titleEl.offsetWidth  || 80;
+  const h = titleEl.offsetHeight || 20;
+  td.style.left = prevLeft; td.style.top = prevTop;
+  titleTW = w; titleTH = h;
+}
 
-  // Font size in actual screen px — titleTScale applied via font size, not CSS transform
+function applyTitleStyle_font() {
+  const titleEl = $id('logoTitle');
+  if (!titleEl) return;
   const baseFontPx = (logoTW > 0 ? logoTW * logoTScale : 80) * 0.08;
   const fontSize   = Math.max(4, Math.round(baseFontPx * titleTScale));
-  if (titleEl) {
-    titleEl.style.fontSize = fontSize + 'px';
-    titleEl.style.whiteSpace = 'nowrap';
-    const colorMap = { white:'#ffffff', black:'#000000', pink:'#ff30ff' };
-    titleEl.style.color = colorMap[logoColor] || '#ffffff';
+  titleEl.style.fontSize   = fontSize + 'px';
+  titleEl.style.whiteSpace = 'nowrap';
+  titleEl.style.fontFamily = "'Trebuchet MS', Trebuchet, sans-serif";
+  titleEl.style.fontWeight = '700';
+  titleEl.style.textTransform = 'uppercase';
+  titleEl.style.letterSpacing = '0.06em';
+  const colorMap = { white:'#ffffff', black:'#000000', pink:'#ff30ff' };
+  titleEl.style.color = colorMap[logoColor] || '#ffffff';
+}
+
+function applyTitleTransform(remeasure) {
+  const td = $id('titleDraggable');
+  const th = $id('titleHandles');
+  if (!td || td.style.display === 'none') return;
+
+  // Update font styles
+  applyTitleStyle_font();
+
+  // Only remeasure size when explicitly requested (font/scale change), not during drag
+  if (remeasure || !titleTW) {
+    measureTitleSize();
   }
+  const w = titleTW || 80;
+  const h = titleTH || 20;
 
-  // Use actual rendered size (post font-size update) — no CSS scale, just font size change
-  const w = titleEl ? (titleEl.offsetWidth  || titleTW || 80) : (titleTW || 80);
-  const h = titleEl ? (titleEl.offsetHeight || titleTH || 20) : (titleTH || 20);
-  titleTW = w; titleTH = h;
-
-  // Position directly — no transform:scale so getBoundingClientRect matches css left/top
+  // Position using locked size — stable during drag
   td.style.width           = w + 'px';
   td.style.height          = h + 'px';
   td.style.left            = (titleTX - w/2) + 'px';
@@ -880,9 +904,10 @@ function applyTitleTransform() {
   td.style.transformOrigin = 'center center';
 
   if (th && titleSelected) {
-    th.style.width  = w + 'px'; th.style.height  = h + 'px';
-    th.style.left   = (titleTX - w/2) + 'px'; th.style.top = (titleTY - h/2) + 'px';
+    th.style.width     = w + 'px'; th.style.height  = h + 'px';
+    th.style.left      = (titleTX - w/2) + 'px'; th.style.top = (titleTY - h/2) + 'px';
     th.style.transform = `rotate(${titleTRot}deg)`;
+    th.style.transformOrigin = 'center center';
   }
 }
 
@@ -911,7 +936,7 @@ function showTitleInPlayArea() {
     }
     titleTScale = 1.0; titleTRot = 0;
   }
-  applyTitleTransform();
+  applyTitleTransform(true);  // remeasure on first show
 }
 
 function hideTitleTransform() {
@@ -927,7 +952,7 @@ function hideTitleTransform() {
 function shiftTitleWithLogo(deltaX, deltaY) {
   titleTX += deltaX;
   titleTY += deltaY;
-  if ($id('titleDraggable')?.style.display !== 'none') applyTitleTransform();
+  if ($id('titleDraggable')?.style.display !== 'none') applyTitleTransform(false);
 }
 
 // ─── LOGO TRANSFORM ──────────────────────────────────────────────────────────
@@ -1309,7 +1334,7 @@ function applyElTransform() {
     if (titleDragging2) {
       titleTX = p.x - ar.left - titleDragOff2X;
       titleTY = p.y - ar.top  - titleDragOff2Y;
-      applyTitleTransform();
+      applyTitleTransform(false);  // no remeasure during drag
     }
     if (titleRotating2) {
       const td2 = $id('titleDraggable'), r = td2.getBoundingClientRect();
@@ -1322,7 +1347,7 @@ function applyElTransform() {
       const td2 = $id('titleDraggable'), r = td2.getBoundingClientRect();
       const cx = r.left + r.width/2, cy = r.top + r.height/2;
       titleTScale = Math.max(0.1, titleScaleStart2 * (Math.hypot(p.x-cx, p.y-cy) / titleScaleStart2Dist));
-      applyTitleTransform();
+      applyTitleTransform(true);  // remeasure — font size changed
     }
     if (genDragging) {
       genX = p.x - ar.left - genDragOffX;
