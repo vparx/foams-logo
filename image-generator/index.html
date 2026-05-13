@@ -344,74 +344,78 @@
     .title-chip.none-chip.selected { color: #aaa; }
 
     /* ════════════ ACTION BUTTONS ════════════ */
-    /* Hard-pinned to right edge of sticky-top, just above the controls bar.
-       Never moves regardless of portrait/landscape canvas position. */
     .play-area-btns {
       position: absolute;
-      right: 10px;       /* spacing from right edge */
-      bottom: 44px;      /* above controls bar with comfortable gap */
+      right: 10px;
+      bottom: 46px;
       z-index: 20;
-      display: flex; align-items: center; gap: 6px;
+      display: flex; align-items: center; gap: 8px;
     }
 
+    /* Base button style — disabled/waiting state */
     .gen-btn {
-      font-size: 11px; font-weight: 700;
-      letter-spacing: 0.12em; text-transform: uppercase;
-      padding: 6px 13px; border-radius: 20px;
-      border: 1px solid rgba(255,255,255,0.08);
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 9px 20px; border-radius: 24px;
+      border: 1px solid rgba(255,255,255,0.12);
       cursor: pointer; transition: all 0.18s;
-      background: rgba(0,0,0,0.55);
-      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-      color: rgba(255,255,255,0.2);
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      color: rgba(255,255,255,0.25);
       font-family: 'Trebuchet MS', Trebuchet, sans-serif;
-      display: flex; align-items: center; gap: 5px;
+      display: flex; align-items: center; gap: 6px;
       white-space: nowrap;
     }
     .gen-btn:disabled { cursor: not-allowed; }
-    /* First-time Generate: bright and prominent */
+
+    /* Generate: prominent white pill */
     .gen-btn.ready {
-      background: rgba(255,255,255,0.92); color: #111;
+      background: rgba(255,255,255,0.95); color: #111;
       border-color: transparent;
-      box-shadow: 0 2px 16px rgba(0,0,0,0.4);
+      box-shadow: 0 3px 20px rgba(0,0,0,0.5);
     }
     .gen-btn.ready:hover {
       background: #fff; transform: translateY(-1px);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      box-shadow: 0 5px 28px rgba(0,0,0,0.6);
     }
-    /* After generating: Regenerate is faded, less prominent */
+
+    /* Regenerate: clearly readable but secondary */
     .gen-btn.regenerate {
-      background: rgba(0,0,0,0.45); color: rgba(255,255,255,0.38);
-      border-color: rgba(255,255,255,0.15);
+      background: rgba(0,0,0,0.6); color: rgba(255,255,255,0.5);
+      border-color: rgba(255,255,255,0.22);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
     .gen-btn.regenerate:hover {
-      background: rgba(0,0,0,0.6); color: rgba(255,255,255,0.6);
+      background: rgba(30,30,30,0.8); color: rgba(255,255,255,0.75);
+      border-color: rgba(255,255,255,0.4);
       transform: translateY(-1px);
     }
+
     .gen-btn.running {
-      background: rgba(0,0,0,0.6); color: rgba(255,255,255,0.4);
-      cursor: wait; border-color: rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.7); color: rgba(255,255,255,0.45);
+      cursor: wait; border-color: rgba(255,255,255,0.15);
       animation: pulse 1.4s ease-in-out infinite;
     }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.45} }
 
+    /* Export Image: solid white, clearly actionable */
     .export-btn {
-      font-size: 11px; font-weight: 700;
-      letter-spacing: 0.12em; text-transform: uppercase;
-      padding: 6px 13px; border-radius: 20px;
-      border: 1px solid rgba(255,255,255,0.9);
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 9px 20px; border-radius: 24px;
+      border: 2px solid #fff;
       cursor: pointer; transition: all 0.18s;
-      background: rgba(255,255,255,0.92);
-      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      background: #fff;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
       color: #111;
       font-family: 'Trebuchet MS', Trebuchet, sans-serif;
       display: none; white-space: nowrap;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+      box-shadow: 0 3px 18px rgba(0,0,0,0.45);
     }
     .export-btn.show { display: block; }
     .export-btn.show:hover {
-      background: #fff; color: #111;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 18px rgba(0,0,0,0.5);
+      background: #f5f5f5; transform: translateY(-1px);
+      box-shadow: 0 5px 24px rgba(0,0,0,0.55);
     }
 
     /* Keep old action-area for any leftover references but hide it */
@@ -435,7 +439,19 @@
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
 
+      <!-- Generated background (after hitting Generate) -->
       <div id="bgImage"></div>
+
+      <!-- Faded base image preview — shown when base image is chosen, before generating -->
+      <div id="basePreview" style="display:none;position:absolute;inset:0;
+        background-size:cover;background-position:center;opacity:0.45;
+        transition:opacity 0.5s ease;"></div>
+
+      <!-- Graphical element preview — shown when element is chosen -->
+      <div id="elPreview" style="display:none;position:absolute;
+        right:8%;bottom:8%;width:32%;height:32%;
+        background-size:contain;background-position:center;background-repeat:no-repeat;
+        opacity:0.35;transition:opacity 0.5s ease;pointer-events:none;"></div>
 
       <div id="logoLayer">
         <!--
@@ -679,6 +695,9 @@ function selectCat(cat) {
   imgGenerated = false;
   lockSection('step2Section',2); lockSection('step3Section',3);
   clearLogoFromPlayArea();
+  // Clear previews when starting over
+  const _bp = $id('basePreview'); if (_bp) { _bp.style.display='none'; _bp.style.backgroundImage=''; }
+  const _ep = $id('elPreview');   if (_ep) { _ep.style.display='none'; _ep.style.backgroundImage=''; }
   updateGenBtn(); updateExportBtn();
 
   ['tropical','water','body'].forEach(c =>
@@ -741,6 +760,14 @@ function selectBaseImg(n) {
   $id('bimg-'+n).classList.add('selected');
   const catLabel = {tropical:'Tropical',water:'Water',body:'Body'}[selCat];
   markDone('step1Section',1, catLabel+' · Image '+n);
+
+  // Show faded base image preview in play area
+  const bp = $id('basePreview');
+  if (bp) {
+    bp.style.backgroundImage = `url('${selBaseFile}')`;
+    bp.style.display = 'block';
+  }
+
   buildStep2(selCat);
   activateSection('step2Section',2);
   window.scrollTo({top: 0, behavior: 'smooth'});
@@ -794,7 +821,19 @@ function selectEl(type, n, tile) {
   $id('step2Body').querySelectorAll('.img-tile').forEach(t => t.classList.remove('selected'));
   tile.classList.add('selected');
   selEl = type+'-'+n;
-  markDone('step2Section',2,(type==='defocus'?'Light Defocus':'Pink Vector')+' #'+n);
+  markDone('step2Section',2,(type==='defocus'?'Light Defocus':'Pink Vectors')+' #'+n);
+
+  // Show faded graphical element preview in play area
+  const filePrefix = type === 'defocus'
+    ? 'Foams-Brand-Graphic-DefocusLight-'
+    : 'Foams-Brand-Graphic-PinkVectors-';
+  const elFile = filePrefix + String(n).padStart(2,'0') + '.png';
+  const ep = $id('elPreview');
+  if (ep) {
+    ep.style.backgroundImage = `url('${elFile}')`;
+    ep.style.display = 'block';
+  }
+
   buildStep3();
   activateSection('step3Section',3);
   window.scrollTo({top: 0, behavior: 'smooth'});
@@ -913,7 +952,7 @@ function selectLogo(logoId, tile) {
 
   // Only reset position on first logo pick, not when swapping
   if (!$id('logoDraggable').style.display || $id('logoDraggable').style.display === 'none') {
-    logoPctX = 50; logoPctY = 50;  // center
+    logoPctX = 26; logoPctY = 70;  // lower-left triad
     logoScale = 45;
     $id('scaleSlider').value = 45;
     $id('scaleVal').textContent = 45;
@@ -1272,6 +1311,13 @@ async function generateImage() {
     const bg = $id('bgImage');
     bg.style.background = grads[selCat];
     bg.classList.add('visible');
+    // Hide faded previews — the real generated image takes over
+    const _bp2 = $id('basePreview'); if (_bp2) _bp2.style.opacity = '0';
+    const _ep2 = $id('elPreview');   if (_ep2) _ep2.style.opacity = '0';
+    setTimeout(() => {
+      if (_bp2) _bp2.style.display = 'none';
+      if (_ep2) _ep2.style.display = 'none';
+    }, 700);
 
     imgGenerated = true; updateExportBtn();
     btn.innerHTML = '↺ Regenerate';
