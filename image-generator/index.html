@@ -65,7 +65,8 @@
     .logo-handle { background: #ff64b4; }
     #elPreview:active, #basePreview:active { cursor: grabbing; }
 
-    #logoLayer { position: absolute; inset: 0; pointer-events: none; }
+    #logoLayer { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+    #logoDraggable, #logoHandles, #logoRotHandle, .logo-handle { pointer-events: all !important; }
 
     #logoDraggable {
       position: absolute; cursor: grab;
@@ -515,7 +516,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v6.8 · FOAMS Image Generator</div>
+<div class="version">v6.9 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -561,6 +562,14 @@
           pointer-events:all;box-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>
         <div style="position:absolute;top:-20px;left:50%;width:1px;height:14px;
           background:rgba(255,255,255,0.4);transform:translateX(-50%);"></div>
+        <!-- Mirror button: bottom-left of handles -->
+        <button id="mirrorBtn" onclick="toggleMirror()" style="position:absolute;bottom:-24px;left:0;
+          background:rgba(0,0,0,0.6);color:rgba(255,255,255,0.8);border:1px solid rgba(255,255,255,0.3);
+          border-radius:4px;font-size:9px;font-weight:700;letter-spacing:0.08em;
+          padding:2px 7px;cursor:pointer;pointer-events:all;
+          font-family:'Trebuchet MS',sans-serif;white-space:nowrap;">
+          ⇄ Mirror
+        </button>
       </div>
 
       <div id="logoLayer">
@@ -757,6 +766,7 @@ let elW = 0, elH = 0;       // natural size in play-area px (set on load)
 let elScale = 1.0;           // scale multiplier
 let elRot = 0;               // rotation in degrees
 let elFile = '';             // current element filename
+let elFlipX = false;  // mirror state for graphical element
 let elDragging = false, elDragOffX = 0, elDragOffY = 0;
 let elRotating = false, elRotStartAngle = 0, elRotStartRot = 0;
 let elScaling = false, elScaleCorner = '', elScaleStartDist = 0, elScaleStart = 1.0;
@@ -831,6 +841,13 @@ function applyLogoTransform() {
   if (selTitle) applyTitlePos();
 }
 
+function toggleMirror() {
+  elFlipX = !elFlipX;
+  const btn = $id('mirrorBtn');
+  if (btn) btn.style.color = elFlipX ? '#7af' : 'rgba(255,255,255,0.8)';
+  applyElTransform();
+}
+
 // ─── BASE IMAGE TRANSFORM ─────────────────────────────────────────────────────
 function applyBgTransform() {
   const bp = $id('basePreview');
@@ -863,7 +880,8 @@ function applyElTransform() {
   ep.style.height = h + 'px';
   ep.style.left   = (elX - w/2) + 'px';
   ep.style.top    = (elY - h/2) + 'px';
-  ep.style.transform = `rotate(${elRot}deg)`;
+  const flipStr = elFlipX ? "scaleX(-1) " : "";
+  ep.style.transform = `${flipStr}rotate(${elRot}deg)`;
 
   // Sync the dashed handles box
   if (eh) {
@@ -1129,8 +1147,30 @@ function toggleOrientation() {
     $id('orientInfo').textContent    = 'Portrait · 1080×1920';
     $id('orientBtnTxt').textContent  = 'Landscape';
   }
-  // After CSS transition settles, reposition using same % coords
-  setTimeout(() => { if (selLogo) { applyLogoPos(); applyTitleStyle(); } }, 420);
+  // After CSS transition settles, recompute transforms from stored % coords
+  setTimeout(() => {
+    if (selLogo) {
+      // Recalculate absolute px from stored % (which survived orientation change)
+      const area2 = $id('playAreaInner');
+      const aW2 = area2.offsetWidth, aH2 = area2.offsetHeight;
+      logoTX = (logoPctX / 100) * aW2;
+      logoTY = (logoPctY / 100) * aH2;
+      // Rescale logoTW/TH proportionally
+      const newBase = Math.min(aW2, aH2);
+      const ratio   = (logoScale / 100);
+      logoTW = newBase * ratio / logoTScale;
+      applyLogoTransform();
+      applyTitleStyle(false);
+    }
+    if (selBaseImg && bgW) {
+      // Rescale base image position/size
+      const area2 = $id('playAreaInner');
+      const aW2 = area2.offsetWidth, aH2 = area2.offsetHeight;
+      bgX = aW2 / 2; bgY = aH2 / 2;
+      bgScale = Math.max(aW2 / bgW, aH2 / bgH);
+      applyBgTransform();
+    }
+  }, 420);
 }
 
 // ─── SECTIONS ────────────────────────────────────────────────────────────────
@@ -1606,7 +1646,8 @@ function applyTitleStyle(resetOffset) {
   const aW = area.offsetWidth, aH = area.offsetHeight;
   if (!aW || !aH) return;
 
-  const logoPx   = Math.min(aW, aH) * (logoScale / 100);
+  // Use actual rendered logo width for font size so title scales with transform
+  const logoPx   = logoTW > 0 ? logoTW * logoTScale : Math.min(aW, aH) * (logoScale / 100);
   const fontSize = Math.max(5, Math.round(logoPx * 0.08 * (titleScale / 100)));
 
   titleEl.textContent    = selTitle;
@@ -1924,6 +1965,7 @@ async function generateImage() {
 
       ctx.save();
       ctx.translate(cx, cy);
+      if (elFlipX) ctx.scale(-1, 1);
       ctx.rotate(elRot * Math.PI / 180);
       ctx.drawImage(elImg, -drawW/2, -drawH/2, drawW, drawH);
       ctx.restore();
