@@ -517,7 +517,7 @@
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
-    <div class="version" id="versionTag" style="position:absolute;top:8px;left:10px;z-index:20;pointer-events:none;">v8.2 · FOAMS Image Generator</div>
+    <div class="version" id="versionTag" style="position:absolute;top:8px;left:10px;z-index:20;pointer-events:none;">v8.3 · FOAMS Image Generator</div>
     <div class="play-area-inner" id="playAreaInner">
 
       <!-- Generated (remixed) result — draggable/scalable/rotatable after generation -->
@@ -1188,10 +1188,11 @@ function applyElTransform() {
       const lh=$id('logoHandles'); if(lh) lh.style.display='none';
       const gh=$id('genHandles'); if(gh) gh.style.display='none';
       titleDragging2 = true;
-      // Get fresh position after any pending rAF from applyTitleTransform
-      const r = td.getBoundingClientRect();
-      titleDragOff2X = p.x - (r.left + r.width/2);
-      titleDragOff2Y = p.y - (r.top  + r.height/2);
+      // Offset = mouse position relative to play area, minus title center
+      // titleTX/TY are already in play-area px — no getBoundingClientRect needed
+      const _ar = $id('playAreaInner').getBoundingClientRect();
+      titleDragOff2X = (p.x - _ar.left) - titleTX;
+      titleDragOff2Y = (p.y - _ar.top)  - titleTY;
       return;
     }
 
