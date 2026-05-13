@@ -17,8 +17,7 @@
 
     .version {
       font-size: 10px; color: #444; font-family: monospace;
-      padding: 8px 0 6px; letter-spacing: 0.1em;
-      margin-bottom: 2px;
+      margin-bottom: 5px; letter-spacing: 0.05em;
     }
 
     /* ════════════ STICKY TOP ════════════ */
@@ -63,6 +62,8 @@
     .el-handle { background: #fff; }
     .logo-handle { background: #ff64b4; }
     .gen-handle { background: #64dcff; }
+    .title-handle { background: #ffdc3c; }
+    #titleDraggable, #titleHandles, #titleRotHandle, .title-handle { pointer-events: all !important; }
     #elPreview:active, #basePreview:active { cursor: grabbing; }
 
     #logoLayer { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
@@ -514,7 +515,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v7.9 · FOAMS Image Generator</div>
+<div class="version">v8.0 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -574,8 +575,26 @@
           <div id="logoDragSurface" style="position:absolute;inset:0;z-index:10;cursor:grab;"></div>
           <div id="logoPlaceholder">LOGO</div>
           <img id="logoImg" src="" alt="" draggable="false" style="user-select:none;-webkit-user-drag:none;">
-          <!-- Title is INSIDE logoDraggable so it inherits position/scale/rotation -->
-          <span id="logoTitle" style="position:absolute;z-index:11;pointer-events:all;cursor:grab;user-select:none;touch-action:none;"></span>
+        </div>
+
+        <!-- Title text — independent element with own transform handles -->
+        <div id="titleDraggable" style="display:none;position:absolute;cursor:grab;
+          user-select:none;touch-action:none;transform-origin:center center;">
+          <span id="logoTitle"></span>
+        </div>
+
+        <!-- Title transform handles (yellow) -->
+        <div id="titleHandles" style="display:none;position:absolute;pointer-events:none;
+          border:1.5px dashed rgba(255,220,60,0.7);box-sizing:border-box;z-index:6;">
+          <div class="t-handle title-handle" data-corner="tl" style="top:-5px;left:-5px"></div>
+          <div class="t-handle title-handle" data-corner="tr" style="top:-5px;right:-5px"></div>
+          <div class="t-handle title-handle" data-corner="bl" style="bottom:-5px;left:-5px"></div>
+          <div class="t-handle title-handle" data-corner="br" style="bottom:-5px;right:-5px"></div>
+          <div id="titleRotHandle" style="position:absolute;top:-26px;left:50%;transform:translateX(-50%);
+            width:10px;height:10px;background:#ffdc3c;border-radius:50%;cursor:crosshair;
+            pointer-events:all;box-shadow:0 1px 4px rgba(0,0,0,0.5);z-index:7;"></div>
+          <div style="position:absolute;top:-20px;left:50%;width:1px;height:14px;
+            background:rgba(255,220,60,0.4);transform:translateX(-50%);"></div>
         </div>
 
         <!-- Logo transform handles (pink) — shown when logo selected -->
@@ -797,8 +816,17 @@ let logoDragging2 = false, logoDragOff2X = 0, logoDragOff2Y = 0;
 let logoRotating2 = false, logoRotStart2 = 0, logoRotStartRot2 = 0;
 let logoScaling2  = false, logoScaleStart2Dist = 0, logoScaleStart2 = 1.0;
 
-// Title position as fraction of scaled logo box (0=left/top, 1=right/bottom)
-let titleFracX = 0.05, titleFracY = 0.05;   // default upper-left
+// Title transform state — independent element in play-area coords
+let titleTX = 0, titleTY = 0;          // center in play-area px
+let titleTW = 0, titleTH = 0;          // natural size of title text in px
+let titleTScale = 1.0;                  // scale multiplier
+let titleTRot   = 0;                    // rotation degrees
+let titleSelected = false;
+let titleDragging2 = false, titleDragOff2X = 0, titleDragOff2Y = 0;
+let titleRotating2 = false, titleRotStart2 = 0, titleRotStartRot2 = 0;
+let titleScaling2  = false, titleScaleStart2Dist = 0, titleScaleStart2 = 1.0;
+
+// Legacy (kept for compat)
 let titleManuallyMoved = false;
 let titleDragging = false, tOffX = 0, tOffY = 0;
 
@@ -819,6 +847,88 @@ function applyGenTransform() {
     gh.style.left   = (genX - w/2) + 'px'; gh.style.top = (genY - h/2) + 'px';
     gh.style.transform = `rotate(${genRot}deg)`;
   }
+}
+
+// ─── TITLE TRANSFORM ─────────────────────────────────────────────────────────
+function applyTitleTransform() {
+  const td = $id('titleDraggable');
+  const th = $id('titleHandles');
+  const titleEl = $id('logoTitle');
+  if (!td || td.style.display === 'none') return;
+
+  // Font size scales with titleTScale — base = logoTW * 0.08 if logo shown, else fixed
+  const baseFontPx = (logoTW > 0 ? logoTW * logoTScale : 80) * 0.08;
+  const fontSize   = Math.max(4, Math.round(baseFontPx * titleTScale));
+  if (titleEl) {
+    titleEl.style.fontSize = fontSize + 'px';
+    const colorMap = { white:'#ffffff', black:'#000000', pink:'#ff30ff' };
+    titleEl.style.color = colorMap[logoColor] || '#ffffff';
+  }
+
+  // Measure rendered size after font update
+  requestAnimationFrame(() => {
+    if (!titleEl) return;
+    titleTW = titleEl.offsetWidth  || titleTW || 80;
+    titleTH = titleEl.offsetHeight || titleTH || 20;
+
+    td.style.width           = titleTW + 'px';
+    td.style.height          = titleTH + 'px';
+    td.style.left            = (titleTX - titleTW/2) + 'px';
+    td.style.top             = (titleTY - titleTH/2) + 'px';
+    td.style.transform       = `scale(${titleTScale}) rotate(${titleTRot}deg)`;
+    td.style.transformOrigin = 'center center';
+
+    if (th && titleSelected) {
+      const sw = titleTW * titleTScale, sh = titleTH * titleTScale;
+      th.style.width  = sw + 'px'; th.style.height  = sh + 'px';
+      th.style.left   = (titleTX - sw/2) + 'px'; th.style.top = (titleTY - sh/2) + 'px';
+      th.style.transform = `rotate(${titleTRot}deg)`;
+    }
+  });
+}
+
+function showTitleInPlayArea() {
+  const td = $id('titleDraggable');
+  if (!td || !selTitle) return;
+  const titleEl = $id('logoTitle');
+  if (titleEl) {
+    titleEl.style.display = 'block';
+    titleEl.textContent   = selTitle;
+  }
+  td.style.display = 'block';
+
+  // Default position: relative to logo if logo is shown
+  const area = $id('playAreaInner');
+  const aW = area.offsetWidth, aH = area.offsetHeight;
+  if (titleTW === 0) {
+    // First time — position near logo
+    const logoSW = logoTW * logoTScale;
+    if (titleLang === 'PT') {
+      titleTX = logoTX - logoSW * 0.3;
+      titleTY = logoTY - logoSW * 0.4;
+    } else {
+      titleTX = logoTX + logoSW * 0.3;
+      titleTY = logoTY + logoSW * 0.35;
+    }
+    titleTScale = 1.0; titleTRot = 0;
+  }
+  applyTitleTransform();
+}
+
+function hideTitleTransform() {
+  const td = $id('titleDraggable');
+  const th = $id('titleHandles');
+  if (td) td.style.display = 'none';
+  if (th) th.style.display = 'none';
+  titleSelected = false;
+  titleTW = 0; // reset so next show recalculates position
+}
+
+// When logo moves, shift title by same delta
+function shiftTitleWithLogo(deltaX, deltaY) {
+  titleTX += deltaX;
+  titleTY += deltaY;
+  if ($id('titleDraggable')?.style.display !== 'none') applyTitleTransform();
 }
 
 // ─── LOGO TRANSFORM ──────────────────────────────────────────────────────────
@@ -957,6 +1067,10 @@ function applyElTransform() {
     const gi = $id('bgImage');
     const isGenHandle   = e.target.classList.contains('gen-handle');
     const isGen         = gi && gi.style.display !== 'none' && gi.src && e.target === gi;
+    const td            = $id('titleDraggable');
+    const isTitleHandle = e.target.classList.contains('title-handle');
+    const isTitleRot    = e.target.id === 'titleRotHandle';
+    const isTitleDrag   = !!(td && td.style.display !== 'none' && td.contains(e.target) && !isTitleHandle && !isTitleRot);
     const isElHandle    = e.target.classList.contains('el-handle');
     const isElRot       = e.target.id === 'rotHandle';
     const isBgHandle    = false;  // no bg handles
@@ -1040,6 +1154,44 @@ function applyElTransform() {
       return;
     }
 
+    // ── Click on title → select + drag ──
+    if (isTitleDrag) {
+      e.preventDefault(); e.stopPropagation();
+      titleSelected = true; elSelected=false; bgSelected=false; logoSelected=false; genSelected=false;
+      const th = $id('titleHandles'); if (th) { th.style.display='block'; applyTitleTransform(); }
+      const eh=$id('elHandles'); if(eh) eh.style.display='none';
+      const bh=$id('bgHandles'); if(bh) bh.style.display='none';
+      const lh=$id('logoHandles'); if(lh) lh.style.display='none';
+      const gh=$id('genHandles'); if(gh) gh.style.display='none';
+      titleDragging2 = true;
+      const r = td.getBoundingClientRect();
+      titleDragOff2X = p.x - (r.left + r.width/2);
+      titleDragOff2Y = p.y - (r.top  + r.height/2);
+      return;
+    }
+
+    // ── Title rotate handle ──
+    if (isTitleRot) {
+      e.preventDefault(); e.stopPropagation();
+      titleRotating2 = true;
+      const r  = td.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      titleRotStart2    = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI;
+      titleRotStartRot2 = titleTRot;
+      return;
+    }
+
+    // ── Title corner handle ──
+    if (isTitleHandle) {
+      e.preventDefault(); e.stopPropagation();
+      titleScaling2 = true;
+      const r  = td.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      titleScaleStart2Dist = Math.hypot(p.x - cx, p.y - cy);
+      titleScaleStart2     = titleTScale;
+      return;
+    }
+
     // ── Click on logo → select + drag ──
     if (isLogo) {
       e.preventDefault(); e.stopPropagation();
@@ -1102,6 +1254,8 @@ function applyElTransform() {
       deselect();
       genSelected = false;
       const gh2 = $id('genHandles'); if(gh2) gh2.style.display='none';
+      titleSelected = false;
+      const th2 = $id('titleHandles'); if(th2) th2.style.display='none';
     }
   }
 
@@ -1109,7 +1263,7 @@ function applyElTransform() {
   document.addEventListener('touchmove', onMove, {passive:false});
 
   function onMove(e) {
-    const anyActive = elDragging || elRotating || elScaling || bgDragging || bgRotating || bgScaling || logoDragging2 || logoRotating2 || logoScaling2 || genDragging || genScaling;
+    const anyActive = elDragging || elRotating || elScaling || bgDragging || bgRotating || bgScaling || logoDragging2 || logoRotating2 || logoScaling2 || genDragging || genScaling || titleDragging2 || titleRotating2 || titleScaling2;
     if (!anyActive) return;
     e.preventDefault();
     const p  = xy(e);
@@ -1152,6 +1306,24 @@ function applyElTransform() {
       bgScale = Math.max(0.05, bgScaleStart * (Math.hypot(p.x-cx, p.y-cy) / bgScaleStartDist));
       applyBgTransform();
     }
+    if (titleDragging2) {
+      titleTX = p.x - ar.left - titleDragOff2X;
+      titleTY = p.y - ar.top  - titleDragOff2Y;
+      applyTitleTransform();
+    }
+    if (titleRotating2) {
+      const td2 = $id('titleDraggable'), r = td2.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      const angle = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI;
+      titleTRot = titleRotStartRot2 + (angle - titleRotStart2);
+      applyTitleTransform();
+    }
+    if (titleScaling2) {
+      const td2 = $id('titleDraggable'), r = td2.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      titleTScale = Math.max(0.1, titleScaleStart2 * (Math.hypot(p.x-cx, p.y-cy) / titleScaleStart2Dist));
+      applyTitleTransform();
+    }
     if (genDragging) {
       genX = p.x - ar.left - genDragOffX;
       genY = p.y - ar.top  - genDragOffY;
@@ -1164,9 +1336,14 @@ function applyElTransform() {
       applyGenTransform();
     }
     if (logoDragging2) {
+      const prevLX = logoTX, prevLY = logoTY;
       logoTX = p.x - ar.left - logoDragOff2X;
       logoTY = p.y - ar.top  - logoDragOff2Y;
       applyLogoTransform();
+      // Title follows logo drag
+      if ($id('titleDraggable')?.style.display !== 'none') {
+        shiftTitleWithLogo(logoTX - prevLX, logoTY - prevLY);
+      }
     }
     if (logoRotating2) {
       const ld = $id('logoDraggable'), r = ld.getBoundingClientRect();
@@ -1190,6 +1367,7 @@ function applyElTransform() {
     bgDragging=false; bgRotating=false; bgScaling=false;
     logoDragging2=false; logoRotating2=false; logoScaling2=false;
     genDragging=false; genScaling=false;
+    titleDragging2=false; titleRotating2=false; titleScaling2=false;
   }
 })();
 
@@ -1661,33 +1839,13 @@ function setTitleDefaultOffset() {
   }
 }
 
-function applyTitleStyle(resetOffset) {
+function applyTitleStyle(resetPos) {
+  // Bridge: calls the new transform system
+  if (!selTitle) { hideTitle(); return; }
   const titleEl = $id('logoTitle');
   if (!titleEl) return;
-  if (!selTitle) { hideTitle(); return; }
-
-  const sw = logoTW * logoTScale;  // scaled box width
-  const sh = logoTH * logoTScale;  // scaled box height
-  if (!sw || !sh) return;
-
-  // Font size = % of scaled box width (same px coords as left/top inside box)
-  const fontSize = Math.max(5, Math.round(sw * 0.08));
-
-  titleEl.textContent    = selTitle;
-  titleEl.style.display  = 'block';
-  titleEl.style.fontSize = fontSize + 'px';
-
-  const colorMap = { white:'#ffffff', black:'#000000', pink:'#ff30ff' };
-  titleEl.style.color = colorMap[logoColor] || '#ffffff';
-
-  if (resetOffset || !titleManuallyMoved) {
-    requestAnimationFrame(() => {
-      setTitleDefaultOffset();
-      _applyTitlePos();
-    });
-  } else {
-    _applyTitlePos();
-  }
+  titleEl.textContent = selTitle;
+  showTitleInPlayArea();
 }
 
 function _applyTitlePos() {
@@ -1706,9 +1864,7 @@ function _applyTitlePos() {
 function applyTitlePos() { _applyTitlePos(); }
 
 function hideTitle() {
-  const titleEl = $id('logoTitle');
-  if (titleEl) titleEl.style.display = 'none';
-  // (title scale controls removed)
+  hideTitleTransform();
 }
 
 // ─── LOGO IN PLAY AREA ───────────────────────────────────────────────────────
