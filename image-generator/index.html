@@ -434,7 +434,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v4.2 · FOAMS Image Generator</div>
+<div class="version">v4.3 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -1309,22 +1309,19 @@ async function generateImage() {
   btn.textContent = 'Generating…';
 
   try {
-    // Determine file paths for the two chosen images
-    const catName = { tropical:'Tropical', water:'Water', body:'Body' }[selCat];
-    const baseFile = selBaseFile; // set in selectBaseImg()
+    // Determine file paths
     const elType   = selEl.startsWith('defocus') ? 'defocus' : 'pinkvec';
     const elNum    = selEl.split('-')[1];
     const elPrefix = elType === 'defocus'
       ? 'Foams-Brand-Graphic-DefocusLight-'
       : 'Foams-Brand-Graphic-PinkVectors-';
     const elFile   = elPrefix + String(elNum).padStart(2,'0') + '.png';
+    const baseFile = selBaseFile;
 
     const size = orientation === 'landscape' ? '1536x1024' : '1024x1536';
-
-    // Build the text prompt
     const prompt = buildPrompt(size);
 
-    // Convert both images to base64 so GPT-4o can see them
+    // Load both images as base64
     btn.textContent = 'Loading images…';
     let baseB64, elB64;
     try {
@@ -1333,77 +1330,84 @@ async function generateImage() {
         fileToBase64(elFile),
       ]);
     } catch (fetchErr) {
-      console.warn('Could not load local images for API:', fetchErr);
-      baseB64 = null; elB64 = null;
+      console.warn('Could not load local images:', fetchErr);
+      throw new Error('Could not load image files. Make sure all files are on the server.');
     }
 
     btn.textContent = 'Generating…';
 
-    // Build the messages array for GPT-4o image generation
-    // GPT-4o responses API with image_generation tool
-    const messages = [{
-      role: 'user',
-      content: [
-        {
-          type: 'text',
-          text: prompt
-        },
-        // Attach the base image if available
-        ...(baseB64 ? [{
-          type: 'image_url',
-          image_url: { url: `data:image/jpeg;base64,${baseB64}`, detail: 'high' }
-        }] : []),
-        // Attach the graphical element image if available
-        ...(elB64 ? [{
-          type: 'image_url',
-          image_url: { url: `data:image/png;base64,${elB64}`, detail: 'high' }
-        }] : []),
-      ]
-    }];
-
+    // Use GPT-4o Responses API with image_generation tool
+    // This is the only OpenAI API that accepts image inputs AND outputs an image
     const requestBody = {
-      model: 'gpt-image-1',
-      prompt: prompt,
-      n: 1,
-      size: size,
-      quality: 'auto',
+      _endpoint: 'https://api.openai.com/v1/responses',  // Worker reads this
+      model: 'gpt-4o',
+      input: [
+        {
+          role: 'user',
+          content: [
+            { type: 'input_text', text: prompt },
+            {
+              type: 'input_image',
+              source: {
+                type: 'base64',
+                media_type: 'image/jpeg',
+                data: baseB64,
+              },
+            },
+            {
+              type: 'input_image',
+              source: {
+                type: 'base64',
+                media_type: 'image/png',
+                data: elB64,
+              },
+            },
+          ],
+        },
+      ],
+      tools: [{ type: 'image_generation', size: size, quality: 'high' }],
     };
 
     const res = await fetch('https://foams-generator.plattformplus.workers.dev/', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody),
     });
 
-    // Log raw response for debugging
     const rawText = await res.text();
-    console.log('API raw response:', rawText.substring(0, 500));
+    console.log('API raw response (first 500):', rawText.substring(0, 500));
 
     let data;
     try { data = JSON.parse(rawText); }
-    catch(e) { throw new Error('Invalid JSON from API: ' + rawText.substring(0, 200)); }
+    catch(e) { throw new Error('Invalid JSON from API: ' + rawText.substring(0, 300)); }
 
     if (!res.ok) {
       throw new Error(data?.error?.message || `API error ${res.status}`);
     }
 
-    console.log('API data keys:', Object.keys(data));
-    console.log('data.data:', JSON.stringify(data.data)?.substring(0, 200));
-
-    // Handle both b64_json and url formats
-    const imgData = data.data?.[0];
+    // Extract the generated image from the Responses API output
+    // Output is an array of content blocks; find the image_generation_call result
     let imageUrl = null;
-    if (imgData?.b64_json) {
-      imageUrl = `data:image/png;base64,${imgData.b64_json}`;
-    } else if (imgData?.url) {
-      imageUrl = imgData.url;
+    const output = data.output || [];
+    for (const block of output) {
+      if (block.type === 'image_generation_call' && block.result) {
+        imageUrl = `data:image/png;base64,${block.result}`;
+        break;
+      }
+      // Also check nested content
+      if (block.content) {
+        for (const item of block.content) {
+          if (item.type === 'image_generation_call' && item.result) {
+            imageUrl = `data:image/png;base64,${item.result}`;
+            break;
+          }
+        }
+      }
     }
 
     if (!imageUrl) {
-      console.error('Full API response:', JSON.stringify(data));
-      throw new Error('No image returned from API — check console for full response');
+      console.error('Full API response:', JSON.stringify(data).substring(0, 1000));
+      throw new Error('No image in API response — check console');
     }
 
     // Display in play area
