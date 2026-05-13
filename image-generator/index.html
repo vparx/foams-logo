@@ -434,7 +434,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v4.4 · FOAMS Image Generator</div>
+<div class="version">v4.6 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -956,9 +956,9 @@ function selectLogo(logoId, tile) {
   // Only reset position on first logo pick, not when swapping
   if (!$id('logoDraggable').style.display || $id('logoDraggable').style.display === 'none') {
     logoPctX = 26; logoPctY = 70;  // lower-left triad
-    logoScale = 45;
-    $id('scaleSlider').value = 45;
-    $id('scaleVal').textContent = 45;
+    logoScale = 55;
+    $id('scaleSlider').value = 55;
+    $id('scaleVal').textContent = 55;
   }
 
   showLogoInPlayArea();
@@ -1340,7 +1340,7 @@ async function generateImage() {
     // This is the only OpenAI API that accepts image inputs AND outputs an image
     const requestBody = {
       _endpoint: 'https://api.openai.com/v1/responses',  // Worker reads this
-      model: 'gpt-4o',
+      model: 'gpt-image-1',
       input: [
         {
           role: 'user',
@@ -1440,25 +1440,18 @@ async function generateImage() {
 }
 
 function buildPrompt(size) {
-  const res = size || (orientation === 'landscape' ? '1920x1080' : '1080x1920');
   const orient = orientation === 'landscape' ? 'landscape' : 'portrait';
-  const elType = selEl.startsWith('defocus') ? 'light defocus' : 'pink vector';
-  const catName = { tropical:'Tropical', water:'Water', body:'Body' }[selCat];
 
-  return `Create a single composed image for the FOAMS brand.
+  return `You have been given two images. Compose them into a single final image.
 
-You have been provided with two images:
-1. A base photograph (${catName} category, image ${selBaseImg})
-2. A graphical element (${elType} style, element ${selEl.split('-')[1]})
-
-Composition rules:
-- Use BOTH the base image AND the graphical element exactly once each
-- The graphical element should be composited ON TOP of the base image, not placed separately
-- You may use blend modes (screen, overlay, multiply, etc.) if it enhances the result — but it is not mandatory
-- Keep the overall vibe: elegant, modern, and a bit mysterious
-- The final image must be in ${orient} format (${res})
-- Editorial photography quality, high fidelity, 8K detail
-- FOAMS brand aesthetic: clean, artistic, contemporary`;
+Rules:
+- Use the first image as the background
+- Place the second image on top of the first, blended naturally into the scene
+- You may use blend modes (screen, overlay, multiply, soft light, etc.) if it improves the result
+- Do not add any text, logos, watermarks or graphic elements that are not in the provided images
+- Keep the mood: elegant, modern, slightly mysterious
+- Output in ${orient} orientation
+- Do not generate anything new — only work with the two images provided`;
 }
 
 // ─── EXPORT ──────────────────────────────────────────────────────────────────
