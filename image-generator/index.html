@@ -517,7 +517,7 @@
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
-    <div class="version" id="versionTag" style="position:absolute;top:8px;left:10px;z-index:20;pointer-events:none;">v8.4 · FOAMS Image Generator</div>
+    <div class="version" id="versionTag" style="position:absolute;top:8px;left:10px;z-index:20;pointer-events:none;">v8.5 · FOAMS Image Generator</div>
     <div class="play-area-inner" id="playAreaInner">
 
       <!-- Generated (remixed) result — draggable/scalable/rotatable after generation -->
@@ -924,15 +924,18 @@ function showTitleInPlayArea() {
   // Default position: relative to logo if logo is shown
   const area = $id('playAreaInner');
   const aW = area.offsetWidth, aH = area.offsetHeight;
-  if (titleTW === 0) {
-    // First time — position near logo
+  if (titleTX === 0 && titleTY === 0) {
+    // First time only — position near logo edge
     const logoSW = logoTW * logoTScale;
+    const logoSH = logoTH * logoTScale;
     if (titleLang === 'PT') {
-      titleTX = logoTX - logoSW * 0.3;
-      titleTY = logoTY - logoSW * 0.4;
+      // PT (CASA): just above the logo, slightly left of center
+      titleTX = logoTX - logoSW * 0.15;
+      titleTY = logoTY - logoSH * 0.5 - 8;   // just above top edge
     } else {
-      titleTX = logoTX + logoSW * 0.3;
-      titleTY = logoTY + logoSW * 0.35;
+      // EN (HOUSE): just below the logo, slightly right of center
+      titleTX = logoTX + logoSW * 0.15;
+      titleTY = logoTY + logoSH * 0.5 + 8;   // just below bottom edge
     }
     titleTScale = 1.0; titleTRot = 0;
   }
@@ -945,7 +948,7 @@ function hideTitleTransform() {
   if (td) td.style.display = 'none';
   if (th) th.style.display = 'none';
   titleSelected = false;
-  titleTW = 0; // reset so next show recalculates position
+  // titleTW preserved — position kept when changing word
 }
 
 // When logo moves, shift title by same delta
@@ -1154,8 +1157,8 @@ function applyElTransform() {
       return;
     }
 
-    // ── Click on generated image → select + drag ──
-    if (isGen) {
+    // ── Click on generated image → select + drag (portrait only) ──
+    if (isGen && orientation === 'portrait') {
       e.preventDefault(); e.stopPropagation();
       genSelected = true;
       const gh = $id('genHandles');
@@ -1167,8 +1170,8 @@ function applyElTransform() {
       return;
     }
 
-    // ── Gen image corner handle ──
-    if (isGenHandle) {
+    // ── Gen image corner handle (portrait only) ──
+    if (isGenHandle && orientation === 'portrait') {
       e.preventDefault(); e.stopPropagation();
       genScaling = true;
       const r  = gi.getBoundingClientRect();
@@ -1412,24 +1415,37 @@ function toggleOrientation() {
     $id('orientInfo').textContent    = 'Portrait · 1080×1920';
     $id('orientBtnTxt').textContent  = 'Landscape';
   }
-  // After CSS transition settles, recompute transforms from stored % coords
+  // Snapshot positions as % of current play area BEFORE transition
+  const area0 = $id('playAreaInner');
+  const aW0 = area0.offsetWidth, aH0 = area0.offsetHeight;
+  const _logoPctX = aW0 > 0 ? logoTX / aW0 : 0.26;
+  const _logoPctY = aH0 > 0 ? logoTY / aH0 : 0.70;
+  const _logoScalePct = aH0 > 0 ? (logoTW * logoTScale) / Math.min(aW0, aH0) : 0.45;
+  // Title position as % too
+  const _titlePctX = aW0 > 0 ? titleTX / aW0 : 0.5;
+  const _titlePctY = aH0 > 0 ? titleTY / aH0 : 0.3;
+
+  // After CSS transition settles, restore positions in new play area coords
   setTimeout(() => {
+    const area2 = $id('playAreaInner');
+    const aW2 = area2.offsetWidth, aH2 = area2.offsetHeight;
+
     if (selLogo) {
-      // Recalculate absolute px from stored % (which survived orientation change)
-      const area2 = $id('playAreaInner');
-      const aW2 = area2.offsetWidth, aH2 = area2.offsetHeight;
-      logoTX = (logoPctX / 100) * aW2;
-      logoTY = (logoPctY / 100) * aH2;
-      // Rescale logoTW/TH proportionally
+      // Restore logo position and size proportionally
+      logoTX = _logoPctX * aW2;
+      logoTY = _logoPctY * aH2;
       const newBase = Math.min(aW2, aH2);
-      const ratio   = (logoScale / 100);
-      logoTW = newBase * ratio / logoTScale;
+      const targetSize = _logoScalePct * newBase;
+      logoTW = targetSize / logoTScale;
       applyLogoTransform();
-      // Reset title position so it recalculates for new orientation
-      titleManuallyMoved = false;  // title position reset handled by showTitleInPlayArea
-      applyTitleStyle(true);
     }
 
+    // Restore title position proportionally (whether or not manually moved)
+    if ($id('titleDraggable')?.style.display !== 'none') {
+      titleTX = _titlePctX * aW2;
+      titleTY = _titlePctY * aH2;
+      applyTitleTransform(false);
+    }
   }, 420);
 }
 
