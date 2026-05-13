@@ -473,7 +473,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v5.9 · FOAMS Image Generator</div>
+<div class="version">v6.0 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -1519,21 +1519,20 @@ async function generateImage() {
 }
 
 function buildPrompt(size) {
-  const bodyRule = selCat === 'body'
-    ? 'The first image contains real people. You MUST reproduce the people, their faces, bodies and expressions EXACTLY as they appear — do not alter any person in any way. The scene, lighting and composition can be very slightly adjusted, but the people must be pixel-faithful.'
-    : 'The first image is the base photograph. Keep its content, composition and mood very close to the original — minor lighting or colour adjustments are fine, but nothing should change what is in the scene.';
+  if (selCat === 'body') {
+    return `Make an image blending both larger image with the graphical element attached
+Use both image and graphical element only once
+The graphical element should be on top of the image, not separated
+Feel free to use blend modes if it looks nice, but not mandatory
+Keep the vibe elegant, modern and a bit mysterious
+IMPORTANT: Do not alter the people in the base image in any way — their faces, bodies and expressions must remain exactly as they are in the original photo.`;
+  }
 
-  return `You are given two separate images.
-
-Image 1 (base photograph): ${bodyRule}
-
-Image 2 (graphical element): This is your creative raw material. You have complete freedom with it — scale it up massively, make it tiny, repeat it multiple times, scatter fragments of it across the scene, distort its shape, rotate it, mirror it, break it apart. The final result does not need to look anything like the original graphical element — what matters is that its visual DNA (shapes, lines, forms, light patterns) is present somewhere in the final image in a way that feels intentional.
-
-The graphical element should feel woven into the scene — part of the atmosphere or environment, not a foreign object sitting on top.
-
-No text, no logos, no new symbols that aren't in the two source images.
-
-Final mood: elegant, modern, slightly mysterious.`;
+  return `Make an image blending both larger image with the graphical element attached
+Use both image and graphical element only once
+The graphical element should be on top of the image, not separated
+Feel free to use blend modes if it looks nice, but not mandatory
+Keep the vibe elegant, modern and a bit mysterious`;
 }
 
 // ─── EXPORT ──────────────────────────────────────────────────────────────────
