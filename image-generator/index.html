@@ -434,7 +434,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v4.9 · FOAMS Image Generator</div>
+<div class="version">v5.0 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -640,6 +640,7 @@ let logoColor    = 'white';
 let titleLang    = 'PT';
 let selTitle     = null;   // word string (already uppercased) or null
 let imgGenerated = false;
+let generatedImageUrl = null;  // stores the last generated image for export
 
 let logoPctX = 18, logoPctY = 78;  // center of logo as % of play-area
 let logoScale = 30;                 // % of min(aW,aH)
@@ -1452,6 +1453,7 @@ async function generateImage() {
 
     // Display in play area
     const bg = $id('bgImage');
+    generatedImageUrl = imageUrl;  // save for export
     bg.style.backgroundImage = `url('${imageUrl}')`;
     bg.style.backgroundSize  = 'cover';
     bg.style.backgroundPosition = 'center';
@@ -1494,19 +1496,50 @@ async function generateImage() {
 function buildPrompt(size) {
   return `You are given two images: a base photograph and a graphical element. Create a new, creative composed image using both.
 
-The graphical element should be integrated into the base photograph — not placed as a separate floating layer, but woven into the scene atmospherically. Use it to add texture, light, mood or depth to the photograph.
+Use both as creative raw material. You don't need to reproduce them exactly — feel free to reinterpret, resize, distort or recolour elements from both images. The result should feel inspired by both, not a literal copy.
 
-You may use blend modes, opacity, colour grading, or any compositing technique that makes the result feel cohesive and intentional.
+The graphical element should feel integrated into the scene — part of the atmosphere, not a floating overlay. It can be subtle or bold, but it should feel intentional.
 
-The final image should feel like a single, unified photograph — elegant, modern, and slightly mysterious. The graphical element should enhance the scene without dominating it.
+The base photograph sets the mood and environment. Keep the same general feeling and colour palette, but you can take creative liberties with composition and lighting.
 
-Do not add any text, symbols, logos or new graphic elements beyond what is in the two provided images.`;
+Blend modes, colour grading, double exposure effects are all welcome if they serve the image.
+
+Final result: a single cohesive image — elegant, modern, slightly mysterious. No added text, logos or symbols.`;
 }
 
 // ─── EXPORT ──────────────────────────────────────────────────────────────────
 function exportImage() {
-  // TODO: composite bgImage + logo + title onto canvas at full res and download
-  alert('Export: TODO — composite canvas at 1920×1080 or 1080×1920 and download PNG.');
+  if (!generatedImageUrl) return;
+
+  // Determine filename
+  const orient = orientation === 'landscape' ? 'landscape' : 'portrait';
+  const filename = `foams-image-${orient}-${Date.now()}.png`;
+
+  // If it's a base64 data URL, convert and download directly
+  if (generatedImageUrl.startsWith('data:')) {
+    const a = document.createElement('a');
+    a.href = generatedImageUrl;
+    a.download = filename;
+    a.click();
+    return;
+  }
+
+  // If it's a regular URL, fetch it and download as blob
+  fetch(generatedImageUrl)
+    .then(r => r.blob())
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    })
+    .catch(err => {
+      console.error('Export failed:', err);
+      // Fallback: open in new tab
+      window.open(generatedImageUrl, '_blank');
+    });
 }
 
 // ─── RESIZE ──────────────────────────────────────────────────────────────────
