@@ -434,7 +434,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v4.8 · FOAMS Image Generator</div>
+<div class="version">v4.9 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -1492,10 +1492,15 @@ async function generateImage() {
 }
 
 function buildPrompt(size) {
-  return `Use both image and graphical element attached, only once
-The graphical element should be on top of the image, not separated
-Feel free to use blend modes if it looks nice, but not mandatory
-Keep the vibe elegant, modern and a bit mysterious`;
+  return `You are given two images: a base photograph and a graphical element. Create a new, creative composed image using both.
+
+The graphical element should be integrated into the base photograph — not placed as a separate floating layer, but woven into the scene atmospherically. Use it to add texture, light, mood or depth to the photograph.
+
+You may use blend modes, opacity, colour grading, or any compositing technique that makes the result feel cohesive and intentional.
+
+The final image should feel like a single, unified photograph — elegant, modern, and slightly mysterious. The graphical element should enhance the scene without dominating it.
+
+Do not add any text, symbols, logos or new graphic elements beyond what is in the two provided images.`;
 }
 
 // ─── EXPORT ──────────────────────────────────────────────────────────────────
