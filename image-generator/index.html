@@ -52,6 +52,16 @@
     }
     #bgImage.visible { opacity: 1; }
 
+    /* Transform corner handles */
+    .t-handle {
+      position: absolute; width: 10px; height: 10px;
+      background: #fff; border: 1.5px solid rgba(0,0,0,0.3);
+      border-radius: 2px; pointer-events: all; cursor: nwse-resize;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    }
+    .t-handle[data-corner="tr"], .t-handle[data-corner="bl"] { cursor: nesw-resize; }
+    #elPreview:active { cursor: grabbing; }
+
     #logoLayer { position: absolute; inset: 0; pointer-events: none; }
 
     #logoDraggable {
@@ -473,24 +483,40 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v6.1 · FOAMS Image Generator</div>
+<div class="version">v6.2 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
 
-      <!-- Generated background (after hitting Generate) -->
+      <!-- Generated result (after hitting Generate) -->
       <div id="bgImage"></div>
 
-      <!-- Faded base image preview — shown when base image is chosen, before generating -->
+      <!-- Base image — full opacity, static, shown when base image chosen -->
       <div id="basePreview" style="display:none;position:absolute;inset:0;
-        background-size:cover;background-position:center;opacity:0.45;
-        transition:opacity 0.5s ease;"></div>
+        background-size:cover;background-position:center;"></div>
 
-      <!-- Graphical element preview — shown when element is chosen -->
-      <div id="elPreview" style="display:none;position:absolute;
-        inset:0;
-        background-size:60%;background-position:center;background-repeat:no-repeat;
-        opacity:0.4;transition:opacity 0.5s ease;pointer-events:none;"></div>
+      <!-- Graphical element — draggable/scalable/rotatable img element -->
+      <img id="elPreview" src="" alt=""
+        style="display:none;position:absolute;transform-origin:center center;
+        cursor:grab;user-select:none;touch-action:none;max-width:none;max-height:none;"
+        draggable="false">
+
+      <!-- Transform handles overlay (shown when element selected, before generating) -->
+      <div id="elHandles" style="display:none;position:absolute;pointer-events:none;
+        border:1.5px dashed rgba(255,255,255,0.5);box-sizing:border-box;">
+        <!-- Corner handles -->
+        <div class="t-handle" data-corner="tl" style="top:-5px;left:-5px"></div>
+        <div class="t-handle" data-corner="tr" style="top:-5px;right:-5px"></div>
+        <div class="t-handle" data-corner="bl" style="bottom:-5px;left:-5px"></div>
+        <div class="t-handle" data-corner="br" style="bottom:-5px;right:-5px"></div>
+        <!-- Rotation handle at top-center -->
+        <div id="rotHandle" style="position:absolute;top:-26px;left:50%;transform:translateX(-50%);
+          width:10px;height:10px;background:#fff;border-radius:50%;cursor:crosshair;
+          pointer-events:all;box-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>
+        <!-- Line from box to rot handle -->
+        <div style="position:absolute;top:-20px;left:50%;width:1px;height:14px;
+          background:rgba(255,255,255,0.4);transform:translateX(-50%);"></div>
+      </div>
 
       <div id="logoLayer">
         <!--
@@ -681,6 +707,16 @@ let selTitle     = null;   // word string (already uppercased) or null
 let imgGenerated = false;
 let generatedImageUrl = null;  // stores the last generated image for export
 
+// Graphical element transform state (all relative to play-area)
+let elX = 0, elY = 0;       // center position in play-area px
+let elW = 0, elH = 0;       // natural size in play-area px (set on load)
+let elScale = 1.0;           // scale multiplier
+let elRot = 0;               // rotation in degrees
+let elFile = '';             // current element filename
+let elDragging = false, elDragOffX = 0, elDragOffY = 0;
+let elRotating = false, elRotStartAngle = 0, elRotStartRot = 0;
+let elScaling = false, elScaleCorner = '', elScaleStartDist = 0, elScaleStart = 1.0;
+
 let logoPctX = 18, logoPctY = 78;  // center of logo as % of play-area
 let logoScale = 30;                 // % of min(aW,aH)
 let dragging = false, dOffX = 0, dOffY = 0;
@@ -695,6 +731,129 @@ let titleScale = 100; // extra multiplier on top of logo scale, 40-200
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 function $id(id) { return document.getElementById(id); }
+
+// ─── ELEMENT TRANSFORM ───────────────────────────────────────────────────────
+function applyElTransform() {
+  const ep = $id('elPreview');
+  const eh = $id('elHandles');
+  if (!ep || ep.style.display === 'none') return;
+
+  const w = elW * elScale;
+  const h = elH * elScale;
+
+  // Position and transform the element image
+  ep.style.width  = w + 'px';
+  ep.style.height = h + 'px';
+  ep.style.left   = (elX - w/2) + 'px';
+  ep.style.top    = (elY - h/2) + 'px';
+  ep.style.transform = `rotate(${elRot}deg)`;
+
+  // Sync the dashed handles box
+  if (eh) {
+    eh.style.width   = w + 'px';
+    eh.style.height  = h + 'px';
+    eh.style.left    = (elX - w/2) + 'px';
+    eh.style.top     = (elY - h/2) + 'px';
+    eh.style.transform = `rotate(${elRot}deg)`;
+  }
+}
+
+// ─── ELEMENT DRAG/ROTATE/SCALE ────────────────────────────────────────────────
+(function initElTransform() {
+  function xy(e) {
+    return e.touches
+      ? {x: e.touches[0].clientX, y: e.touches[0].clientY}
+      : {x: e.clientX, y: e.clientY};
+  }
+
+  // DRAG — on the element itself
+  document.addEventListener('mousedown', startElDrag);
+  document.addEventListener('touchstart', startElDrag, {passive:false});
+
+  function startElDrag(e) {
+    const ep = $id('elPreview');
+    if (!ep || ep.style.display === 'none') return;
+    if (e.target !== ep) return;
+    e.preventDefault(); e.stopPropagation();
+    elDragging = true;
+    const p = xy(e), r = ep.getBoundingClientRect();
+    elDragOffX = p.x - (r.left + r.width/2);
+    elDragOffY = p.y - (r.top  + r.height/2);
+  }
+
+  // ROTATE — on the rotation handle
+  document.addEventListener('mousedown', startRotate);
+  document.addEventListener('touchstart', startRotate, {passive:false});
+
+  function startRotate(e) {
+    const rh = $id('rotHandle');
+    if (!rh || e.target !== rh) return;
+    e.preventDefault(); e.stopPropagation();
+    elRotating = true;
+    const p = xy(e);
+    const ep = $id('elPreview');
+    const r  = ep.getBoundingClientRect();
+    const cx = r.left + r.width/2, cy = r.top + r.height/2;
+    elRotStartAngle = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI;
+    elRotStartRot   = elRot;
+  }
+
+  // SCALE — on corner handles
+  document.addEventListener('mousedown', startScale);
+  document.addEventListener('touchstart', startScale, {passive:false});
+
+  function startScale(e) {
+    if (!e.target.classList.contains('t-handle')) return;
+    e.preventDefault(); e.stopPropagation();
+    elScaling = true;
+    elScaleCorner = e.target.dataset.corner;
+    const p = xy(e);
+    const ep = $id('elPreview');
+    const r  = ep.getBoundingClientRect();
+    const cx = r.left + r.width/2, cy = r.top + r.height/2;
+    elScaleStartDist = Math.hypot(p.x - cx, p.y - cy);
+    elScaleStart = elScale;
+  }
+
+  // MOVE
+  document.addEventListener('mousemove', moveEl);
+  document.addEventListener('touchmove', moveEl, {passive:false});
+
+  function moveEl(e) {
+    if (!elDragging && !elRotating && !elScaling) return;
+    e.preventDefault();
+    const p = xy(e);
+    const area = $id('playAreaInner');
+    const ar   = area.getBoundingClientRect();
+
+    if (elDragging) {
+      elX = p.x - ar.left - elDragOffX;
+      elY = p.y - ar.top  - elDragOffY;
+      applyElTransform();
+    }
+
+    if (elRotating) {
+      const ep = $id('elPreview');
+      const r  = ep.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      const angle = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI;
+      elRot = elRotStartRot + (angle - elRotStartAngle);
+      applyElTransform();
+    }
+
+    if (elScaling) {
+      const ep = $id('elPreview');
+      const r  = ep.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      const dist = Math.hypot(p.x - cx, p.y - cy);
+      elScale = Math.max(0.05, elScaleStart * (dist / elScaleStartDist));
+      applyElTransform();
+    }
+  }
+
+  document.addEventListener('mouseup',  () => { elDragging=false; elRotating=false; elScaling=false; });
+  document.addEventListener('touchend', () => { elDragging=false; elRotating=false; elScaling=false; });
+})();
 
 // ─── ORIENTATION ─────────────────────────────────────────────────────────────
 function toggleOrientation() {
@@ -752,7 +911,9 @@ function selectCat(cat) {
   const _bg = $id('bgImage');
   if (_bg) { _bg.classList.remove('visible'); _bg.style.background = ''; _bg.style.backgroundImage = ''; }
   const _bp = $id('basePreview'); if (_bp) { _bp.style.display='none'; _bp.style.backgroundImage=''; _bp.style.opacity='0.45'; }
-  const _ep = $id('elPreview');   if (_ep) { _ep.style.display='none'; _ep.style.backgroundImage=''; _ep.style.opacity='0.4'; }
+  const _ep = $id('elPreview');   if (_ep) { _ep.style.display='none'; _ep.src=''; }
+  const _eh = $id('elHandles'); if (_eh) _eh.style.display='none';
+  elX=0; elY=0; elScale=1; elRot=0; elFile='';
   imgGenerated = false;
   updateGenBtn(); updateExportBtn();
 
@@ -819,19 +980,25 @@ function selectBaseImg(n) {
   // Reset play area whenever a new base image is chosen (even same category)
   const _bg = $id('bgImage');
   if (_bg) { _bg.classList.remove('visible'); _bg.style.background = ''; _bg.style.backgroundImage = ''; }
-  const _ep = $id('elPreview'); if (_ep) { _ep.style.display='none'; _ep.style.backgroundImage=''; _ep.style.opacity='0.4'; }
+  const _ep2 = $id('elPreview'); if (_ep2) { _ep2.style.display='none'; _ep2.src=''; }
+  const _eh2 = $id('elHandles'); if (_eh2) _eh2.style.display='none';
+  elX=0; elY=0; elScale=1; elRot=0; elFile='';
   generatedImageUrl = null;
   imgGenerated = false;
   updateExportBtn();
 
   markDone('step1Section',1, catLabel+' · Image '+n);
 
-  // Show faded base image preview in play area
+  // Show base image at full opacity (static, no fade)
   const bp = $id('basePreview');
   if (bp) {
     bp.style.backgroundImage = `url('${selBaseFile}')`;
     bp.style.display = 'block';
   }
+  // Reset element
+  const ep0 = $id('elPreview'); if (ep0) { ep0.style.display='none'; ep0.src=''; }
+  const eh0 = $id('elHandles'); if (eh0) eh0.style.display='none';
+  elX=0; elY=0; elScale=1; elRot=0; elFile='';
 
   buildStep2(selCat);
   activateSection('step2Section',2);
@@ -888,15 +1055,26 @@ function selectEl(type, n, tile) {
   selEl = type+'-'+n;
   markDone('step2Section',2,(type==='defocus'?'Light Defocus':'Pink Vectors')+' #'+n);
 
-  // Show faded graphical element preview in play area
+  // Load element as transformable <img>
   const filePrefix = type === 'defocus'
     ? 'Foams-Brand-Graphic-DefocusLight-'
     : 'Foams-Brand-Graphic-PinkVectors-';
-  const elFile = filePrefix + String(n).padStart(2,'0') + '.png';
+  elFile = filePrefix + String(n).padStart(2,'0') + '.png';
   const ep = $id('elPreview');
   if (ep) {
-    ep.style.backgroundImage = `url('${elFile}')`;
+    ep.src = elFile;
     ep.style.display = 'block';
+    ep.onload = () => {
+      const area = $id('playAreaInner');
+      const aW = area.offsetWidth, aH = area.offsetHeight;
+      const nat = ep.naturalWidth / ep.naturalHeight;
+      elW = aW * 0.5;
+      elH = elW / nat;
+      elScale = 1.0; elRot = 0;
+      elX = aW / 2; elY = aH / 2;
+      applyElTransform();
+      $id('elHandles').style.display = 'block';
+    };
   }
 
   buildStep3();
@@ -1399,22 +1577,75 @@ async function generateImage() {
     const size = orientation === 'landscape' ? '1536x1024' : '1024x1536';
     const prompt = buildPrompt(size);
 
-    // Load both images as base64
-    showProgress(15, 'Loading images…');
-    let baseB64, elB64;
-    try {
-      [baseB64, elB64] = await Promise.all([
-        fileToBase64(baseFile),
-        fileToBase64(elFile),
-      ]);
-    } catch (fetchErr) {
-      console.warn('Could not load local images:', fetchErr);
-      throw new Error('Could not load image files. Make sure all files are on the server.');
+    // Composite base + element onto canvas (NO logo/title) and send as one image
+    showProgress(15, 'Compositing images…');
+
+    // Helper to load an image into an HTMLImageElement
+    function loadImg(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+      });
     }
+
+    function b64ToBlob(b64, mimeType) {
+      const bytes = atob(b64);
+      const arr = new Uint8Array(bytes.length);
+      for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+      return new Blob([arr], { type: mimeType });
+    }
+
+    // Determine output canvas size in pixels
+    const isLandscape = orientation === 'landscape';
+    const canvasW = isLandscape ? 1536 : 1024;
+    const canvasH = isLandscape ? 1024 : 1536;
+
+    // Draw the composition on an off-screen canvas
+    const compCanvas = document.createElement('canvas');
+    compCanvas.width  = canvasW;
+    compCanvas.height = canvasH;
+    const ctx = compCanvas.getContext('2d');
+
+    // Draw base image (cover-scaled)
+    const baseImg = await loadImg(baseFile);
+    const bScale = Math.max(canvasW / baseImg.width, canvasH / baseImg.height);
+    const bW = baseImg.width * bScale, bH = baseImg.height * bScale;
+    ctx.drawImage(baseImg, (canvasW-bW)/2, (canvasH-bH)/2, bW, bH);
+
+    // Draw graphical element at its current transform, scaled to canvas coords
+    if (elFile && $id('elPreview').style.display !== 'none') {
+      const area = $id('playAreaInner');
+      const aW = area.offsetWidth, aH = area.offsetHeight;
+      const scX = canvasW / aW, scY = canvasH / aH;
+
+      const elImg = await loadImg(elFile);
+      const drawW = elW * elScale * scX;
+      const drawH = elH * elScale * scY;
+      const cx    = elX * scX;
+      const cy    = elY * scY;
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(elRot * Math.PI / 180);
+      ctx.drawImage(elImg, -drawW/2, -drawH/2, drawW, drawH);
+      ctx.restore();
+    }
+
+    // Convert canvas to blob to send to API
+    const compositeBlob = await new Promise(res => compCanvas.toBlob(res, 'image/jpeg', 0.92));
+    const compositeB64  = await new Promise((res, rej) => {
+      const reader = new FileReader();
+      reader.onload  = () => res(reader.result.split(',')[1]);
+      reader.onerror = rej;
+      reader.readAsDataURL(compositeBlob);
+    });
 
     showProgress(35, 'Sending base images…');
 
-    // Slowly tick progress while API processes (can take 30-90s)
+    // Tick progress while API processes
     let _fakePct = 35;
     const _ticker = setInterval(() => {
       if (_fakePct < 70) {
@@ -1430,29 +1661,15 @@ async function generateImage() {
       }
     }, 800);
 
-    // Use /v1/images/edits with gpt-image-1
-    // Accepts multiple images as input array + text prompt, outputs a generated image.
-    // We send BOTH images as separate files — gpt-image-1 supports up to 16 input images.
-    // The Worker forwards this multipart/form-data directly to OpenAI.
-
-    function b64ToBlob(b64, mimeType) {
-      const bytes = atob(b64);
-      const arr = new Uint8Array(bytes.length);
-      for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
-      return new Blob([arr], { type: mimeType });
-    }
-
+    // Send composite as single image to /v1/images/edits
     const formData = new FormData();
     formData.append('model', 'gpt-image-1');
     formData.append('prompt', prompt);
     formData.append('size', size);
     formData.append('quality', 'medium');
     formData.append('n', '1');
-    // Append both images — gpt-image-1 edits accepts image[] array
-    formData.append('image[]', b64ToBlob(baseB64, 'image/jpeg'), 'base.jpg');
-    formData.append('image[]', b64ToBlob(elB64,   'image/png'),  'element.png');
+    formData.append('image[]', b64ToBlob(compositeB64, 'image/jpeg'), 'composed.jpg');
 
-    // No Content-Type header — browser sets multipart boundary automatically
     const res = await fetch('https://foams-generator.plattformplus.workers.dev/', {
       method: 'POST',
       body: formData,
@@ -1493,13 +1710,10 @@ async function generateImage() {
     bg.style.backgroundPosition = 'center';
     bg.classList.add('visible');
 
-    // Fade out previews
-    const _bp2 = $id('basePreview'); if (_bp2) _bp2.style.opacity = '0';
-    const _ep2 = $id('elPreview');   if (_ep2) _ep2.style.opacity = '0';
-    setTimeout(() => {
-      if (_bp2) _bp2.style.display = 'none';
-      if (_ep2) _ep2.style.display = 'none';
-    }, 700);
+    // Hide composition layers — generated image takes over
+    const _bp2 = $id('basePreview'); if (_bp2) _bp2.style.display = 'none';
+    const _ep2 = $id('elPreview');   if (_ep2) _ep2.style.display = 'none';
+    const _eh2 = $id('elHandles');   if (_eh2) _eh2.style.display = 'none';
 
     showProgress(100, 'Done!');
     setTimeout(hideProgress, 600);
@@ -1528,23 +1742,15 @@ async function generateImage() {
 }
 
 function buildPrompt(size) {
-  if (selCat === 'body') {
-    return `Make an image blending both larger image with the graphical element attached
-Use both image and graphical element only once
-Keep human body and human faces intact
-The graphical element should be on top of the image, not separated
+  const bodyRule = selCat === 'body'
+    ? '\nIMPORTANT: Do not alter the people in the image in any way — their faces, bodies and expressions must remain exactly as in the original.'
+    : '';
+  return `Make an image highly inspired by the attached image
+Use both image and graphical element in your composition
 Feel free to use blend modes if it looks nice, but not mandatory
-Feel free to change the size and position of the graphical element, make it big, smaller, cut into pieces, move it around randomly
-Keep the vibe elegant, modern and a bit mysterious
-IMPORTANT: Do not alter the people in the base image in any way — their faces, bodies and expressions must remain exactly as they are in the original photo.`;
-  }
-
-  return `Make an image blending both larger image with the graphical element attached
-Use both image and graphical element only once
-The graphical element should be on top of the image, not separated
-Feel free to use blend modes if it looks nice, but not mandatory
-Feel free to change the size and position of the graphical element, make it big, smaller, cut into pieces, move it around randomly
-Keep the vibe elegant, modern and a bit mysterious`;
+Take full creative freedom to distort the elements, but keep the overall vibe exactly the same
+Do not use text or UI elements, no UI no text elements
+Keep the vibe elegant, modern and a bit mysterious${bodyRule}`;
 }
 
 // ─── EXPORT ──────────────────────────────────────────────────────────────────
