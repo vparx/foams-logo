@@ -473,7 +473,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v5.2 · FOAMS Image Generator</div>
+<div class="version">v5.3 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -1433,11 +1433,17 @@ async function generateImage() {
             { type: 'input_text', text: prompt },
             {
               type: 'input_image',
-              image_url: `data:image/jpeg;base64,${baseB64}`,
+              image_url: {
+                url: `data:image/jpeg;base64,${baseB64}`,
+                detail: 'high',
+              },
             },
             {
               type: 'input_image',
-              image_url: `data:image/png;base64,${elB64}`,
+              image_url: {
+                url: `data:image/png;base64,${elB64}`,
+                detail: 'high',
+              },
             },
           ],
         },
@@ -1534,18 +1540,20 @@ async function generateImage() {
 
 function buildPrompt(size) {
   const bodyRule = selCat === 'body'
-    ? '- IMPORTANT: The base photograph contains real people. Reproduce it EXACTLY as given — do not alter faces, bodies, expressions or any person in any way. No reinterpretation of the people or their appearance whatsoever.'
-    : '- The base photograph sets the mood. Keep its content and feeling essentially the same. Very minor colour or lighting shifts are acceptable, but nothing that changes what is in the scene.';
+    ? 'The first image contains real people. You MUST reproduce the people, their faces, bodies and expressions EXACTLY as they appear — do not alter any person in any way. The scene, lighting and composition can be very slightly adjusted, but the people must be pixel-faithful.'
+    : 'The first image is the base photograph. Keep its content, composition and mood very close to the original — minor lighting or colour adjustments are fine, but nothing should change what is in the scene.';
 
-  return `You are given two images: a base photograph and a graphical element.
+  return `You are given two separate images.
 
-Create a new composed image that combines both. Rules:
-${bodyRule}
-- The graphical element is your creative tool. You can freely scale it, crop it, repeat it, scatter it, rotate it, abstract it, or transform its shape and size — as long as it feels intentional. It does not need to look exactly like the original element.
-- The graphical element should feel part of the scene — integrated, not placed on top like a sticker.
-- No blend modes, overlays or transparency effects. Composit cleanly.
-- No text, no logos, no new symbols.
-- Result: elegant, modern, slightly mysterious.`;
+Image 1 (base photograph): ${bodyRule}
+
+Image 2 (graphical element): This is your creative raw material. You have complete freedom with it — scale it up massively, make it tiny, repeat it multiple times, scatter fragments of it across the scene, distort its shape, rotate it, mirror it, break it apart. The final result does not need to look anything like the original graphical element — what matters is that its visual DNA (shapes, lines, forms, light patterns) is present somewhere in the final image in a way that feels intentional.
+
+The graphical element should feel woven into the scene — part of the atmosphere or environment, not a foreign object sitting on top.
+
+No text, no logos, no new symbols that aren't in the two source images.
+
+Final mood: elegant, modern, slightly mysterious.`;
 }
 
 // ─── EXPORT ──────────────────────────────────────────────────────────────────
