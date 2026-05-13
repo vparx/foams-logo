@@ -1065,8 +1065,8 @@
     }
 
       /* Overview eye candy — stack on mobile */
-      .overview-eyecandy { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
-      .overview-eyecandy img { width: 100%; height: 280px; border-radius: 8px; object-fit: cover; display: block; }
+      .overview-eyecandy { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+      .overview-eyecandy img { width: 100%; aspect-ratio: 9/16; border-radius: 8px; object-fit: cover; display: block; }
 
     /* ══════════════════════════════════════════
        RESPONSIVE — tablet (≤900px)
@@ -1216,7 +1216,7 @@
         <a href="#generative-examples" data-i18n="nav-gen-examples">Exemplos Generativos</a>
         <a href="#closing" data-i18n="nav-closing">↓ Keep it fluid</a>
       </nav>
-      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v4.4</div>
+      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v4.6</div>
 
       <!-- BACK TO TOP — inside sticky sidebar so it's always in viewport -->
       <div id="back-to-top-wrap">
@@ -1390,6 +1390,15 @@
             <div class="element-item element-item--light"><img src="o4.png" alt="Logo usage example"></div>
             <div class="element-item element-item--light"><img src="o5.png" alt="Logo usage example"></div>
             <div class="element-item element-item--light"><img src="o6.png" alt="Logo usage example"></div>
+          </div>
+        </div>
+
+        <!-- Animated Logo -->
+        <div class="subsection">
+          <h3 data-i18n="animated-logo-h3">Animated Logo</h3>
+          <p style="color:#666; font-size:0.9rem; margin-bottom:1.5rem;" data-i18n="animated-logo-p">It's also possible to animate the logo using the logo generator tool to be used in videos, websites and social media.</p>
+          <div class="logo-box on-black" style="max-width: 420px; height: 200px;">
+            <img src="foams-animated-white-transparent-2.png" alt="Animated FOAMS logo" style="max-width:80%; max-height:80%; object-fit:contain;">
           </div>
         </div>
       </section>
@@ -1842,6 +1851,8 @@
         'gen-guideline-p': 'Preferably always make a logo in which the letters are closely connected and look very watery — fluid. But feel free to also explore different ways of using the logo generator tool.',
         'gen-titletext-title': 'Title Text',
         'gen-titletext-p': 'You can also add a title text in the generator by clicking the Title buttons, in case it\'s needed.',
+        'animated-logo-h3': 'Animated Logo',
+        'animated-logo-p': 'It\'s also possible to animate the logo using the logo generator tool to be used in videos, websites and social media.',
         'diff-usage-h3': 'Different Usage of Logo',
         'diff-usage-p': 'Feel free to go crazy with the logo!',
         'color-h2': 'Color',
@@ -1942,6 +1953,8 @@
         'gen-guideline-p': 'Prefira sempre fazer um logo onde as letras estejam bem conectadas e pareçam muito aquosas — fluidas. Mas fique à vontade para explorar diferentes formas de usar a ferramenta.',
         'gen-titletext-title': 'Texto de Título',
         'gen-titletext-p': 'Você também pode adicionar um texto de título no gerador clicando nos botões de Título, caso seja necessário.',
+        'animated-logo-h3': 'Logo Animado',
+        'animated-logo-p': 'Também é possível animar o logo usando a ferramenta geradora de logo para ser usado em vídeos, sites e redes sociais.',
         'diff-usage-h3': 'Usos Diferentes do Logo',
         'diff-usage-p': 'Sinta-se livre para explorar o logo!',
         'color-h2': 'Cores',
