@@ -17,8 +17,8 @@
 
     .version {
       font-size: 10px; color: #444; font-family: monospace;
-      padding: 6px 0 0; text-align: right; letter-spacing: 0.1em;
-      margin-bottom: 6px;
+      padding: 8px 0 6px; letter-spacing: 0.1em;
+      margin-bottom: 2px;
     }
 
     /* ════════════ STICKY TOP ════════════ */
@@ -434,7 +434,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v3.2 · FOAMS Image Generator</div>
+<div class="version">v4.0 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -1061,8 +1061,8 @@ function setTitleDefaultOffset() {
     // Offset from logo CENTER:
     //   dx: -60% of logoPx  (well into the left half, slightly outside visual edge)
     //   dy: -35% of logoPx  (into the upper portion of the image)
-    titleOffDx = -(logoPx * 0.60);
-    titleOffDy = -(logoPx * 0.18);  // lower than before
+    titleOffDx = -(logoPx * 0.48);  // slightly right
+    titleOffDy = -(logoPx * 0.26);  // slightly up
   } else {
     // EN (HOUSE style): inside the logo image, lower-right area.
     // Offset from logo CENTER:
@@ -1283,38 +1283,127 @@ function updateExportBtn() {
   $id('exportBtn').classList.toggle('show', imgGenerated);
 }
 
+// ─── OPENAI API KEY ─────────────────────────────────────────────────────────
+// Set your OpenAI API key here.
+// For production: load from a backend proxy instead of hardcoding.
+const OPENAI_API_KEY = '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';
+
+// Convert a local image file to base64 data URL
+async function fileToBase64(url) {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve(reader.result.split(',')[1]); // strip data:...;base64,
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
 async function generateImage() {
   if (!selCat || !selBaseImg || !selEl || !selLogo) return;
   const btn = $id('genBtn');
-  btn.disabled=true; btn.classList.remove('ready'); btn.classList.add('running');
-  btn.textContent = 'Generating…'; btn.disabled=true;
+  btn.disabled = true;
+  btn.classList.remove('ready', 'regenerate');
+  btn.classList.add('running');
+  btn.textContent = 'Generating…';
+
   try {
-    const prompt = buildPrompt();
-    console.log('Prompt:', prompt);
+    // Determine file paths for the two chosen images
+    const catName = { tropical:'Tropical', water:'Water', body:'Body' }[selCat];
+    const baseFile = selBaseFile; // set in selectBaseImg()
+    const elType   = selEl.startsWith('defocus') ? 'defocus' : 'pinkvec';
+    const elNum    = selEl.split('-')[1];
+    const elPrefix = elType === 'defocus'
+      ? 'Foams-Brand-Graphic-DefocusLight-'
+      : 'Foams-Brand-Graphic-PinkVectors-';
+    const elFile   = elPrefix + String(elNum).padStart(2,'0') + '.png';
 
-    // ── REPLACE: actual image API call goes here ───────────────────────────
-    // const size = orientation==='landscape' ? '1792x1024' : '1024x1792';
-    // const res  = await fetch('https://api.openai.com/v1/images/generations', {
-    //   method:'POST',
-    //   headers:{'Content-Type':'application/json','Authorization':'Bearer YOUR_KEY'},
-    //   body: JSON.stringify({model:'dall-e-3', prompt, size, n:1})
-    // });
-    // const data = await res.json();
-    // const bg = $id('bgImage');
-    // bg.style.backgroundImage = `url(${data.data[0].url})`;
-    // bg.classList.add('visible');
-    // ──────────────────────────────────────────────────────────────────────
+    const size = orientation === 'landscape' ? '1920x1080' : '1080x1920';
 
-    await new Promise(r => setTimeout(r, 2000));
-    const grads = {
-      tropical:'linear-gradient(150deg,#0c2010,#1c4a22,#2d6a33)',
-      water:   'linear-gradient(150deg,#04101e,#0a2a4a,#103060)',
-      body:    'linear-gradient(150deg,#1a0808,#3a1212,#541a1a)',
+    // Build the text prompt
+    const prompt = buildPrompt(size);
+
+    // Convert both images to base64 so GPT-4o can see them
+    btn.textContent = 'Loading images…';
+    let baseB64, elB64;
+    try {
+      [baseB64, elB64] = await Promise.all([
+        fileToBase64(baseFile),
+        fileToBase64(elFile),
+      ]);
+    } catch (fetchErr) {
+      console.warn('Could not load local images for API:', fetchErr);
+      baseB64 = null; elB64 = null;
+    }
+
+    btn.textContent = 'Generating…';
+
+    // Build the messages array for GPT-4o image generation
+    // GPT-4o responses API with image_generation tool
+    const messages = [{
+      role: 'user',
+      content: [
+        {
+          type: 'text',
+          text: prompt
+        },
+        // Attach the base image if available
+        ...(baseB64 ? [{
+          type: 'image_url',
+          image_url: { url: `data:image/jpeg;base64,${baseB64}`, detail: 'high' }
+        }] : []),
+        // Attach the graphical element image if available
+        ...(elB64 ? [{
+          type: 'image_url',
+          image_url: { url: `data:image/png;base64,${elB64}`, detail: 'high' }
+        }] : []),
+      ]
+    }];
+
+    const requestBody = {
+      model: 'gpt-image-1',
+      prompt: prompt,
+      n: 1,
+      size: size,
+      quality: 'high',
     };
+
+    const res = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData?.error?.message || `API error ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    // gpt-image-1 returns base64, dall-e-3 returns URL — handle both
+    const imgData = data.data?.[0];
+    let imageUrl = null;
+    if (imgData?.url) {
+      imageUrl = imgData.url;
+    } else if (imgData?.b64_json) {
+      imageUrl = `data:image/png;base64,${imgData.b64_json}`;
+    }
+
+    if (!imageUrl) throw new Error('No image returned from API');
+
+    // Display in play area
     const bg = $id('bgImage');
-    bg.style.background = grads[selCat];
+    bg.style.backgroundImage = `url('${imageUrl}')`;
+    bg.style.backgroundSize  = 'cover';
+    bg.style.backgroundPosition = 'center';
     bg.classList.add('visible');
-    // Hide faded previews — the real generated image takes over
+
+    // Fade out previews
     const _bp2 = $id('basePreview'); if (_bp2) _bp2.style.opacity = '0';
     const _ep2 = $id('elPreview');   if (_ep2) _ep2.style.opacity = '0';
     setTimeout(() => {
@@ -1322,28 +1411,48 @@ async function generateImage() {
       if (_ep2) _ep2.style.display = 'none';
     }, 700);
 
-    imgGenerated = true; updateExportBtn();
+    imgGenerated = true;
+    updateExportBtn();
     btn.innerHTML = '↺ Regenerate';
-    btn.classList.remove('running', 'ready'); btn.classList.add('regenerate'); btn.disabled=false;
+    btn.classList.remove('running', 'ready');
+    btn.classList.add('regenerate');
+    btn.disabled = false;
+
   } catch(err) {
-    console.error(err);
+    console.error('Generation error:', err);
     btn.textContent = 'Error — Retry';
-    btn.classList.remove('running'); btn.classList.add('regenerate'); btn.disabled=false;
+    btn.classList.remove('running');
+    btn.classList.add('regenerate');
+    btn.disabled = false;
+    // Show error message briefly
+    setTimeout(() => {
+      if (btn.classList.contains('regenerate')) {
+        btn.innerHTML = '↺ Regenerate';
+      }
+    }, 3000);
   }
 }
 
-function buildPrompt() {
-  const baseMap = {
-    tropical:`lush tropical rainforest, image variant ${selBaseImg}, dense green foliage, golden hour light shafts`,
-    water:   `serene water surface, image variant ${selBaseImg}, soft reflections, blue-teal tones, caustic light`,
-    body:    `artistic human body forms, image variant ${selBaseImg}, skin texture close-up, soft studio light`,
-  };
-  const elType = selEl.startsWith('defocus') ? 'defocus' : 'pinkvec';
-  const elHint = elType==='defocus'
-    ? 'with overlapping soft bokeh light orbs and lens defocus glow'
-    : 'with pink magenta abstract vector graphic overlays';
-  const orient = orientation==='landscape' ? 'wide cinematic 16:9' : 'tall portrait 9:16';
-  return `${baseMap[selCat]}, ${elHint}, ${orient}, editorial photography, 8K, FOAMS brand aesthetic, photorealistic`;
+function buildPrompt(size) {
+  const res = size || (orientation === 'landscape' ? '1920x1080' : '1080x1920');
+  const orient = orientation === 'landscape' ? 'landscape' : 'portrait';
+  const elType = selEl.startsWith('defocus') ? 'light defocus' : 'pink vector';
+  const catName = { tropical:'Tropical', water:'Water', body:'Body' }[selCat];
+
+  return `Create a single composed image for the FOAMS brand.
+
+You have been provided with two images:
+1. A base photograph (${catName} category, image ${selBaseImg})
+2. A graphical element (${elType} style, element ${selEl.split('-')[1]})
+
+Composition rules:
+- Use BOTH the base image AND the graphical element exactly once each
+- The graphical element should be composited ON TOP of the base image, not placed separately
+- You may use blend modes (screen, overlay, multiply, etc.) if it enhances the result — but it is not mandatory
+- Keep the overall vibe: elegant, modern, and a bit mysterious
+- The final image must be ${res} pixels (${orient} format)
+- Editorial photography quality, high fidelity, 8K detail
+- FOAMS brand aesthetic: clean, artistic, contemporary`;
 }
 
 // ─── EXPORT ──────────────────────────────────────────────────────────────────
