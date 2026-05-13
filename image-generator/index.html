@@ -92,10 +92,7 @@
       font-family: 'Trebuchet MS', Trebuchet, sans-serif;
       font-weight: 700; text-transform: uppercase;
       white-space: nowrap; line-height: 1; letter-spacing: 0.06em;
-      pointer-events: all; z-index: 3;
-      cursor: grab; user-select: none; touch-action: none;
     }
-    #logoTitle:active { cursor: grabbing; }
 
     .play-area-label {
       font-size: 10px; color: #252525;
@@ -516,7 +513,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v7.2 · FOAMS Image Generator</div>
+<div class="version">v7.4 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -562,9 +559,10 @@
       <div id="logoLayer">
         <div id="logoDraggable">
           <div id="logoPlaceholder">LOGO</div>
-          <img id="logoImg" src="" alt="">
+          <img id="logoImg" src="" alt="" draggable="false" style="user-select:none;-webkit-user-drag:none;">
+          <!-- Title is INSIDE logoDraggable so it inherits position/scale/rotation -->
+          <span id="logoTitle" style="position:absolute;pointer-events:all;cursor:grab;user-select:none;touch-action:none;"></span>
         </div>
-        <span id="logoTitle"></span>
 
         <!-- Logo transform handles (pink) — shown when logo selected -->
         <div id="logoHandles" style="display:none;position:absolute;
@@ -867,8 +865,8 @@ function applyElTransform() {
   ep.style.height = h + 'px';
   ep.style.left   = (elX - w/2) + 'px';
   ep.style.top    = (elY - h/2) + 'px';
-  const flipStr = elFlipX ? "scaleX(-1) " : "";
-  ep.style.transform = `${flipStr}rotate(${elRot}deg)`;
+  // Rotate first, then flip — keeps rotation direction consistent with handles
+  ep.style.transform = elFlipX ? `rotate(${elRot}deg) scaleX(-1)` : `rotate(${elRot}deg)`;
 
   // Sync the dashed handles box
   if (eh) {
@@ -928,9 +926,11 @@ function applyElTransform() {
     const isLogoRot     = e.target.id === 'logoRotHandle';
     const isEl          = ep && ep.style.display !== 'none' && e.target === ep;
     const isBg          = false;  // base image is now static, no transform
+    const titleEl_      = $id('logoTitle');
+    const isTitle       = titleEl_ && e.target === titleEl_;
     const isLogo        = ld && ld.style.display !== 'none' &&
                           (e.target === ld || ld.contains(e.target)) &&
-                          !isLogoHandle && !isLogoRot;
+                          !isLogoHandle && !isLogoRot && !isTitle;
 
     // ── Click on element → select it ──
     if (isEl) {
@@ -1638,20 +1638,23 @@ function _applyTitlePos(aW, aH) {
   const titleEl = $id('logoTitle');
   if (!titleEl || titleEl.style.display === 'none') return;
 
-  // Logo center in px
-  const logoCX = (logoPctX / 100) * aW;
-  const logoCY = (logoPctY / 100) * aH;
-
-  // Title top-left = logo center + offset
-  titleEl.style.left   = (logoCX + titleOffDx) + 'px';
-  titleEl.style.top    = (logoCY + titleOffDy) + 'px';
+  // Title is inside logoDraggable, so position is relative to the box.
+  // Box center = (w/2, h/2). Offset from center, divided by scale to get local coords.
+  const s  = logoTScale || 1;
+  const w  = (logoTW || 0) * s;
+  const h  = (logoTH || 0) * s;
+  // titleOffDx/Dy are in screen px at the current scale.
+  // In box-local coords (CSS positions within the scaled element):
+  const localX = w/2 + titleOffDx / s;
+  const localY = h/2 + titleOffDy / s;
+  titleEl.style.left   = localX + 'px';
+  titleEl.style.top    = localY + 'px';
   titleEl.style.right  = 'auto';
   titleEl.style.bottom = 'auto';
 }
 
 function applyTitlePos() {
-  const area = $id('playAreaInner');
-  _applyTitlePos(area.offsetWidth, area.offsetHeight);
+  _applyTitlePos(0, 0);  // aW/aH unused — title is inside logoDraggable
 }
 
 function hideTitle() {
@@ -1769,19 +1772,22 @@ function updateTitleScale(val) {
   function moveTitle(e) {
     if (!titleDragging) return;
     e.preventDefault();
-    const p = xy(e), r = area.getBoundingClientRect();
-    const aW = r.width, aH = r.height;
-    // New title top-left in play-area px
-    const tLeft = p.x - r.left - tOffX;
-    const tTop  = p.y - r.top  - tOffY;
-    // Logo center in px
-    const logoCX = (logoPctX / 100) * aW;
-    const logoCY = (logoPctY / 100) * aH;
-    // Update offset from logo center
-    titleOffDx = tLeft - logoCX;
-    titleOffDy = tTop  - logoCY;
+    // Title is inside logoDraggable — get position relative to the draggable box
+    const ld = $id('logoDraggable');
+    if (!ld) return;
+    const p  = xy(e);
+    const lr = ld.getBoundingClientRect();
+    const s  = logoTScale || 1;
+    const w  = (logoTW || 0) * s;
+    const h  = (logoTH || 0) * s;
+    // Position of mouse within the box (accounting for scale)
+    const localX = (p.x - lr.left - tOffX) / s;
+    const localY = (p.y - lr.top  - tOffY) / s;
+    // titleOffDx/Dy = offset from box center in local coords
+    titleOffDx = (localX - w/2/s) * s;
+    titleOffDy = (localY - h/2/s) * s;
     titleManuallyMoved = true;
-    _applyTitlePos(aW, aH);
+    _applyTitlePos(0, 0);
   }
 
   document.addEventListener('mouseup',  () => { titleDragging = false; });
