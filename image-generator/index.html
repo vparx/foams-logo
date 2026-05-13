@@ -473,7 +473,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v5.1 · FOAMS Image Generator</div>
+<div class="version">v5.2 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -1533,13 +1533,17 @@ async function generateImage() {
 }
 
 function buildPrompt(size) {
+  const bodyRule = selCat === 'body'
+    ? '- IMPORTANT: The base photograph contains real people. Reproduce it EXACTLY as given — do not alter faces, bodies, expressions or any person in any way. No reinterpretation of the people or their appearance whatsoever.'
+    : '- The base photograph sets the mood. Keep its content and feeling essentially the same. Very minor colour or lighting shifts are acceptable, but nothing that changes what is in the scene.';
+
   return `You are given two images: a base photograph and a graphical element.
 
 Create a new composed image that combines both. Rules:
-- Keep the base photograph as the main scene. It can be very slightly reinterpreted in lighting or colour, but the content and mood should remain essentially the same.
-- The graphical element is your creative tool. You can freely scale it, crop it, repeat it, scatter it, abstract it, or transform its shape and size — as long as it feels intentional and enhances the scene. It does not need to look exactly like the original.
-- The graphical element should feel part of the scene, not a sticker placed on top.
-- No blend modes, overlays or transparency effects — composit cleanly.
+${bodyRule}
+- The graphical element is your creative tool. You can freely scale it, crop it, repeat it, scatter it, rotate it, abstract it, or transform its shape and size — as long as it feels intentional. It does not need to look exactly like the original element.
+- The graphical element should feel part of the scene — integrated, not placed on top like a sticker.
+- No blend modes, overlays or transparency effects. Composit cleanly.
 - No text, no logos, no new symbols.
 - Result: elegant, modern, slightly mysterious.`;
 }
@@ -1601,11 +1605,26 @@ async function exportImage() {
       const logoOutX    = logoCX_pa * scaleX - logoOutSize / 2;
       const logoOutY    = logoCY_pa * scaleY - logoOutSize / 2;
 
-      // Draw logo image
+      // Draw logo image — preserve natural aspect ratio (logo PNG is wide, not square)
       const logoSrc = $id('logoImg')?.src;
       if (logoSrc && $id('logoImg').style.display !== 'none') {
         const logoImg = await loadImg(logoSrc);
-        ctx.drawImage(logoImg, logoOutX, logoOutY, logoOutSize, logoOutSize);
+        // object-fit:contain behaviour: fit within the square box, centered
+        const nat    = logoImg.naturalWidth / logoImg.naturalHeight;
+        let   lw, lh;
+        if (nat >= 1) {
+          // wider than tall — width fills the box
+          lw = logoOutSize;
+          lh = logoOutSize / nat;
+        } else {
+          // taller than wide — height fills the box
+          lh = logoOutSize;
+          lw = logoOutSize * nat;
+        }
+        // Center within the draggable box position
+        const lx = logoOutX + (logoOutSize - lw) / 2;
+        const ly = logoOutY + (logoOutSize - lh) / 2;
+        ctx.drawImage(logoImg, lx, ly, lw, lh);
       }
 
       // 3. Draw title text if present
