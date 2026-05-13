@@ -514,7 +514,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v7.8 · FOAMS Image Generator</div>
+<div class="version">v7.9 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -797,13 +797,10 @@ let logoDragging2 = false, logoDragOff2X = 0, logoDragOff2Y = 0;
 let logoRotating2 = false, logoRotStart2 = 0, logoRotStartRot2 = 0;
 let logoScaling2  = false, logoScaleStart2Dist = 0, logoScaleStart2 = 1.0;
 
-// Title drag state
-// titleOffPx = offset from logo center to title top-left, in play-area pixels.
-// When logo moves, title moves by same delta. User can drag title to change offset.
-let titleOffDx = 0, titleOffDy = 0;  // set at default position
-let titleDragging = false, tOffX = 0, tOffY = 0;
+// Title position as fraction of scaled logo box (0=left/top, 1=right/bottom)
+let titleFracX = 0.05, titleFracY = 0.05;   // default upper-left
 let titleManuallyMoved = false;
-let titleScale = 100; // extra multiplier on top of logo scale, 40-200
+let titleDragging = false, tOffX = 0, tOffY = 0;
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 function $id(id) { return document.getElementById(id); }
@@ -830,38 +827,39 @@ function applyLogoTransform() {
   const lh = $id('logoHandles');
   if (!ld || ld.style.display === 'none') return;
 
-  // Natural size box, centered at logoTX/logoTY via translate.
-  // scale+rotate applied around center — visual center stays at logoTX/logoTY.
-  ld.style.width     = logoTW + 'px';
-  ld.style.height    = logoTH + 'px';
-  ld.style.left      = '0';
-  ld.style.top       = '0';
-  ld.style.transformOrigin = '0 0';
-  ld.style.transform = `translate(${logoTX - logoTW/2}px, ${logoTY - logoTH/2}px) scale(${logoTScale}) rotate(${logoTRot}deg)`;
+  // Scaled size in actual screen px
+  const sw = logoTW * logoTScale;
+  const sh = logoTH * logoTScale;
 
-  // Keep logoPctX/Y in sync for export code
+  // Position box: top-left at (logoTX - sw/2, logoTY - sh/2)
+  // Rotation around center
+  ld.style.width          = sw + 'px';
+  ld.style.height         = sh + 'px';
+  ld.style.left           = (logoTX - sw/2) + 'px';
+  ld.style.top            = (logoTY - sh/2) + 'px';
+  ld.style.transform      = `rotate(${logoTRot}deg)`;
+  ld.style.transformOrigin = 'center center';
+
+  // Sync % coords for export
   const area = $id('playAreaInner');
   const aW = area.offsetWidth, aH = area.offsetHeight;
   if (aW && aH) {
     logoPctX = (logoTX / aW) * 100;
     logoPctY = (logoTY / aH) * 100;
-    logoScale = (logoTW * logoTScale / Math.min(aW, aH)) * 100;
+    logoScale = (sw / Math.min(aW, aH)) * 100;
   }
 
-  // Sync handles box — handles sit at the SCALED size around the box
+  // Sync handles
   if (lh && logoSelected) {
-    const sw = logoTW * logoTScale;
-    const sh = logoTH * logoTScale;
-    lh.style.width     = sw + 'px';
-    lh.style.height    = sh + 'px';
-    lh.style.left      = (logoTX - sw/2) + 'px';
-    lh.style.top       = (logoTY - sh/2) + 'px';
-    lh.style.transform = `rotate(${logoTRot}deg)`;
+    lh.style.width          = sw + 'px';
+    lh.style.height         = sh + 'px';
+    lh.style.left           = (logoTX - sw/2) + 'px';
+    lh.style.top            = (logoTY - sh/2) + 'px';
+    lh.style.transform      = `rotate(${logoTRot}deg)`;
+    lh.style.transformOrigin = 'center center';
   }
 
-  // Title is inside logoDraggable — it scales automatically with the CSS transform.
-  // Just update position offset in natural coords.
-  if (selTitle) applyTitlePos();
+  if (selTitle) _applyTitlePos();
 }
 
 function toggleMirror() {
@@ -1224,7 +1222,7 @@ function toggleOrientation() {
       logoTW = newBase * ratio / logoTScale;
       applyLogoTransform();
       // Reset title position so it recalculates for new orientation
-      titleManuallyMoved = false; titleOffDx = 0; titleOffDy = 0;
+      titleManuallyMoved = false; titleFracX = -0.55; titleFracY = 0.10;
       applyTitleStyle(true);
     }
 
@@ -1622,7 +1620,7 @@ function buildTitleGrid() {
     const chip = document.createElement('div');
     chip.className = 'title-chip' + (selTitle===word?' selected':'');
     chip.textContent = word;   // already uppercase in our arrays
-    chip.onclick = () => { selTitle=word; titleManuallyMoved=false; titleOffDx=0; titleOffDy=0; refreshTitleChips(); applyTitleStyle(true); };
+    chip.onclick = () => { selTitle=word; titleManuallyMoved=false; titleFracX = -0.55; titleFracY = 0.10; refreshTitleChips(); applyTitleStyle(true); };
     grid.appendChild(chip);
   });
 
@@ -1632,7 +1630,7 @@ function buildTitleGrid() {
 
 function setTitleLang(lang) {
   titleLang = lang; selTitle = null;
-  titleManuallyMoved = false; titleOffDx = 0; titleOffDy = 0;
+  titleManuallyMoved = false; titleFracX = -0.55; titleFracY = 0.10;
   buildTitleGrid();
 }
 
@@ -1653,38 +1651,13 @@ function refreshTitleChips() {
   Font size scales with the logo's rendered pixel size so it always looks proportional.
 */
 function setTitleDefaultOffset() {
-  // Sets titleOffDx/Dy = pixel offset from logo CENTER to title TOP-LEFT.
-  // This is re-computed each time a title is selected or lang changes.
-  const area = $id('playAreaInner');
-  const aW = area.offsetWidth, aH = area.offsetHeight;
-  if (!aW || !aH) { titleOffDx = 0; titleOffDy = 0; return; }
-
-  // Screen size of logo = natural size * scale
-  const logoPx  = logoTW > 0 ? logoTW * logoTScale : Math.min(aW, aH) * (logoScale / 100);
-  const halfPx  = logoPx / 2;
-  const titleEl = $id('logoTitle');
-  // offsetHeight/Width are in natural coords — multiply by scale for screen px
-  const s       = logoTScale || 1;
-  const titleH  = (titleEl.offsetHeight * s) || Math.round(logoPx * 0.08 * 1.3);
-  const titleW  = (titleEl.offsetWidth  * s) || Math.round(logoPx * 0.55);
-
+  // Set titleFracX/Y as fraction of scaled box (0=left edge, 1=right edge).
   if (titleLang === 'PT') {
-    // PT (CASA style): inside the logo image, upper-left area.
-    // The FOAMS lettering occupies roughly the centre of the PNG.
-    // We place the title at upper-left, nudged a bit further left than the
-    // logo's visual left edge — so it feels like it belongs to that corner.
-    // Offset from logo CENTER:
-    //   dx: -60% of logoPx  (well into the left half, slightly outside visual edge)
-    //   dy: -35% of logoPx  (into the upper portion of the image)
-    titleOffDx = -(logoPx * 0.48);  // slightly right
-    titleOffDy = -(logoPx * 0.26);  // slightly up
+    titleFracX = -0.45;   // overhangs left of box
+    titleFracY =  0.08;   // near top
   } else {
-    // EN (HOUSE style): inside the logo image, lower-right area.
-    // Offset from logo CENTER:
-    //   dx: +30% of logoPx minus titleW  (lower-right, shifted right of visual edge)
-    //   dy: +25% of logoPx               (into the lower portion of the image)
-    titleOffDx = (logoPx * 0.30);
-    titleOffDy = (logoPx * 0.25);
+    titleFracX =  0.50;   // overhangs right of box
+    titleFracY =  0.70;   // near bottom
   }
 }
 
@@ -1693,54 +1666,44 @@ function applyTitleStyle(resetOffset) {
   if (!titleEl) return;
   if (!selTitle) { hideTitle(); return; }
 
-  const area = $id('playAreaInner');
-  const aW = area.offsetWidth, aH = area.offsetHeight;
-  if (!aW || !aH) return;
+  const sw = logoTW * logoTScale;  // scaled box width
+  const sh = logoTH * logoTScale;  // scaled box height
+  if (!sw || !sh) return;
 
-  // Font size in natural box coords — CSS transform:scale on logoDraggable
-  // handles the visual scaling automatically.
-  const logoPx   = logoTW > 0 ? logoTW : Math.min(aW, aH) * 0.55;
-  const fontSize = Math.max(5, Math.round(logoPx * 0.08));
+  // Font size = % of scaled box width (same px coords as left/top inside box)
+  const fontSize = Math.max(5, Math.round(sw * 0.08));
 
   titleEl.textContent    = selTitle;
   titleEl.style.display  = 'block';
   titleEl.style.fontSize = fontSize + 'px';
-  // (title scale controls removed — handled by canvas transform)
 
   const colorMap = { white:'#ffffff', black:'#000000', pink:'#ff30ff' };
   titleEl.style.color = colorMap[logoColor] || '#ffffff';
 
   if (resetOffset || !titleManuallyMoved) {
-    // Need title to be rendered so offsetWidth/Height are available
     requestAnimationFrame(() => {
       setTitleDefaultOffset();
-      _applyTitlePos(aW, aH);
+      _applyTitlePos();
     });
   } else {
-    _applyTitlePos(aW, aH);
+    _applyTitlePos();
   }
 }
 
-function _applyTitlePos(aW, aH) {
+function _applyTitlePos() {
   const titleEl = $id('logoTitle');
   if (!titleEl || titleEl.style.display === 'none') return;
-
-  // Title is inside logoDraggable which now uses CSS transform:scale.
-  // CSS left/top are in NATURAL (unscaled) box coords.
-  // Box center = (logoTW/2, logoTH/2) in natural coords.
-  // titleOffDx/Dy are in screen px — divide by logoTScale to get natural coords.
-  const s  = logoTScale || 1;
-  const cx = (logoTW || 0) / 2;
-  const cy = (logoTH || 0) / 2;
-  titleEl.style.left   = (cx + titleOffDx / s) + 'px';
-  titleEl.style.top    = (cy + titleOffDy / s) + 'px';
+  // Title is inside logoDraggable. Box is sw×sh in actual screen px.
+  // CSS left/top are in those same px (no CSS scale on the box).
+  const sw = logoTW * logoTScale;
+  const sh = logoTH * logoTScale;
+  titleEl.style.left   = (titleFracX * sw) + 'px';
+  titleEl.style.top    = (titleFracY * sh) + 'px';
   titleEl.style.right  = 'auto';
   titleEl.style.bottom = 'auto';
 }
 
-function applyTitlePos() {
-  _applyTitlePos(0, 0);  // aW/aH unused — title is inside logoDraggable
-}
+function applyTitlePos() { _applyTitlePos(); }
 
 function hideTitle() {
   const titleEl = $id('logoTitle');
@@ -1857,24 +1820,19 @@ function updateTitleScale(val) {
   function moveTitle(e) {
     if (!titleDragging) return;
     e.preventDefault();
-    // Title is inside logoDraggable — get position relative to the draggable box
     const ld = $id('logoDraggable');
     if (!ld) return;
     const p  = xy(e);
     const lr = ld.getBoundingClientRect();
-    const s  = logoTScale || 1;
-    // lr is the screen rect of the scaled box.
-    // Mouse position within scaled box in screen px:
+    const sw = lr.width, sh = lr.height;
+    if (!sw || !sh) return;
+    // Mouse position within box in screen px, then as fraction
     const mouseInBoxX = p.x - lr.left - tOffX;
     const mouseInBoxY = p.y - lr.top  - tOffY;
-    // Scaled box center in screen px:
-    const scCX = lr.width / 2;
-    const scCY = lr.height / 2;
-    // titleOffDx/Dy = screen px offset from logo center
-    titleOffDx = mouseInBoxX - scCX;
-    titleOffDy = mouseInBoxY - scCY;
+    titleFracX = mouseInBoxX / sw;
+    titleFracY = mouseInBoxY / sh;
     titleManuallyMoved = true;
-    _applyTitlePos(0, 0);
+    _applyTitlePos();
   }
 
   document.addEventListener('mouseup',  () => { titleDragging = false; });
@@ -2286,7 +2244,7 @@ async function exportImage() {
 
           // Font size: same proportion as in play-area but scaled up
           const logoPxInPlayArea = Math.min(aW, aH) * (logoScale / 100);
-          const fontSizePlay = Math.max(5, Math.round(logoPxInPlayArea * 0.08 * (titleScale / 100)));
+          const fontSizePlay = Math.max(5, Math.round(logoPxInPlayArea * 0.08));
           const fontSizeOut  = Math.round(fontSizePlay * scaleX);
 
           ctx.save();
