@@ -473,7 +473,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v6.0 · FOAMS Image Generator</div>
+<div class="version">v6.1 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -815,6 +815,15 @@ function selectBaseImg(n) {
   $id('baseImgGrid').querySelectorAll('.img-tile').forEach(t => t.classList.remove('selected'));
   $id('bimg-'+n).classList.add('selected');
   const catLabel = {tropical:'Tropical',water:'Water',body:'Body'}[selCat];
+
+  // Reset play area whenever a new base image is chosen (even same category)
+  const _bg = $id('bgImage');
+  if (_bg) { _bg.classList.remove('visible'); _bg.style.background = ''; _bg.style.backgroundImage = ''; }
+  const _ep = $id('elPreview'); if (_ep) { _ep.style.display='none'; _ep.style.backgroundImage=''; _ep.style.opacity='0.4'; }
+  generatedImageUrl = null;
+  imgGenerated = false;
+  updateExportBtn();
+
   markDone('step1Section',1, catLabel+' · Image '+n);
 
   // Show faded base image preview in play area
@@ -1524,6 +1533,7 @@ function buildPrompt(size) {
 Use both image and graphical element only once
 The graphical element should be on top of the image, not separated
 Feel free to use blend modes if it looks nice, but not mandatory
+Feel free to change the size and position of the graphical element, make it big, smaller, cut into pieces, move it around randomly
 Keep the vibe elegant, modern and a bit mysterious
 IMPORTANT: Do not alter the people in the base image in any way — their faces, bodies and expressions must remain exactly as they are in the original photo.`;
   }
@@ -1532,6 +1542,7 @@ IMPORTANT: Do not alter the people in the base image in any way — their faces,
 Use both image and graphical element only once
 The graphical element should be on top of the image, not separated
 Feel free to use blend modes if it looks nice, but not mandatory
+Feel free to change the size and position of the graphical element, make it big, smaller, cut into pieces, move it around randomly
 Keep the vibe elegant, modern and a bit mysterious`;
 }
 
