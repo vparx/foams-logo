@@ -434,7 +434,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v4.0 · FOAMS Image Generator</div>
+<div class="version">v4.1 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -1319,7 +1319,7 @@ async function generateImage() {
       : 'Foams-Brand-Graphic-PinkVectors-';
     const elFile   = elPrefix + String(elNum).padStart(2,'0') + '.png';
 
-    const size = orientation === 'landscape' ? '1920x1080' : '1080x1920';
+    const size = orientation === 'landscape' ? '1536x1024' : '1024x1536';
 
     // Build the text prompt
     const prompt = buildPrompt(size);
@@ -1367,7 +1367,6 @@ async function generateImage() {
       n: 1,
       size: size,
       quality: 'standard',
-      response_format: 'b64_json',  // always get base64 back
     };
 
     const res = await fetch('https://foams-generator.plattformplus.workers.dev/', {
@@ -1461,7 +1460,7 @@ Composition rules:
 - The graphical element should be composited ON TOP of the base image, not placed separately
 - You may use blend modes (screen, overlay, multiply, etc.) if it enhances the result — but it is not mandatory
 - Keep the overall vibe: elegant, modern, and a bit mysterious
-- The final image must be ${res} pixels (${orient} format)
+- The final image must be in ${orient} format (${res})
 - Editorial photography quality, high fidelity, 8K detail
 - FOAMS brand aesthetic: clean, artistic, contemporary`;
 }
