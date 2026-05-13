@@ -513,7 +513,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v7.4 · FOAMS Image Generator</div>
+<div class="version">v7.5 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -558,10 +558,12 @@
 
       <div id="logoLayer">
         <div id="logoDraggable">
+          <!-- Transparent full-cover drag surface — ensures the whole box is clickable -->
+          <div id="logoDragSurface" style="position:absolute;inset:0;z-index:10;cursor:grab;"></div>
           <div id="logoPlaceholder">LOGO</div>
           <img id="logoImg" src="" alt="" draggable="false" style="user-select:none;-webkit-user-drag:none;">
           <!-- Title is INSIDE logoDraggable so it inherits position/scale/rotation -->
-          <span id="logoTitle" style="position:absolute;pointer-events:all;cursor:grab;user-select:none;touch-action:none;"></span>
+          <span id="logoTitle" style="position:absolute;z-index:11;pointer-events:all;cursor:grab;user-select:none;touch-action:none;"></span>
         </div>
 
         <!-- Logo transform handles (pink) — shown when logo selected -->
@@ -928,9 +930,10 @@ function applyElTransform() {
     const isBg          = false;  // base image is now static, no transform
     const titleEl_      = $id('logoTitle');
     const isTitle       = titleEl_ && e.target === titleEl_;
+    const isDragSurface = e.target.id === 'logoDragSurface';
     const isLogo        = ld && ld.style.display !== 'none' &&
-                          (e.target === ld || ld.contains(e.target)) &&
-                          !isLogoHandle && !isLogoRot && !isTitle;
+                          (e.target === ld || isDragSurface || (ld.contains(e.target) && !isTitle)) &&
+                          !isLogoHandle && !isLogoRot;
 
     // ── Click on element → select it ──
     if (isEl) {
@@ -1611,9 +1614,10 @@ function applyTitleStyle(resetOffset) {
   const aW = area.offsetWidth, aH = area.offsetHeight;
   if (!aW || !aH) return;
 
-  // Use actual rendered logo width for font size so title scales with transform
-  const logoPx   = logoTW > 0 ? logoTW * logoTScale : Math.min(aW, aH) * (logoScale / 100);
-  const fontSize = Math.max(5, Math.round(logoPx * 0.08 * (titleScale / 100)));
+  // Font size based on logoTW (natural box size) — the box itself is already
+  // sized to logoTW*logoTScale px, so title inherits visual scale from the box.
+  const logoPx   = logoTW > 0 ? logoTW : Math.min(aW, aH) * (logoScale / 100);
+  const fontSize = Math.max(5, Math.round(logoPx * 0.08));
 
   titleEl.textContent    = selTitle;
   titleEl.style.display  = 'block';
@@ -1638,17 +1642,15 @@ function _applyTitlePos(aW, aH) {
   const titleEl = $id('logoTitle');
   if (!titleEl || titleEl.style.display === 'none') return;
 
-  // Title is inside logoDraggable, so position is relative to the box.
-  // Box center = (w/2, h/2). Offset from center, divided by scale to get local coords.
+  // Title is inside logoDraggable. The box is sized at logoTW*logoTScale px,
+  // so CSS left/top are in actual px (no scaling needed).
+  // Box center in px = (logoTW*s/2, logoTH*s/2).
   const s  = logoTScale || 1;
-  const w  = (logoTW || 0) * s;
-  const h  = (logoTH || 0) * s;
-  // titleOffDx/Dy are in screen px at the current scale.
-  // In box-local coords (CSS positions within the scaled element):
-  const localX = w/2 + titleOffDx / s;
-  const localY = h/2 + titleOffDy / s;
-  titleEl.style.left   = localX + 'px';
-  titleEl.style.top    = localY + 'px';
+  const cx = (logoTW || 0) * s / 2;
+  const cy = (logoTH || 0) * s / 2;
+  // titleOffDx/Dy are screen px offsets from logo center.
+  titleEl.style.left   = (cx + titleOffDx) + 'px';
+  titleEl.style.top    = (cy + titleOffDy) + 'px';
   titleEl.style.right  = 'auto';
   titleEl.style.bottom = 'auto';
 }
@@ -1778,14 +1780,14 @@ function updateTitleScale(val) {
     const p  = xy(e);
     const lr = ld.getBoundingClientRect();
     const s  = logoTScale || 1;
-    const w  = (logoTW || 0) * s;
-    const h  = (logoTH || 0) * s;
-    // Position of mouse within the box (accounting for scale)
-    const localX = (p.x - lr.left - tOffX) / s;
-    const localY = (p.y - lr.top  - tOffY) / s;
-    // titleOffDx/Dy = offset from box center in local coords
-    titleOffDx = (localX - w/2/s) * s;
-    titleOffDy = (localY - h/2/s) * s;
+    const cx = (logoTW || 0) * s / 2;
+    const cy = (logoTH || 0) * s / 2;
+    // Mouse position within the box in screen px
+    const mouseInBoxX = p.x - lr.left - tOffX;
+    const mouseInBoxY = p.y - lr.top  - tOffY;
+    // Store offset from box center in screen px
+    titleOffDx = mouseInBoxX - cx;
+    titleOffDy = mouseInBoxY - cy;
     titleManuallyMoved = true;
     _applyTitlePos(0, 0);
   }
@@ -2113,6 +2115,7 @@ async function exportImage() {
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(elRot * Math.PI / 180);
+        if (elFlipX) ctx.scale(-1, 1);
         ctx.drawImage(elImg, -drawW/2, -drawH/2, drawW, drawH);
         ctx.restore();
       }
