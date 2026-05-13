@@ -55,12 +55,14 @@
     /* Transform corner handles */
     .t-handle {
       position: absolute; width: 10px; height: 10px;
-      background: #fff; border: 1.5px solid rgba(0,0,0,0.3);
+      border: 1.5px solid rgba(0,0,0,0.3);
       border-radius: 2px; pointer-events: all; cursor: nwse-resize;
       box-shadow: 0 1px 4px rgba(0,0,0,0.4);
     }
     .t-handle[data-corner="tr"], .t-handle[data-corner="bl"] { cursor: nesw-resize; }
-    #elPreview:active { cursor: grabbing; }
+    .el-handle { background: #fff; }
+    .bg-handle { background: #ffc864; }
+    #elPreview:active, #basePreview:active { cursor: grabbing; }
 
     #logoLayer { position: absolute; inset: 0; pointer-events: none; }
 
@@ -483,7 +485,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v6.2 · FOAMS Image Generator</div>
+<div class="version">v6.3 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -491,9 +493,25 @@
       <!-- Generated result (after hitting Generate) -->
       <div id="bgImage"></div>
 
-      <!-- Base image — full opacity, static, shown when base image chosen -->
-      <div id="basePreview" style="display:none;position:absolute;inset:0;
-        background-size:cover;background-position:center;"></div>
+      <!-- Base image — transformable, click to select -->
+      <img id="basePreview" src="" alt=""
+        style="display:none;position:absolute;transform-origin:center center;
+        cursor:grab;user-select:none;touch-action:none;max-width:none;max-height:none;"
+        draggable="false">
+
+      <!-- Base image transform handles -->
+      <div id="bgHandles" style="display:none;position:absolute;pointer-events:none;
+        border:1.5px dashed rgba(255,200,100,0.7);box-sizing:border-box;">
+        <div class="t-handle bg-handle" data-corner="tl" style="top:-5px;left:-5px"></div>
+        <div class="t-handle bg-handle" data-corner="tr" style="top:-5px;right:-5px"></div>
+        <div class="t-handle bg-handle" data-corner="bl" style="bottom:-5px;left:-5px"></div>
+        <div class="t-handle bg-handle" data-corner="br" style="bottom:-5px;right:-5px"></div>
+        <div id="bgRotHandle" style="position:absolute;top:-26px;left:50%;transform:translateX(-50%);
+          width:10px;height:10px;background:#ffc864;border-radius:50%;cursor:crosshair;
+          pointer-events:all;box-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>
+        <div style="position:absolute;top:-20px;left:50%;width:1px;height:14px;
+          background:rgba(255,200,100,0.4);transform:translateX(-50%);"></div>
+      </div>
 
       <!-- Graphical element — draggable/scalable/rotatable img element -->
       <img id="elPreview" src="" alt=""
@@ -501,19 +519,16 @@
         cursor:grab;user-select:none;touch-action:none;max-width:none;max-height:none;"
         draggable="false">
 
-      <!-- Transform handles overlay (shown when element selected, before generating) -->
+      <!-- Graphical element transform handles (white) -->
       <div id="elHandles" style="display:none;position:absolute;pointer-events:none;
-        border:1.5px dashed rgba(255,255,255,0.5);box-sizing:border-box;">
-        <!-- Corner handles -->
-        <div class="t-handle" data-corner="tl" style="top:-5px;left:-5px"></div>
-        <div class="t-handle" data-corner="tr" style="top:-5px;right:-5px"></div>
-        <div class="t-handle" data-corner="bl" style="bottom:-5px;left:-5px"></div>
-        <div class="t-handle" data-corner="br" style="bottom:-5px;right:-5px"></div>
-        <!-- Rotation handle at top-center -->
+        border:1.5px dashed rgba(255,255,255,0.6);box-sizing:border-box;">
+        <div class="t-handle el-handle" data-corner="tl" style="top:-5px;left:-5px"></div>
+        <div class="t-handle el-handle" data-corner="tr" style="top:-5px;right:-5px"></div>
+        <div class="t-handle el-handle" data-corner="bl" style="bottom:-5px;left:-5px"></div>
+        <div class="t-handle el-handle" data-corner="br" style="bottom:-5px;right:-5px"></div>
         <div id="rotHandle" style="position:absolute;top:-26px;left:50%;transform:translateX(-50%);
           width:10px;height:10px;background:#fff;border-radius:50%;cursor:crosshair;
           pointer-events:all;box-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>
-        <!-- Line from box to rot handle -->
         <div style="position:absolute;top:-20px;left:50%;width:1px;height:14px;
           background:rgba(255,255,255,0.4);transform:translateX(-50%);"></div>
       </div>
@@ -716,6 +731,14 @@ let elFile = '';             // current element filename
 let elDragging = false, elDragOffX = 0, elDragOffY = 0;
 let elRotating = false, elRotStartAngle = 0, elRotStartRot = 0;
 let elScaling = false, elScaleCorner = '', elScaleStartDist = 0, elScaleStart = 1.0;
+let elSelected = false;  // whether el transform handles are shown
+
+// Base image transform state
+let bgX = 0, bgY = 0, bgW = 0, bgH = 0, bgScale = 1.0, bgRot = 0;
+let bgDragging = false, bgDragOffX = 0, bgDragOffY = 0;
+let bgRotating = false, bgRotStartAngle = 0, bgRotStartRot = 0;
+let bgScaling  = false, bgScaleStartDist = 0, bgScaleStart = 1.0;
+let bgSelected = false;  // whether bg transform handles are shown
 
 let logoPctX = 18, logoPctY = 78;  // center of logo as % of play-area
 let logoScale = 30;                 // % of min(aW,aH)
@@ -731,6 +754,24 @@ let titleScale = 100; // extra multiplier on top of logo scale, 40-200
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 function $id(id) { return document.getElementById(id); }
+
+// ─── BASE IMAGE TRANSFORM ─────────────────────────────────────────────────────
+function applyBgTransform() {
+  const bp = $id('basePreview');
+  const bh = $id('bgHandles');
+  if (!bp || bp.style.display === 'none') return;
+  const w = bgW * bgScale, h = bgH * bgScale;
+  bp.style.width  = w + 'px';
+  bp.style.height = h + 'px';
+  bp.style.left   = (bgX - w/2) + 'px';
+  bp.style.top    = (bgY - h/2) + 'px';
+  bp.style.transform = `rotate(${bgRot}deg)`;
+  if (bh && bgSelected) {
+    bh.style.width  = w + 'px'; bh.style.height  = h + 'px';
+    bh.style.left   = (bgX - w/2) + 'px'; bh.style.top = (bgY - h/2) + 'px';
+    bh.style.transform = `rotate(${bgRot}deg)`;
+  }
+}
 
 // ─── ELEMENT TRANSFORM ───────────────────────────────────────────────────────
 function applyElTransform() {
@@ -758,71 +799,129 @@ function applyElTransform() {
   }
 }
 
-// ─── ELEMENT DRAG/ROTATE/SCALE ────────────────────────────────────────────────
-(function initElTransform() {
+// ─── TRANSFORM SYSTEM (base image + graphical element) ──────────────────────
+(function initTransforms() {
   function xy(e) {
     return e.touches
       ? {x: e.touches[0].clientX, y: e.touches[0].clientY}
       : {x: e.clientX, y: e.clientY};
   }
 
-  // DRAG — on the element itself
-  document.addEventListener('mousedown', startElDrag);
-  document.addEventListener('touchstart', startElDrag, {passive:false});
-
-  function startElDrag(e) {
-    const ep = $id('elPreview');
-    if (!ep || ep.style.display === 'none') return;
-    if (e.target !== ep) return;
-    e.preventDefault(); e.stopPropagation();
-    elDragging = true;
-    const p = xy(e), r = ep.getBoundingClientRect();
-    elDragOffX = p.x - (r.left + r.width/2);
-    elDragOffY = p.y - (r.top  + r.height/2);
+  function selectEl() {
+    elSelected = true; bgSelected = false;
+    const eh = $id('elHandles'); if (eh) eh.style.display = 'block';
+    const bh = $id('bgHandles'); if (bh) bh.style.display = 'none';
+    applyElTransform();
+  }
+  function selectBg() {
+    bgSelected = true; elSelected = false;
+    const bh = $id('bgHandles'); if (bh) { bh.style.display = 'block'; applyBgTransform(); }
+    const eh = $id('elHandles'); if (eh) eh.style.display = 'none';
+  }
+  function deselect() {
+    elSelected = false; bgSelected = false;
+    const eh = $id('elHandles'); if (eh) eh.style.display = 'none';
+    const bh = $id('bgHandles'); if (bh) bh.style.display = 'none';
   }
 
-  // ROTATE — on the rotation handle
-  document.addEventListener('mousedown', startRotate);
-  document.addEventListener('touchstart', startRotate, {passive:false});
+  // Expose deselect for external use
+  window.deselectAll = deselect;
 
-  function startRotate(e) {
-    const rh = $id('rotHandle');
-    if (!rh || e.target !== rh) return;
-    e.preventDefault(); e.stopPropagation();
-    elRotating = true;
-    const p = xy(e);
+  document.addEventListener('mousedown', onDown);
+  document.addEventListener('touchstart', onDown, {passive:false});
+
+  function onDown(e) {
     const ep = $id('elPreview');
-    const r  = ep.getBoundingClientRect();
-    const cx = r.left + r.width/2, cy = r.top + r.height/2;
-    elRotStartAngle = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI;
-    elRotStartRot   = elRot;
+    const bp = $id('basePreview');
+    const p  = xy(e);
+    const isElHandle  = e.target.classList.contains('el-handle');
+    const isElRot     = e.target.id === 'rotHandle';
+    const isBgHandle  = e.target.classList.contains('bg-handle');
+    const isBgRot     = e.target.id === 'bgRotHandle';
+    const isEl        = ep && ep.style.display !== 'none' && e.target === ep;
+    const isBg        = bp && bp.style.display !== 'none' && e.target === bp;
+
+    // ── Click on element → select it ──
+    if (isEl) {
+      e.preventDefault(); e.stopPropagation();
+      selectEl();
+      elDragging = true;
+      const r = ep.getBoundingClientRect();
+      elDragOffX = p.x - (r.left + r.width/2);
+      elDragOffY = p.y - (r.top  + r.height/2);
+      return;
+    }
+
+    // ── Click on base image → select it ──
+    if (isBg) {
+      e.preventDefault(); e.stopPropagation();
+      selectBg();
+      bgDragging = true;
+      const r = bp.getBoundingClientRect();
+      bgDragOffX = p.x - (r.left + r.width/2);
+      bgDragOffY = p.y - (r.top  + r.height/2);
+      return;
+    }
+
+    // ── El rotate handle ──
+    if (isElRot) {
+      e.preventDefault(); e.stopPropagation();
+      elRotating = true;
+      const r  = ep.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      elRotStartAngle = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI;
+      elRotStartRot   = elRot;
+      return;
+    }
+
+    // ── Bg rotate handle ──
+    if (isBgRot) {
+      e.preventDefault(); e.stopPropagation();
+      bgRotating = true;
+      const r  = bp.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      bgRotStartAngle = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI;
+      bgRotStartRot   = bgRot;
+      return;
+    }
+
+    // ── El corner handle ──
+    if (isElHandle) {
+      e.preventDefault(); e.stopPropagation();
+      elScaling = true;
+      const r  = ep.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      elScaleStartDist = Math.hypot(p.x - cx, p.y - cy);
+      elScaleStart = elScale;
+      return;
+    }
+
+    // ── Bg corner handle ──
+    if (isBgHandle) {
+      e.preventDefault(); e.stopPropagation();
+      bgScaling = true;
+      const r  = bp.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      bgScaleStartDist = Math.hypot(p.x - cx, p.y - cy);
+      bgScaleStart = bgScale;
+      return;
+    }
+
+    // ── Click on play area background → deselect ──
+    const area = $id('playAreaInner');
+    if (area && area.contains(e.target)) {
+      deselect();
+    }
   }
 
-  // SCALE — on corner handles
-  document.addEventListener('mousedown', startScale);
-  document.addEventListener('touchstart', startScale, {passive:false});
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('touchmove', onMove, {passive:false});
 
-  function startScale(e) {
-    if (!e.target.classList.contains('t-handle')) return;
-    e.preventDefault(); e.stopPropagation();
-    elScaling = true;
-    elScaleCorner = e.target.dataset.corner;
-    const p = xy(e);
-    const ep = $id('elPreview');
-    const r  = ep.getBoundingClientRect();
-    const cx = r.left + r.width/2, cy = r.top + r.height/2;
-    elScaleStartDist = Math.hypot(p.x - cx, p.y - cy);
-    elScaleStart = elScale;
-  }
-
-  // MOVE
-  document.addEventListener('mousemove', moveEl);
-  document.addEventListener('touchmove', moveEl, {passive:false});
-
-  function moveEl(e) {
-    if (!elDragging && !elRotating && !elScaling) return;
+  function onMove(e) {
+    const anyActive = elDragging || elRotating || elScaling || bgDragging || bgRotating || bgScaling;
+    if (!anyActive) return;
     e.preventDefault();
-    const p = xy(e);
+    const p  = xy(e);
     const area = $id('playAreaInner');
     const ar   = area.getBoundingClientRect();
 
@@ -831,28 +930,45 @@ function applyElTransform() {
       elY = p.y - ar.top  - elDragOffY;
       applyElTransform();
     }
-
+    if (bgDragging) {
+      bgX = p.x - ar.left - bgDragOffX;
+      bgY = p.y - ar.top  - bgDragOffY;
+      applyBgTransform();
+    }
     if (elRotating) {
-      const ep = $id('elPreview');
-      const r  = ep.getBoundingClientRect();
+      const ep = $id('elPreview'), r = ep.getBoundingClientRect();
       const cx = r.left + r.width/2, cy = r.top + r.height/2;
       const angle = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI;
       elRot = elRotStartRot + (angle - elRotStartAngle);
       applyElTransform();
     }
-
-    if (elScaling) {
-      const ep = $id('elPreview');
-      const r  = ep.getBoundingClientRect();
+    if (bgRotating) {
+      const bp = $id('basePreview'), r = bp.getBoundingClientRect();
       const cx = r.left + r.width/2, cy = r.top + r.height/2;
-      const dist = Math.hypot(p.x - cx, p.y - cy);
-      elScale = Math.max(0.05, elScaleStart * (dist / elScaleStartDist));
+      const angle = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI;
+      bgRot = bgRotStartRot + (angle - bgRotStartAngle);
+      applyBgTransform();
+    }
+    if (elScaling) {
+      const ep = $id('elPreview'), r = ep.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      elScale = Math.max(0.05, elScaleStart * (Math.hypot(p.x-cx, p.y-cy) / elScaleStartDist));
       applyElTransform();
+    }
+    if (bgScaling) {
+      const bp = $id('basePreview'), r = bp.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      bgScale = Math.max(0.05, bgScaleStart * (Math.hypot(p.x-cx, p.y-cy) / bgScaleStartDist));
+      applyBgTransform();
     }
   }
 
-  document.addEventListener('mouseup',  () => { elDragging=false; elRotating=false; elScaling=false; });
-  document.addEventListener('touchend', () => { elDragging=false; elRotating=false; elScaling=false; });
+  document.addEventListener('mouseup',  onUp);
+  document.addEventListener('touchend', onUp);
+  function onUp() {
+    elDragging=false; elRotating=false; elScaling=false;
+    bgDragging=false; bgRotating=false; bgScaling=false;
+  }
 })();
 
 // ─── ORIENTATION ─────────────────────────────────────────────────────────────
@@ -911,9 +1027,12 @@ function selectCat(cat) {
   const _bg = $id('bgImage');
   if (_bg) { _bg.classList.remove('visible'); _bg.style.background = ''; _bg.style.backgroundImage = ''; }
   const _bp = $id('basePreview'); if (_bp) { _bp.style.display='none'; _bp.style.backgroundImage=''; _bp.style.opacity='0.45'; }
-  const _ep = $id('elPreview');   if (_ep) { _ep.style.display='none'; _ep.src=''; }
+  const _ep = $id('elPreview'); if (_ep) { _ep.style.display='none'; _ep.src=''; }
+  const _bp3 = $id('basePreview'); if (_bp3) { _bp3.style.display='none'; _bp3.src=''; }
   const _eh = $id('elHandles'); if (_eh) _eh.style.display='none';
+  const _bh = $id('bgHandles'); if (_bh) _bh.style.display='none';
   elX=0; elY=0; elScale=1; elRot=0; elFile='';
+  bgX=0; bgY=0; bgScale=1; bgRot=0; elSelected=false; bgSelected=false;
   imgGenerated = false;
   updateGenBtn(); updateExportBtn();
 
@@ -989,15 +1108,28 @@ function selectBaseImg(n) {
 
   markDone('step1Section',1, catLabel+' · Image '+n);
 
-  // Show base image at full opacity (static, no fade)
+  // Show base image as transformable img — centered and cover-sized by default
   const bp = $id('basePreview');
   if (bp) {
-    bp.style.backgroundImage = `url('${selBaseFile}')`;
+    bp.src = selBaseFile;
     bp.style.display = 'block';
+    bp.onload = () => {
+      const area = $id('playAreaInner');
+      const aW = area.offsetWidth, aH = area.offsetHeight;
+      const nat = bp.naturalWidth / bp.naturalHeight;
+      // Cover-size: fill the play area
+      const coverScale = Math.max(aW / bp.naturalWidth, aH / bp.naturalHeight);
+      bgW = bp.naturalWidth; bgH = bp.naturalHeight;
+      bgScale = coverScale; bgRot = 0;
+      bgX = aW / 2; bgY = aH / 2;
+      applyBgTransform();
+    };
   }
   // Reset element
   const ep0 = $id('elPreview'); if (ep0) { ep0.style.display='none'; ep0.src=''; }
   const eh0 = $id('elHandles'); if (eh0) eh0.style.display='none';
+  const bh0 = $id('bgHandles'); if (bh0) bh0.style.display='none';
+  elSelected=false; bgSelected=false;
   elX=0; elY=0; elScale=1; elRot=0; elFile='';
 
   buildStep2(selCat);
@@ -1609,17 +1741,24 @@ async function generateImage() {
     compCanvas.height = canvasH;
     const ctx = compCanvas.getContext('2d');
 
-    // Draw base image (cover-scaled)
+    // Draw base image at its current transform
     const baseImg = await loadImg(baseFile);
-    const bScale = Math.max(canvasW / baseImg.width, canvasH / baseImg.height);
-    const bW = baseImg.width * bScale, bH = baseImg.height * bScale;
-    ctx.drawImage(baseImg, (canvasW-bW)/2, (canvasH-bH)/2, bW, bH);
+    const area = $id('playAreaInner');
+    const aW = area.offsetWidth, aH = area.offsetHeight;
+    const scX = canvasW / aW, scY = canvasH / aH;
+    {
+      const bDrawW = bgW * bgScale * scX;
+      const bDrawH = bgH * bgScale * scY;
+      const bcx    = bgX * scX, bcy = bgY * scY;
+      ctx.save();
+      ctx.translate(bcx, bcy);
+      ctx.rotate(bgRot * Math.PI / 180);
+      ctx.drawImage(baseImg, -bDrawW/2, -bDrawH/2, bDrawW, bDrawH);
+      ctx.restore();
+    }
 
     // Draw graphical element at its current transform, scaled to canvas coords
     if (elFile && $id('elPreview').style.display !== 'none') {
-      const area = $id('playAreaInner');
-      const aW = area.offsetWidth, aH = area.offsetHeight;
-      const scX = canvasW / aW, scY = canvasH / aH;
 
       const elImg = await loadImg(elFile);
       const drawW = elW * elScale * scX;
@@ -1714,6 +1853,7 @@ async function generateImage() {
     const _bp2 = $id('basePreview'); if (_bp2) _bp2.style.display = 'none';
     const _ep2 = $id('elPreview');   if (_ep2) _ep2.style.display = 'none';
     const _eh2 = $id('elHandles');   if (_eh2) _eh2.style.display = 'none';
+    const _bh2 = $id('bgHandles');   if (_bh2) _bh2.style.display = 'none';
 
     showProgress(100, 'Done!');
     setTimeout(hideProgress, 600);
