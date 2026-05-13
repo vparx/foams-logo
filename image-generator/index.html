@@ -515,7 +515,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v6.7 · FOAMS Image Generator</div>
+<div class="version">v6.8 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -1479,12 +1479,10 @@ function selectLogo(logoId, tile) {
     : logoFilename(logoColor, parseInt(logoId.split('-')[1]));
   setLogoSrc(src);
 
-  // Only reset position on first logo pick, not when swapping
+  // Only reset transform on first logo pick, not when swapping
   if (!$id('logoDraggable').style.display || $id('logoDraggable').style.display === 'none') {
     logoPctX = 26; logoPctY = 70;  // lower-left triad
     logoScale = 55;
-    $id('scaleSlider').value = 55;
-    $id('scaleVal').textContent = 55;
   }
 
   showLogoInPlayArea();
@@ -1614,10 +1612,7 @@ function applyTitleStyle(resetOffset) {
   titleEl.textContent    = selTitle;
   titleEl.style.display  = 'block';
   titleEl.style.fontSize = fontSize + 'px';
-  // Show the inline text scale controls
-  ['scaleDivider','titleScaleLbl','titleScaleSlider','titleScaleVal'].forEach(id => {
-    const el = $id(id); if(el) el.style.display = (id==='titleScaleSlider') ? '' : 'inline';
-  });
+  // (title scale controls removed — handled by canvas transform)
 
   const colorMap = { white:'#ffffff', black:'#000000', pink:'#ff30ff' };
   titleEl.style.color = colorMap[logoColor] || '#ffffff';
@@ -1656,10 +1651,7 @@ function applyTitlePos() {
 function hideTitle() {
   const titleEl = $id('logoTitle');
   if (titleEl) titleEl.style.display = 'none';
-  // Hide the inline text scale controls
-  ['scaleDivider','titleScaleLbl','titleScaleSlider','titleScaleVal'].forEach(id => {
-    const el = $id(id); if(el) el.style.display = 'none';
-  });
+  // (title scale controls removed)
 }
 
 // ─── LOGO IN PLAY AREA ───────────────────────────────────────────────────────
@@ -1726,13 +1718,11 @@ function applyLogoPos() {
 
 function updateLogoScale(val) {
   logoScale = parseInt(val);
-  $id('scaleVal').textContent = val;
   if (selLogo) applyLogoPos();
 }
 
 function updateTitleScale(val) {
   titleScale = parseInt(val);
-  $id('titleScaleVal').textContent = val;
   // Reapply style without moving position or resetting offset
   if (selTitle) applyTitleStyle(false);
 }
