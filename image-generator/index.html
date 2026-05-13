@@ -341,42 +341,64 @@
     .title-chip.none-chip { font-size: 9px; letter-spacing: 0.1em; color: #3a3a3a; }
     .title-chip.none-chip.selected { color: #aaa; }
 
-    /* ════════════ ACTION BUTTONS ════════════ */
-    .action-area { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+    /* ════════════ PLAY AREA OVERLAY BUTTONS (bottom-right) ════════════ */
+    .play-area-btns {
+      position: absolute;
+      bottom: 8px; right: 8px;
+      z-index: 10;
+      display: flex; align-items: center; gap: 6px;
+    }
 
     .gen-btn {
-      width: 100%; font-size: 13px; font-weight: 700;
-      letter-spacing: 0.18em; text-transform: uppercase;
-      padding: 12px 16px; border-radius: 24px; border: 1px solid #2a2a2a;
-      cursor: pointer; transition: all 0.2s;
-      background: #1a1a1a; color: #333;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 6px 13px; border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.08);
+      cursor: pointer; transition: all 0.18s;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      color: rgba(255,255,255,0.2);
       font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+      display: flex; align-items: center; gap: 5px;
+      white-space: nowrap;
     }
-    .gen-btn:disabled { cursor: not-allowed; opacity: 0.5; }
+    .gen-btn:disabled { cursor: not-allowed; }
     .gen-btn.ready {
-      background: #fff; color: #111; border-color: #fff;
-      box-shadow: 0 2px 20px rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.92); color: #111;
+      border-color: transparent;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.4);
     }
     .gen-btn.ready:hover {
-      background: #f0f0f0; transform: translateY(-1px);
-      box-shadow: 0 4px 28px rgba(255,255,255,0.2);
+      background: #fff; transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
     }
     .gen-btn.running {
-      background: #1a1a1a; color: #666; cursor: wait; border-color: #2a2a2a;
+      background: rgba(0,0,0,0.6); color: rgba(255,255,255,0.4);
+      cursor: wait; border-color: rgba(255,255,255,0.12);
       animation: pulse 1.4s ease-in-out infinite;
     }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
     .export-btn {
-      width: 100%; font-size: 12px; font-weight: 700;
-      letter-spacing: 0.14em; text-transform: uppercase;
-      padding: 10px 16px; border-radius: 24px;
-      border: 1px solid #252525; cursor: pointer;
-      background: #141414; color: #3a3a3a; transition: all 0.2s; display: none;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 6px 13px; border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.15);
+      cursor: pointer; transition: all 0.18s;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      color: rgba(255,255,255,0.55);
       font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+      display: none; white-space: nowrap;
     }
-    .export-btn.show { display: block; color: #777; border-color: #333; }
-    .export-btn.show:hover { border-color: #777; color: #ccc; transform: translateY(-1px); }
+    .export-btn.show { display: block; }
+    .export-btn.show:hover {
+      background: rgba(255,255,255,0.15); color: #fff;
+      transform: translateY(-1px);
+    }
+
+    /* Keep old action-area for any leftover references but hide it */
+    .action-area { display: none; }
 
     @media (max-width:560px) {
       body { padding: 0 0.75rem 4rem; }
@@ -413,6 +435,12 @@
       </div>
 
       <span class="play-area-label" id="playAreaLabel">1920 × 1080</span>
+
+      <!-- Overlay buttons: bottom-right of play area -->
+      <div class="play-area-btns">
+        <button class="export-btn" id="exportBtn" onclick="exportImage()">↓ Export</button>
+        <button class="gen-btn" id="genBtn" disabled onclick="generateImage()">Generate</button>
+      </div>
     </div>
   </div>
 
@@ -542,13 +570,6 @@
 </div>
 
 </div><!-- /content-pad -->
-<!-- ══════════════════════════════════════════
-     ACTIONS
-═══════════════════════════════════════════ -->
-<div class="action-area" style="padding: 0 1rem;">
-  <button class="gen-btn" id="genBtn" disabled onclick="generateImage()">Generate Image</button>
-  <button class="export-btn" id="exportBtn" onclick="exportImage()">↓ Export Image</button>
-</div>
 
 
 <script>
@@ -874,10 +895,10 @@ function selectLogo(logoId, tile) {
 
   // Only reset position on first logo pick, not when swapping
   if (!$id('logoDraggable').style.display || $id('logoDraggable').style.display === 'none') {
-    logoPctX = 18; logoPctY = 78;
-    logoScale = 30;
-    $id('scaleSlider').value = 30;
-    $id('scaleVal').textContent = 30;
+    logoPctX = 50; logoPctY = 50;  // center
+    logoScale = 45;
+    $id('scaleSlider').value = 45;
+    $id('scaleVal').textContent = 45;
   }
 
   showLogoInPlayArea();
@@ -1206,7 +1227,7 @@ async function generateImage() {
   if (!selCat || !selBaseImg || !selEl || !selLogo) return;
   const btn = $id('genBtn');
   btn.disabled=true; btn.classList.remove('ready'); btn.classList.add('running');
-  btn.textContent = 'Generating…';
+  btn.textContent = 'Generating…'; btn.disabled=true;
   try {
     const prompt = buildPrompt();
     console.log('Prompt:', prompt);
@@ -1235,11 +1256,11 @@ async function generateImage() {
     bg.classList.add('visible');
 
     imgGenerated = true; updateExportBtn();
-    btn.textContent = 'Regenerate Image';
+    btn.innerHTML = '↺ Regenerate';
     btn.classList.remove('running'); btn.classList.add('ready'); btn.disabled=false;
   } catch(err) {
     console.error(err);
-    btn.textContent = 'Error — Try Again';
+    btn.textContent = 'Error — Retry';
     btn.classList.remove('running'); btn.classList.add('ready'); btn.disabled=false;
   }
 }
@@ -1283,27 +1304,39 @@ _ro.observe(document.body);
 // When embedded in Squarespace (or any iframe), the host page controls scroll,
 // not the iframe. We switch the sticky-top to position:fixed so it always
 // stays at the top of the VIEWPORT, regardless of scroll context.
-(function initIframeSticky() {
+// ─── FIXED PLAY AREA ─────────────────────────────────────────────────────────
+// position:sticky fails in iframes because scroll happens in the parent page.
+// We use position:fixed so the play area always stays at the top of the
+// iframe viewport. Body padding compensates for the space it takes up.
+(function initFixedPlayArea() {
   const stickyEl = document.querySelector('.sticky-top');
+  const versionEl = document.querySelector('.version');
   if (!stickyEl) return;
 
-  function applySticky() {
-    const stickyH = stickyEl.offsetHeight;
-    // Always use fixed — works both in iframe and standalone
+  // Get the horizontal padding from body so our fixed bar matches content width
+  const bodyStyle = getComputedStyle(document.body);
+  const padL = parseFloat(bodyStyle.paddingLeft)  || 0;
+  const padR = parseFloat(bodyStyle.paddingRight) || 0;
+
+  function applyFixed() {
+    // version line scrolls away normally — only sticky-top is fixed
     stickyEl.style.position = 'fixed';
     stickyEl.style.top      = '0';
-    stickyEl.style.left     = '0';
-    stickyEl.style.right    = '0';
-    stickyEl.style.width    = '100%';
+    stickyEl.style.left     = padL + 'px';
+    stickyEl.style.right    = padR + 'px';
+    stickyEl.style.width    = 'auto';
     stickyEl.style.zIndex   = '999';
-    // Push body content down so it doesn't hide behind the fixed bar
-    document.body.style.paddingTop = stickyH + 'px';
+    stickyEl.style.background = '#111';
+
+    // Recalculate how much space the fixed bar occupies
+    const totalH = stickyEl.offsetHeight + (versionEl ? versionEl.offsetHeight + 6 : 0);
+    document.body.style.paddingTop = totalH + 'px';
   }
 
-  // Apply on load and whenever the sticky bar changes size
-  applySticky();
-  const stickyRo = new ResizeObserver(applySticky);
-  stickyRo.observe(stickyEl);
+  applyFixed();
+  new ResizeObserver(applyFixed).observe(stickyEl);
+  // Also re-apply if fonts/images change the version line height
+  window.addEventListener('load', applyFixed);
 })();
 </script>
 </body>
