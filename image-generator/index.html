@@ -90,7 +90,7 @@
     }
 
     #logoTitle {
-      display: none; position: absolute;
+      display: none;
       font-family: 'Trebuchet MS', Trebuchet, sans-serif;
       font-weight: 700; text-transform: uppercase;
       white-space: nowrap; line-height: 1; letter-spacing: 0.06em;
@@ -517,7 +517,7 @@
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
-    <div class="version" id="versionTag" style="position:absolute;top:8px;left:10px;z-index:20;pointer-events:none;">v8.3 · FOAMS Image Generator</div>
+    <div class="version" id="versionTag" style="position:absolute;top:8px;left:10px;z-index:20;pointer-events:none;">v8.4 · FOAMS Image Generator</div>
     <div class="play-area-inner" id="playAreaInner">
 
       <!-- Generated (remixed) result — draggable/scalable/rotatable after generation -->
@@ -580,7 +580,7 @@
         <!-- Title text — independent element with own transform handles -->
         <div id="titleDraggable" style="display:none;position:absolute;cursor:grab;
           user-select:none;touch-action:none;transform-origin:center center;">
-          <span id="logoTitle"></span>
+          <span id="logoTitle" style="display:block;position:relative;top:0;left:0;"></span>
         </div>
 
         <!-- Title transform handles (yellow) -->
@@ -993,7 +993,7 @@ function applyLogoTransform() {
     lh.style.transformOrigin = 'center center';
   }
 
-  if (selTitle) _applyTitlePos();
+  // Title position handled by titleDraggable, not here
 }
 
 function toggleMirror() {
@@ -1426,7 +1426,7 @@ function toggleOrientation() {
       logoTW = newBase * ratio / logoTScale;
       applyLogoTransform();
       // Reset title position so it recalculates for new orientation
-      titleManuallyMoved = false; titleFracX = -0.55; titleFracY = 0.10;
+      titleManuallyMoved = false;  // title position reset handled by showTitleInPlayArea
       applyTitleStyle(true);
     }
 
@@ -1824,7 +1824,7 @@ function buildTitleGrid() {
     const chip = document.createElement('div');
     chip.className = 'title-chip' + (selTitle===word?' selected':'');
     chip.textContent = word;   // already uppercase in our arrays
-    chip.onclick = () => { selTitle=word; titleManuallyMoved=false; titleFracX = -0.55; titleFracY = 0.10; refreshTitleChips(); applyTitleStyle(true); };
+    chip.onclick = () => { selTitle=word; titleManuallyMoved=false; titleTW=0; refreshTitleChips(); applyTitleStyle(true); };
     grid.appendChild(chip);
   });
 
@@ -1834,7 +1834,7 @@ function buildTitleGrid() {
 
 function setTitleLang(lang) {
   titleLang = lang; selTitle = null;
-  titleManuallyMoved = false; titleFracX = -0.55; titleFracY = 0.10;
+  titleManuallyMoved = false; titleTW = 0;  // force reposition on next show
   buildTitleGrid();
 }
 
@@ -1854,16 +1854,7 @@ function refreshTitleChips() {
 
   Font size scales with the logo's rendered pixel size so it always looks proportional.
 */
-function setTitleDefaultOffset() {
-  // Set titleFracX/Y as fraction of scaled box (0=left edge, 1=right edge).
-  if (titleLang === 'PT') {
-    titleFracX = -0.45;   // overhangs left of box
-    titleFracY =  0.08;   // near top
-  } else {
-    titleFracX =  0.50;   // overhangs right of box
-    titleFracY =  0.70;   // near bottom
-  }
-}
+
 
 function applyTitleStyle(resetPos) {
   // Bridge: calls the new transform system
@@ -1874,20 +1865,9 @@ function applyTitleStyle(resetPos) {
   showTitleInPlayArea();
 }
 
-function _applyTitlePos() {
-  const titleEl = $id('logoTitle');
-  if (!titleEl || titleEl.style.display === 'none') return;
-  // Title is inside logoDraggable. Box is sw×sh in actual screen px.
-  // CSS left/top are in those same px (no CSS scale on the box).
-  const sw = logoTW * logoTScale;
-  const sh = logoTH * logoTScale;
-  titleEl.style.left   = (titleFracX * sw) + 'px';
-  titleEl.style.top    = (titleFracY * sh) + 'px';
-  titleEl.style.right  = 'auto';
-  titleEl.style.bottom = 'auto';
-}
 
-function applyTitlePos() { _applyTitlePos(); }
+
+// applyTitlePos removed
 
 function hideTitle() {
   hideTitleTransform();
@@ -1952,7 +1932,7 @@ function applyLogoPos() {
   d.style.top    = ((logoPctY/100)*aH - px/2) + 'px';
 
   // Title moves with logo: recompute position using same offset
-  if (selTitle) applyTitlePos();
+  // Title position handled by titleDraggable, not here
 }
 
 function updateLogoScale(val) {
@@ -1969,57 +1949,7 @@ function updateTitleScale(val) {
 // Logo drag now handled by unified transform system (initTransforms)
 
 // ─── TITLE DRAG ───────────────────────────────────────────────────────────────
-(function initTitleDrag() {
-  const area = $id('playAreaInner');
-
-  function xy(e) {
-    return e.touches
-      ? {x:e.touches[0].clientX, y:e.touches[0].clientY}
-      : {x:e.clientX, y:e.clientY};
-  }
-
-  // Use event delegation since #logoTitle may not have content yet
-  document.addEventListener('mousedown', startTitle);
-  document.addEventListener('touchstart', startTitle, {passive:false});
-
-  function startTitle(e) {
-    const titleEl = $id('logoTitle');
-    if (!titleEl || !selTitle) return;
-    // Only trigger if the event target is #logoTitle
-    if (e.target !== titleEl) return;
-    e.preventDefault();
-    e.stopPropagation();
-    titleDragging = true;
-    const p = xy(e);
-    const r = titleEl.getBoundingClientRect();
-    tOffX = p.x - r.left;
-    tOffY = p.y - r.top;
-  }
-
-  document.addEventListener('mousemove', moveTitle);
-  document.addEventListener('touchmove',  moveTitle, {passive:false});
-
-  function moveTitle(e) {
-    if (!titleDragging) return;
-    e.preventDefault();
-    const ld = $id('logoDraggable');
-    if (!ld) return;
-    const p  = xy(e);
-    const lr = ld.getBoundingClientRect();
-    const sw = lr.width, sh = lr.height;
-    if (!sw || !sh) return;
-    // Mouse position within box in screen px, then as fraction
-    const mouseInBoxX = p.x - lr.left - tOffX;
-    const mouseInBoxY = p.y - lr.top  - tOffY;
-    titleFracX = mouseInBoxX / sw;
-    titleFracY = mouseInBoxY / sh;
-    titleManuallyMoved = true;
-    _applyTitlePos();
-  }
-
-  document.addEventListener('mouseup',  () => { titleDragging = false; });
-  document.addEventListener('touchend', () => { titleDragging = false; });
-})();
+// Old title drag IIFE removed — title dragging handled by initTransforms
 
 // ─── GENERATE ────────────────────────────────────────────────────────────────
 function updateGenBtn() {
