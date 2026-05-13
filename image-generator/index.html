@@ -1114,8 +1114,18 @@ function exportImage() {
 
 // ─── RESIZE ──────────────────────────────────────────────────────────────────
 window.addEventListener('resize', () => {
-  if (selLogo) applyLogoPos();  // applyLogoPos calls applyTitleStyle internally
+  if (selLogo) applyLogoPos();
+  sendHeight();
 });
+
+// ─── IFRAME HEIGHT REPORTER ──────────────────────────────────────────────────
+function sendHeight() {
+  const h = document.documentElement.scrollHeight;
+  window.parent.postMessage({ type: 'foams-height', height: h }, '*');
+}
+sendHeight();
+const _ro = new ResizeObserver(sendHeight);
+_ro.observe(document.body);
 </script>
 </body>
 </html>
