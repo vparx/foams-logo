@@ -11,8 +11,7 @@
       font-family: sans-serif;
       background: #111;
       min-height: 100vh;
-      padding: 1.5rem;
-      padding-bottom: 5rem;
+      padding: 0 1rem 4rem;
       color: #ccc;
     }
 
@@ -20,9 +19,15 @@
 
     /* ════════════ STICKY TOP ════════════ */
     .sticky-top {
-      position: sticky; top: 0; z-index: 100;
+      position: sticky;
+      top: 0;
+      z-index: 200;
       background: #111;
-      padding-top: 6px; padding-bottom: 10px; margin-bottom: 6px;
+      padding-top: 6px;
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+      /* Slight shadow so play area doesn't bleed into sections when scrolling */
+      box-shadow: 0 4px 16px rgba(0,0,0,0.6);
     }
 
     .play-area-outer {
@@ -30,17 +35,15 @@
       overflow: hidden; background: #000; position: relative;
       transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
     }
-    /* Landscape 16:9 — full width, height follows ratio */
+    /* Landscape 16:9 — full container width, height AUTO from ratio (no max-height!) */
     .play-area-outer.landscape {
       width: 100%;
       aspect-ratio: 1920 / 1080;
-      max-height: 220px;
     }
-    /* Portrait 9:16 — fixed height, width follows ratio automatically */
+    /* Portrait 9:16 — 200px wide, height auto from ratio */
     .play-area-outer.portrait {
       aspect-ratio: 1080 / 1920;
-      height: 340px;
-      width: auto;
+      width: 200px;
       margin-left: auto; margin-right: auto;
     }
 
@@ -213,6 +216,7 @@
     /* ════════════ IMAGE GRIDS ════════════ */
     .picker-label { font-size: 10px; color: #444; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; }
     .grid-5x2 { display: grid; grid-template-columns: repeat(5,1fr); gap: 4px; }
+    .grid-5x2 .img-tile { aspect-ratio: 16/10; }
     .grid-4x4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 4px; }
 
     .img-tile {
@@ -224,7 +228,7 @@
     }
     .img-tile:hover  { border-color: #555; }
     .img-tile.selected { border-color: #fff; }
-    .img-tile .t-num { font-size: 13px; font-weight: 800; color: #252525; font-family: monospace; line-height: 1; }
+    .img-tile .t-num { font-size: 11px; font-weight: 800; color: #252525; font-family: monospace; line-height: 1; }
     .img-tile .t-lbl { font-size: 7px; color: #252525; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; }
     .img-tile.defocus { background: radial-gradient(ellipse,#0e0e22,#080810); }
     .img-tile.defocus .t-num, .img-tile.defocus .t-lbl { color: #222240; }
@@ -262,7 +266,7 @@
     .logo-sub::after { content: ''; flex: 1; height: 1px; background: #1d1d1d; }
 
     /* 6-slot grid: upload + 5 presets */
-    .logo-grid-6 { display: grid; grid-template-columns: repeat(3,1fr); gap: 4px; }
+    .logo-grid-6 { display: grid; grid-template-columns: repeat(6,1fr); gap: 4px; }
 
     .logo-tile {
       aspect-ratio: 1; border-radius: 7px; border: 2px solid #1e1e1e;
@@ -367,13 +371,11 @@
       body { padding: 0.75rem; padding-bottom: 5rem; }
       .grid-5x2 { grid-template-columns: repeat(4,1fr); }
       .title-grid { grid-template-columns: repeat(3,1fr); }
-      .play-area-outer.portrait { height: 260px; }
+      .play-area-outer.portrait { width: 160px; }
     }
   </style>
 </head>
 <body>
-
-<div class="version">v3.1 · FOAMS Image Generator</div>
 
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
@@ -424,6 +426,7 @@
 <input type="file" id="uploadInput" accept="image/png,image/jpeg,image/svg+xml,image/webp"
   onchange="handleUpload(this)">
 
+<div style="padding: 0 1rem;">
 <!-- ══════════════════════════════════════════
      STEP 1
 ═══════════════════════════════════════════ -->
@@ -438,20 +441,20 @@
     <div class="base-choices">
       <div class="base-choice" id="basebtn-tropical" onclick="selectCat('tropical')">
         <img src="Foams-Brand-Images-Tropical-Landscape-01.jpg" style="width:100%;height:100%;object-fit:cover;display:block;"
-          onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+          onerror="this.style.display='none';this.parentElement.querySelector('.ph-bg').style.display='block'">
         <div class="ph-bg tropical" style="display:none"></div>
         <span class="choice-label">Tropical</span>
       </div>
       <div class="base-choice" id="basebtn-water" onclick="selectCat('water')">
         <img src="Foams-Brand-Images-Water-Landscape-05.jpg" style="width:100%;height:100%;object-fit:cover;display:block;"
-          onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+          onerror="this.style.display='none';this.parentElement.querySelector('.ph-bg').style.display='block'">
         <div class="ph-bg water" style="display:none"></div>
         <span class="choice-label">Water</span>
       </div>
       <div class="base-choice" id="basebtn-body" onclick="selectCat('body')">
-        <img src="Foams-Brand-Images-Body-Landscape-04.jpg" style="width:100%;height:100%;object-fit:cover;display:block;"
-          onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-        <div class="ph-bg body" style="display:none"></div>
+        <img src="Foams-Brand-Images-Body-Landscape-04.jpg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;"
+          onerror="this.style.display='none';this.parentElement.querySelector('.ph-bg').style.display='block'">
+        <div class="ph-bg body" style="position:absolute;inset:0;display:none"></div>
         <span class="choice-label">Body</span>
       </div>
     </div>
@@ -517,10 +520,11 @@
   </div>
 </div>
 
+</div><!-- /content-pad -->
 <!-- ══════════════════════════════════════════
      ACTIONS
 ═══════════════════════════════════════════ -->
-<div class="action-area">
+<div class="action-area" style="padding: 0 1rem;">
   <button class="gen-btn" id="genBtn" disabled onclick="generateImage()">Generate Image</button>
   <button class="export-btn" id="exportBtn" onclick="exportImage()">↓ Export Image</button>
 </div>
@@ -927,51 +931,41 @@ function applyTitleStyle() {
 
   if (!selTitle) { hideTitle(); return; }
 
-  // Font size scales with logo pixel size
-  const area     = $id('playAreaInner');
-  const aW       = area.offsetWidth;
-  const aH       = area.offsetHeight;
-  const baseSize  = Math.min(aW, aH);
-  const logoPx    = baseSize * (logoScale / 100);
-  // Font is ~13% of the logo size — matches the reference weight visually
-  const fontSize  = Math.max(7, Math.round(logoPx * 0.13));
+  // Font size strictly proportional to the logo's rendered pixel size.
+  // logoScale is a % of min(aW,aH), so logoPx is the logo's side length in px.
+  // Title font = 9% of logoPx. This means it scales 1:1 with the logo slider.
+  const area    = $id('playAreaInner');
+  const aW      = area.offsetWidth;
+  const aH      = area.offsetHeight;
+  const logoPx  = Math.min(aW, aH) * (logoScale / 100);
+  const fontSize = Math.max(6, Math.round(logoPx * 0.09));
 
-  titleEl.textContent      = selTitle;
-  titleEl.style.display    = 'block';
-  titleEl.style.fontSize   = fontSize + 'px';
+  titleEl.textContent    = selTitle;
+  titleEl.style.display  = 'block';
+  titleEl.style.fontSize = fontSize + 'px';
 
-  // Color matches logo color
   const colorMap = { white:'#ffffff', black:'#000000', pink:'#ff30ff' };
   titleEl.style.color = colorMap[logoColor] || '#ffffff';
 
-  // Clear all position props first
-  titleEl.style.left      = '';
-  titleEl.style.right     = '';
-  titleEl.style.top       = '';
-  titleEl.style.bottom    = '';
-  titleEl.style.transform = '';
+  // Reset all sides
+  titleEl.style.left = titleEl.style.right =
+  titleEl.style.top  = titleEl.style.bottom = 'auto';
   titleEl.classList.remove('pos-pt','pos-en');
 
   if (titleLang === 'PT') {
-    /*
-      PT (ESPAÇO reference): appears to the left and below the logo's left edge.
-      In the reference the word is at ~bottom-left, below the logo body.
-      We place it at: left edge aligned with logo left, top at ~85% down the logo height.
-      A small negative left offset (-5%) shifts it slightly outside the logo to the left.
-    */
-    titleEl.style.left   = '-5%';
+    // PT: anchored to TOP-LEFT corner of the logo box.
+    // Slightly left of the logo left edge, just above the top edge.
+    titleEl.style.left   = '0%';
     titleEl.style.right  = 'auto';
-    titleEl.style.top    = '82%';
-    titleEl.style.bottom = 'auto';
+    titleEl.style.bottom = '100%';  // sits just above the logo top
+    titleEl.style.top    = 'auto';
   } else {
-    /*
-      EN (SPACE reference): appears to the right and lower, but higher than PT baseline.
-      Title's left edge aligns roughly under the logo's right half.
-      We place it at: right edge of logo, top at ~75% down.
-    */
-    titleEl.style.right  = '-5%';
+    // EN: anchored to BOTTOM-RIGHT corner of the logo box.
+    // Slightly right of logo right edge, just below the bottom edge.
+    // Shifted right a bit more per the reference.
+    titleEl.style.right  = '-8%';
     titleEl.style.left   = 'auto';
-    titleEl.style.top    = '72%';
+    titleEl.style.top    = '100%';  // sits just below the logo bottom
     titleEl.style.bottom = 'auto';
   }
 }
