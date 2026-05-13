@@ -485,7 +485,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v6.3 · FOAMS Image Generator</div>
+<div class="version">v6.4 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -567,7 +567,7 @@
 
   <!-- Action buttons: absolute inside sticky-top, always bottom-right of play area -->
   <div class="play-area-btns" id="playAreaBtns">
-    <button class="gen-btn" id="genBtn" disabled onclick="generateImage()">Generate</button>
+    <button class="gen-btn" id="genBtn" disabled onclick="generateImage()">Remix Image</button>
     <button class="export-btn" id="exportBtn" onclick="exportImage()">↓ Export Image</button>
   </div>
 
@@ -1019,14 +1019,14 @@ function lockSection(id, n) {
 
 // ─── STEP 1 ──────────────────────────────────────────────────────────────────
 function selectCat(cat) {
-  selCat = cat; selBaseImg = null; selEl = null; selLogo = null;
+  selCat = cat; selBaseImg = null; selEl = null;
   imgGenerated = false;
   lockSection('step2Section',2); lockSection('step3Section',3);
-  clearLogoFromPlayArea();
+  // Do NOT clear logo — user keeps their logo/title when switching base image
   // Reset play area completely when starting over
   const _bg = $id('bgImage');
   if (_bg) { _bg.classList.remove('visible'); _bg.style.background = ''; _bg.style.backgroundImage = ''; }
-  const _bp = $id('basePreview'); if (_bp) { _bp.style.display='none'; _bp.style.backgroundImage=''; _bp.style.opacity='0.45'; }
+  const _bp = $id('basePreview'); if (_bp) { _bp.style.display='none'; _bp.src=''; }
   const _ep = $id('elPreview'); if (_ep) { _ep.style.display='none'; _ep.src=''; }
   const _bp3 = $id('basePreview'); if (_bp3) { _bp3.style.display='none'; _bp3.src=''; }
   const _eh = $id('elHandles'); if (_eh) _eh.style.display='none';
@@ -1104,6 +1104,7 @@ function selectBaseImg(n) {
   elX=0; elY=0; elScale=1; elRot=0; elFile='';
   generatedImageUrl = null;
   imgGenerated = false;
+  // Export stays available — user can export the composed preview
   updateExportBtn();
 
   markDone('step1Section',1, catLabel+' · Image '+n);
@@ -1123,6 +1124,7 @@ function selectBaseImg(n) {
       bgScale = coverScale; bgRot = 0;
       bgX = aW / 2; bgY = aH / 2;
       applyBgTransform();
+      updateExportBtn();
     };
   }
   // Reset element
@@ -1652,7 +1654,10 @@ function updateGenBtn() {
   btn.classList.toggle('ready', ready);
 }
 function updateExportBtn() {
-  $id('exportBtn').classList.toggle('show', imgGenerated);
+  // Show export if we have a generated image OR a composed preview the user can export
+  const hasBg = $id('basePreview') && $id('basePreview').style.display !== 'none';
+  const show  = imgGenerated || (!!selBaseImg);
+  $id('exportBtn').classList.toggle('show', show);
 }
 
 // ─── OPENAI API KEY ─────────────────────────────────────────────────────────
@@ -1693,7 +1698,7 @@ async function generateImage() {
   btn.disabled = true;
   btn.classList.remove('ready', 'regenerate');
   btn.classList.add('running');
-  btn.textContent = 'Generating…';
+  btn.textContent = 'Remixing…';
   showProgress(5, 'Preparing…');
 
   try {
@@ -1859,7 +1864,7 @@ async function generateImage() {
     setTimeout(hideProgress, 600);
     imgGenerated = true;
     updateExportBtn();
-    btn.innerHTML = '↺ Regenerate';
+    btn.innerHTML = '↺ Remix';
     btn.classList.remove('running', 'ready');
     btn.classList.add('regenerate');
     btn.disabled = false;
@@ -1868,14 +1873,14 @@ async function generateImage() {
     try { clearInterval(_ticker); } catch(e) {}
     hideProgress();
     console.error('Generation error:', err);
-    btn.textContent = 'Error — Retry';
+    btn.innerHTML = '↺ Remix';
     btn.classList.remove('running');
     btn.classList.add('regenerate');
     btn.disabled = false;
     // Show error message briefly
     setTimeout(() => {
       if (btn.classList.contains('regenerate')) {
-        btn.innerHTML = '↺ Regenerate';
+        btn.innerHTML = '↺ Remix';
       }
     }, 3000);
   }
@@ -1895,20 +1900,17 @@ Keep the vibe elegant, modern and a bit mysterious${bodyRule}`;
 
 // ─── EXPORT ──────────────────────────────────────────────────────────────────
 async function exportImage() {
-  if (!generatedImageUrl) return;
-
+  // Can export at any stage: generated result, or composed preview, or even blank
   const isLandscape = orientation === 'landscape';
   const outW = isLandscape ? 1920 : 1080;
   const outH = isLandscape ? 1080 : 1920;
   const filename = `foams-image-${orientation}-${Date.now()}.png`;
 
-  // Create off-screen canvas at full output resolution
   const canvas = document.createElement('canvas');
   canvas.width  = outW;
   canvas.height = outH;
   const ctx = canvas.getContext('2d');
 
-  // Helper: load an image from a src (data URL or URL) into an HTMLImageElement
   function loadImg(src) {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -1919,16 +1921,49 @@ async function exportImage() {
     });
   }
 
+  const area  = $id('playAreaInner');
+  const aW    = area.offsetWidth, aH = area.offsetHeight;
+  const scX   = outW / aW, scY = outH / aH;
+
   try {
-    // 1. Draw the generated background image at full resolution
-    const bgImg = await loadImg(generatedImageUrl);
-    // Scale to cover the canvas (same as background-size:cover)
-    const scale = Math.max(outW / bgImg.width, outH / bgImg.height);
-    const dw = bgImg.width  * scale;
-    const dh = bgImg.height * scale;
-    const dx = (outW - dw) / 2;
-    const dy = (outH - dh) / 2;
-    ctx.drawImage(bgImg, dx, dy, dw, dh);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, outW, outH);
+
+    // 1a. If we have a generated (remixed) result, draw that first
+    if (generatedImageUrl) {
+      const bgImg = await loadImg(generatedImageUrl);
+      const scale = Math.max(outW / bgImg.width, outH / bgImg.height);
+      const dw = bgImg.width * scale, dh = bgImg.height * scale;
+      ctx.drawImage(bgImg, (outW-dw)/2, (outH-dh)/2, dw, dh);
+    }
+
+    // 1b. Otherwise draw the composed preview (base + element at their transforms)
+    else {
+      const bp = $id('basePreview');
+      if (bp && bp.style.display !== 'none' && bp.src) {
+        const baseImg = await loadImg(bp.src);
+        const bDrawW = bgW * bgScale * scX;
+        const bDrawH = bgH * bgScale * scY;
+        const bcx = bgX * scX, bcy = bgY * scY;
+        ctx.save();
+        ctx.translate(bcx, bcy);
+        ctx.rotate(bgRot * Math.PI / 180);
+        ctx.drawImage(baseImg, -bDrawW/2, -bDrawH/2, bDrawW, bDrawH);
+        ctx.restore();
+      }
+      const ep = $id('elPreview');
+      if (ep && ep.style.display !== 'none' && ep.src) {
+        const elImg = await loadImg(ep.src);
+        const drawW = elW * elScale * scX;
+        const drawH = elH * elScale * scY;
+        const cx = elX * scX, cy = elY * scY;
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(elRot * Math.PI / 180);
+        ctx.drawImage(elImg, -drawW/2, -drawH/2, drawW, drawH);
+        ctx.restore();
+      }
+    }
 
     // 2. Draw the logo + title if present
     if (selLogo) {
