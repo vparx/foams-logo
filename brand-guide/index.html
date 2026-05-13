@@ -1065,8 +1065,8 @@
     }
 
       /* Overview eye candy — stack on mobile */
-      .overview-eyecandy { display: flex; gap: 0.5rem; height: 180px; flex-shrink: 0; align-items: stretch; }
-      .overview-eyecandy img { height: 180px; width: 110px; border-radius: 8px; object-fit: cover; flex-shrink: 0; display: block; }
+      .overview-eyecandy { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
+      .overview-eyecandy img { width: 100%; height: 280px; border-radius: 8px; object-fit: cover; display: block; }
 
     /* ══════════════════════════════════════════
        RESPONSIVE — tablet (≤900px)
@@ -1081,9 +1081,9 @@
       .two-col, .two-col.wide-right { grid-template-columns: 1fr; }
       .type-ex { grid-template-columns: 1fr; }
       .btn-row { flex-wrap: wrap; gap: 0.75rem; }
-      /* overview eye candy: hide last 2 images on tablet */
-      .overview-eyecandy img:nth-child(3),
-      .overview-eyecandy img:nth-child(4) { display: none; }
+      /* overview eye candy: 2 col on tablet */
+      .overview-eyecandy { grid-template-columns: repeat(2, 1fr); }
+      .overview-eyecandy img { height: 200px; }
     }
 
     /* ══════════════════════════════════════════
@@ -1216,7 +1216,7 @@
         <a href="#generative-examples" data-i18n="nav-gen-examples">Exemplos Generativos</a>
         <a href="#closing" data-i18n="nav-closing">↓ Keep it fluid</a>
       </nav>
-      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v4.3</div>
+      <div style="padding: 1.5rem 1.5rem 0; font-size: 0.68rem; color: var(--text-subtle); letter-spacing: 0.05em;">v4.4</div>
 
       <!-- BACK TO TOP — inside sticky sidebar so it's always in viewport -->
       <div id="back-to-top-wrap">
