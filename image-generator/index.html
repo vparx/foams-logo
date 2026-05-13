@@ -61,7 +61,6 @@
     }
     .t-handle[data-corner="tr"], .t-handle[data-corner="bl"] { cursor: nesw-resize; }
     .el-handle { background: #fff; }
-    .bg-handle { background: #ffc864; }
     .logo-handle { background: #ff64b4; }
     #elPreview:active, #basePreview:active { cursor: grabbing; }
 
@@ -72,19 +71,20 @@
       position: absolute; cursor: grab;
       user-select: none; touch-action: none;
       pointer-events: all; display: none; overflow: visible;
+      background: transparent;  /* ensures the hit area covers the full box */
     }
     #logoDraggable:active { cursor: grabbing; }
 
     #logoImg {
       display: none; width: 100%; height: 100%;
-      object-fit: contain; pointer-events: none; position: relative; z-index: 1;
+      object-fit: contain; pointer-events: all; position: relative; z-index: 1;
     }
     #logoPlaceholder {
       position: absolute; inset: 0; z-index: 1;
       border: 1.5px dashed rgba(255,255,255,0.15); border-radius: 5px;
       display: flex; align-items: center; justify-content: center;
       font-size: 8px; font-weight: 700; letter-spacing: 0.2em;
-      text-transform: uppercase; color: rgba(255,255,255,0.15); pointer-events: none;
+      text-transform: uppercase; color: rgba(255,255,255,0.15); pointer-events: all;
     }
 
     #logoTitle {
@@ -393,7 +393,7 @@
       border: 5px solid transparent;
       border-top-color: rgba(20,20,20,0.95);
     }
-    .gen-btn-wrap:hover .gen-tooltip { display: block; }
+    .gen-btn-wrap.body-locked:hover .gen-tooltip { display: block; }
 
     /* Base button style — disabled/waiting state */
     .gen-btn {
@@ -516,7 +516,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v6.9 · FOAMS Image Generator</div>
+<div class="version">v7.1 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -524,25 +524,12 @@
       <!-- Generated result (after hitting Generate) -->
       <div id="bgImage"></div>
 
-      <!-- Base image — transformable, click to select -->
+      <!-- Base image — static, fills play area -->
       <img id="basePreview" src="" alt=""
-        style="display:none;position:absolute;transform-origin:center center;
-        cursor:grab;user-select:none;touch-action:none;max-width:none;max-height:none;"
+        style="display:none;position:absolute;width:100%;height:100%;object-fit:cover;"
         draggable="false">
 
-      <!-- Base image transform handles -->
-      <div id="bgHandles" style="display:none;position:absolute;pointer-events:none;
-        border:1.5px dashed rgba(255,200,100,0.7);box-sizing:border-box;">
-        <div class="t-handle bg-handle" data-corner="tl" style="top:-5px;left:-5px"></div>
-        <div class="t-handle bg-handle" data-corner="tr" style="top:-5px;right:-5px"></div>
-        <div class="t-handle bg-handle" data-corner="bl" style="bottom:-5px;left:-5px"></div>
-        <div class="t-handle bg-handle" data-corner="br" style="bottom:-5px;right:-5px"></div>
-        <div id="bgRotHandle" style="position:absolute;top:-26px;left:50%;transform:translateX(-50%);
-          width:10px;height:10px;background:#ffc864;border-radius:50%;cursor:crosshair;
-          pointer-events:all;box-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>
-        <div style="position:absolute;top:-20px;left:50%;width:1px;height:14px;
-          background:rgba(255,200,100,0.4);transform:translateX(-50%);"></div>
-      </div>
+
 
       <!-- Graphical element — draggable/scalable/rotatable img element -->
       <img id="elPreview" src="" alt=""
@@ -580,7 +567,7 @@
         <span id="logoTitle"></span>
 
         <!-- Logo transform handles (pink) — shown when logo selected -->
-        <div id="logoHandles" style="display:none;position:absolute;pointer-events:none;
+        <div id="logoHandles" style="display:none;position:absolute;
           border:1.5px dashed rgba(255,100,180,0.7);box-sizing:border-box;z-index:5;">
           <div class="t-handle logo-handle" data-corner="tl" style="top:-5px;left:-5px"></div>
           <div class="t-handle logo-handle" data-corner="tr" style="top:-5px;right:-5px"></div>
@@ -615,7 +602,7 @@
   <!-- Action buttons: absolute inside sticky-top, always bottom-right of play area -->
   <div class="play-area-btns" id="playAreaBtns">
     <div class="gen-btn-wrap" id="genBtnWrap">
-      <span class="gen-tooltip" id="genTooltip" style="display:none"></span>
+      <span class="gen-tooltip" id="genTooltip"></span>
       <button class="gen-btn" id="genBtn" disabled onclick="generateImage()">✦ Remix Image</button>
     </div>
     <button class="export-btn" id="exportBtn" onclick="exportImage()">↓ Export Image</button>
@@ -904,26 +891,21 @@ function applyElTransform() {
   function selectEl() {
     elSelected=true; bgSelected=false; logoSelected=false;
     const eh=$id('elHandles'); if(eh) eh.style.display='block';
-    const bh=$id('bgHandles'); if(bh) bh.style.display='none';
+
     const lh=$id('logoHandles'); if(lh) lh.style.display='none';
     applyElTransform();
   }
-  function selectBg() {
-    bgSelected=true; elSelected=false; logoSelected=false;
-    const bh=$id('bgHandles'); if(bh){ bh.style.display='block'; applyBgTransform(); }
-    const eh=$id('elHandles'); if(eh) eh.style.display='none';
-    const lh=$id('logoHandles'); if(lh) lh.style.display='none';
-  }
+  function selectBg() { /* base image is static, no selection */ }
   function selectLogo() {
     logoSelected=true; elSelected=false; bgSelected=false;
     const lh=$id('logoHandles'); if(lh){ lh.style.display='block'; applyLogoTransform(); }
     const eh=$id('elHandles'); if(eh) eh.style.display='none';
-    const bh=$id('bgHandles'); if(bh) bh.style.display='none';
+
   }
   function deselect() {
     elSelected=false; bgSelected=false; logoSelected=false;
     const eh=$id('elHandles'); if(eh) eh.style.display='none';
-    const bh=$id('bgHandles'); if(bh) bh.style.display='none';
+
     const lh=$id('logoHandles'); if(lh) lh.style.display='none';
   }
 
@@ -940,12 +922,12 @@ function applyElTransform() {
     const ld = $id('logoDraggable');
     const isElHandle    = e.target.classList.contains('el-handle');
     const isElRot       = e.target.id === 'rotHandle';
-    const isBgHandle    = e.target.classList.contains('bg-handle');
-    const isBgRot       = e.target.id === 'bgRotHandle';
+    const isBgHandle    = false;  // no bg handles
+    const isBgRot       = false;  // no bg rotation
     const isLogoHandle  = e.target.classList.contains('logo-handle');
     const isLogoRot     = e.target.id === 'logoRotHandle';
     const isEl          = ep && ep.style.display !== 'none' && e.target === ep;
-    const isBg          = bp && bp.style.display !== 'none' && e.target === bp;
+    const isBg          = false;  // base image is now static, no transform
     const isLogo        = ld && ld.style.display !== 'none' &&
                           (e.target === ld || ld.contains(e.target)) &&
                           !isLogoHandle && !isLogoRot;
@@ -1050,8 +1032,9 @@ function applyElTransform() {
     }
 
     // ── Click on play area background → deselect ──
+    // Don't deselect if clicking on the mirror button or any button inside handles
     const area = $id('playAreaInner');
-    if (area && area.contains(e.target)) {
+    if (area && area.contains(e.target) && e.target.tagName !== 'BUTTON') {
       deselect();
     }
   }
@@ -1162,14 +1145,7 @@ function toggleOrientation() {
       applyLogoTransform();
       applyTitleStyle(false);
     }
-    if (selBaseImg && bgW) {
-      // Rescale base image position/size
-      const area2 = $id('playAreaInner');
-      const aW2 = area2.offsetWidth, aH2 = area2.offsetHeight;
-      bgX = aW2 / 2; bgY = aH2 / 2;
-      bgScale = Math.max(aW2 / bgW, aH2 / bgH);
-      applyBgTransform();
-    }
+
   }, 420);
 }
 
@@ -1292,23 +1268,12 @@ function selectBaseImg(n) {
 
   markDone('step1Section',1, catLabel+' · Image '+n);
 
-  // Show base image as transformable img — centered and cover-sized by default
+  // Show base image — static, CSS cover handles sizing
   const bp = $id('basePreview');
   if (bp) {
     bp.src = selBaseFile;
     bp.style.display = 'block';
-    bp.onload = () => {
-      const area = $id('playAreaInner');
-      const aW = area.offsetWidth, aH = area.offsetHeight;
-      const nat = bp.naturalWidth / bp.naturalHeight;
-      // Cover-size: fill the play area
-      const coverScale = Math.max(aW / bp.naturalWidth, aH / bp.naturalHeight);
-      bgW = bp.naturalWidth; bgH = bp.naturalHeight;
-      bgScale = coverScale; bgRot = 0;
-      bgX = aW / 2; bgY = aH / 2;
-      applyBgTransform();
-      updateExportBtn();
-    };
+    bp.onload = () => { updateExportBtn(); };
   }
   // Reset element
   const ep0 = $id('elPreview'); if (ep0) { ep0.style.display='none'; ep0.src=''; }
@@ -1833,16 +1798,15 @@ function updateGenBtn() {
   btn.disabled = !ready;
   btn.classList.toggle('ready', ready);
 
-  // Body images: keep button visible but permanently disabled with tooltip
+  // Body images: keep button disabled with hover tooltip
+  const wrap = $id('genBtnWrap');
   if (isBody && selBaseImg) {
     btn.classList.remove('ready');
     btn.disabled = true;
-    if (tooltip) {
-      tooltip.textContent = "Images containing people can't be remixed";
-      tooltip.style.display = '';  // let CSS :hover control visibility
-    }
+    if (tooltip) tooltip.textContent = "Images containing people can't be remixed";
+    if (wrap) wrap.classList.add('body-locked');
   } else {
-    if (tooltip) tooltip.style.display = 'none';
+    if (wrap) wrap.classList.remove('body-locked');
   }
 }
 function updateExportBtn() {
@@ -1938,20 +1902,15 @@ async function generateImage() {
     compCanvas.height = canvasH;
     const ctx = compCanvas.getContext('2d');
 
-    // Draw base image at its current transform
+    // Draw base image cover-scaled (static, no user transform)
     const baseImg = await loadImg(baseFile);
     const area = $id('playAreaInner');
     const aW = area.offsetWidth, aH = area.offsetHeight;
     const scX = canvasW / aW, scY = canvasH / aH;
     {
-      const bDrawW = bgW * bgScale * scX;
-      const bDrawH = bgH * bgScale * scY;
-      const bcx    = bgX * scX, bcy = bgY * scY;
-      ctx.save();
-      ctx.translate(bcx, bcy);
-      ctx.rotate(bgRot * Math.PI / 180);
-      ctx.drawImage(baseImg, -bDrawW/2, -bDrawH/2, bDrawW, bDrawH);
-      ctx.restore();
+      const bs = Math.max(canvasW / baseImg.width, canvasH / baseImg.height);
+      const bw = baseImg.width * bs, bh = baseImg.height * bs;
+      ctx.drawImage(baseImg, (canvasW-bw)/2, (canvasH-bh)/2, bw, bh);
     }
 
     // Draw graphical element at its current transform, scaled to canvas coords
@@ -2135,14 +2094,9 @@ async function exportImage() {
       const bp = $id('basePreview');
       if (bp && bp.style.display !== 'none' && bp.src) {
         const baseImg = await loadImg(bp.src);
-        const bDrawW = bgW * bgScale * scX;
-        const bDrawH = bgH * bgScale * scY;
-        const bcx = bgX * scX, bcy = bgY * scY;
-        ctx.save();
-        ctx.translate(bcx, bcy);
-        ctx.rotate(bgRot * Math.PI / 180);
-        ctx.drawImage(baseImg, -bDrawW/2, -bDrawH/2, bDrawW, bDrawH);
-        ctx.restore();
+        const bs = Math.max(outW / baseImg.width, outH / baseImg.height);
+        const bw = baseImg.width * bs, bh = baseImg.height * bs;
+        ctx.drawImage(baseImg, (outW-bw)/2, (outH-bh)/2, bw, bh);
       }
       const ep = $id('elPreview');
       if (ep && ep.style.display !== 'none' && ep.src) {
