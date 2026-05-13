@@ -26,14 +26,22 @@
     }
 
     .play-area-outer {
-      border-radius: 10px; width: 100%;
+      border-radius: 8px;
       overflow: hidden; background: #000; position: relative;
       transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
     }
-    .play-area-outer.landscape { aspect-ratio: 1920/1080; max-height: 290px; }
-    .play-area-outer.portrait  {
-      aspect-ratio: 1080/1920; max-height: 460px;
-      max-width: 258px; margin-left: auto; margin-right: auto;
+    /* Landscape 16:9 — full width, height follows ratio */
+    .play-area-outer.landscape {
+      width: 100%;
+      aspect-ratio: 1920 / 1080;
+      max-height: 220px;
+    }
+    /* Portrait 9:16 — fixed height, width follows ratio automatically */
+    .play-area-outer.portrait {
+      aspect-ratio: 1080 / 1920;
+      height: 340px;
+      width: auto;
+      margin-left: auto; margin-right: auto;
     }
 
     .play-area-inner {
@@ -103,18 +111,7 @@
       pointer-events: none;
       z-index: 2;
     }
-    /* PT: sits at top-left. We anchor its bottom-left to the top-left of the logo. */
-    #logoTitle.pos-pt {
-      left: 0;
-      bottom: 100%; /* above the logo box */
-      transform: translateY(-6%); /* small gap */
-    }
-    /* EN: sits at bottom-right. We anchor its top-right to the bottom-right of the logo. */
-    #logoTitle.pos-en {
-      right: 0;
-      top: 100%; /* below the logo box */
-      transform: translateY(6%);
-    }
+    /* pos-pt / pos-en positioning is applied via inline styles in applyTitleStyle() */
 
     .play-area-label {
       font-size: 10px; color: #2a2a2a;
@@ -156,7 +153,7 @@
     .section.locked { opacity: 0.28; pointer-events: none; }
 
     .section-header {
-      display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+      display: flex; align-items: center; gap: 8px; padding: 8px 12px;
       cursor: pointer; background: #161616;
       transition: background 0.15s; user-select: none;
     }
@@ -191,14 +188,14 @@
     .section.active .collapse-arrow { color: #555; }
     .section.open   .collapse-arrow { transform: rotate(180deg); }
 
-    .section-body { padding: 14px; display: none; }
+    .section-body { padding: 10px 12px; display: none; }
     .section.open .section-body { display: block; }
 
     /* ════════════ BASE CATEGORY ════════════ */
-    .base-choices { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 12px; }
+    .base-choices { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 10px; }
     .base-choice {
       position: relative; border-radius: 8px; overflow: hidden;
-      cursor: pointer; border: 2px solid #222; transition: border-color 0.15s; aspect-ratio: 16/9;
+      cursor: pointer; border: 2px solid #222; transition: border-color 0.15s; aspect-ratio: 3/2;
     }
     .base-choice:hover { border-color: #555; }
     .base-choice.selected { border-color: #fff; }
@@ -215,8 +212,8 @@
 
     /* ════════════ IMAGE GRIDS ════════════ */
     .picker-label { font-size: 10px; color: #444; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; }
-    .grid-5x2 { display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; }
-    .grid-4x4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; }
+    .grid-5x2 { display: grid; grid-template-columns: repeat(5,1fr); gap: 4px; }
+    .grid-4x4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 4px; }
 
     .img-tile {
       aspect-ratio: 1; border-radius: 7px; border: 2px solid #1e1e1e;
@@ -265,7 +262,7 @@
     .logo-sub::after { content: ''; flex: 1; height: 1px; background: #1d1d1d; }
 
     /* 6-slot grid: upload + 5 presets */
-    .logo-grid-6 { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; }
+    .logo-grid-6 { display: grid; grid-template-columns: repeat(3,1fr); gap: 4px; }
 
     .logo-tile {
       aspect-ratio: 1; border-radius: 7px; border: 2px solid #1e1e1e;
@@ -315,10 +312,10 @@
     .title-chooser.visible { display: block; }
 
     .title-grid {
-      display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-top: 10px;
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 4px; margin-top: 8px;
     }
     .title-chip {
-      padding: 8px 4px; border-radius: 6px; border: 1px solid #1e1e1e;
+      padding: 5px 3px; border-radius: 5px; border: 1px solid #1e1e1e;
       cursor: pointer;
       font-family: 'Trebuchet MS', Trebuchet, sans-serif;
       font-size: 10px; font-weight: 700;
@@ -340,7 +337,7 @@
     .gen-btn {
       width: 100%; font-size: 13px; font-weight: 800;
       letter-spacing: 0.12em; text-transform: uppercase;
-      padding: 15px; border-radius: 10px; border: none;
+      padding: 11px; border-radius: 8px; border: none;
       cursor: pointer; font-family: sans-serif; transition: all 0.2s;
       background: #181818; color: #2a2a2a;
     }
@@ -359,7 +356,7 @@
     .export-btn {
       width: 100%; font-size: 13px; font-weight: 700;
       letter-spacing: 0.1em; text-transform: uppercase;
-      padding: 13px; border-radius: 10px;
+      padding: 10px; border-radius: 8px;
       border: 1px solid #222; cursor: pointer; font-family: sans-serif;
       background: #141414; color: #333; transition: all 0.2s; display: none;
     }
@@ -370,7 +367,7 @@
       body { padding: 0.75rem; padding-bottom: 5rem; }
       .grid-5x2 { grid-template-columns: repeat(4,1fr); }
       .title-grid { grid-template-columns: repeat(3,1fr); }
-      .play-area-outer.portrait { max-width: 200px; }
+      .play-area-outer.portrait { height: 260px; }
     }
   </style>
 </head>
@@ -440,13 +437,13 @@
   <div class="section-body">
     <div class="base-choices">
       <div class="base-choice" id="basebtn-tropical" onclick="selectCat('tropical')">
-        <img src="Foams-Brand-Images-Tropical-Landscape-03.jpg" style="width:100%;height:100%;object-fit:cover;display:block;"
+        <img src="Foams-Brand-Images-Tropical-Landscape-01.jpg" style="width:100%;height:100%;object-fit:cover;display:block;"
           onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
         <div class="ph-bg tropical" style="display:none"></div>
         <span class="choice-label">Tropical</span>
       </div>
       <div class="base-choice" id="basebtn-water" onclick="selectCat('water')">
-        <img src="Foams-Brand-Images-Water-Landscape-02.jpg" style="width:100%;height:100%;object-fit:cover;display:block;"
+        <img src="Foams-Brand-Images-Water-Landscape-05.jpg" style="width:100%;height:100%;object-fit:cover;display:block;"
           onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
         <div class="ph-bg water" style="display:none"></div>
         <span class="choice-label">Water</span>
@@ -670,7 +667,7 @@ function selectBaseImg(n) {
   markDone('step1Section',1, catLabel+' · Image '+n);
   buildStep2(selCat);
   activateSection('step2Section',2);
-  $id('step2Section').scrollIntoView({behavior:'smooth',block:'nearest'});
+  window.scrollTo({top: 0, behavior: 'smooth'});
 }
 
 // ─── STEP 2 ──────────────────────────────────────────────────────────────────
@@ -724,7 +721,7 @@ function selectEl(type, n, tile) {
   markDone('step2Section',2,(type==='defocus'?'Light Defocus':'Pink Vector')+' #'+n);
   buildStep3();
   activateSection('step3Section',3);
-  $id('step3Section').scrollIntoView({behavior:'smooth',block:'nearest'});
+  window.scrollTo({top: 0, behavior: 'smooth'});
 }
 
 // ─── STEP 3: LOGO ────────────────────────────────────────────────────────────
@@ -852,9 +849,7 @@ function selectLogo(logoId, tile) {
   $id('titleChooser').classList.add('visible');
   buildTitleGrid();
   // Small delay so the title chooser is rendered before scrolling
-  setTimeout(() => {
-    $id('titleChooser').scrollIntoView({behavior:'smooth', block:'nearest'});
-  }, 80);
+  // Title chooser is now visible inline - no extra scroll needed
 
   // Update summary text but do NOT collapse the section
   const lbl = logoId==='upload' ? 'Uploaded' : 'Variation '+logoId.split('-')[1];
@@ -932,16 +927,16 @@ function applyTitleStyle() {
 
   if (!selTitle) { hideTitle(); return; }
 
-  // Font size: proportional to the logo's rendered px size
-  const area    = $id('playAreaInner');
-  const aW      = area.offsetWidth;
-  const aH      = area.offsetHeight;
-  const baseSize = Math.min(aW, aH);
-  const logoPx   = baseSize * (logoScale / 100);  // logo width/height in px
-  // Title is roughly 14% of the logo size — adjust this ratio to taste
-  const fontSize = Math.max(8, Math.round(logoPx * 0.16));
+  // Font size scales with logo pixel size
+  const area     = $id('playAreaInner');
+  const aW       = area.offsetWidth;
+  const aH       = area.offsetHeight;
+  const baseSize  = Math.min(aW, aH);
+  const logoPx    = baseSize * (logoScale / 100);
+  // Font is ~13% of the logo size — matches the reference weight visually
+  const fontSize  = Math.max(7, Math.round(logoPx * 0.13));
 
-  titleEl.textContent = selTitle;
+  titleEl.textContent      = selTitle;
   titleEl.style.display    = 'block';
   titleEl.style.fontSize   = fontSize + 'px';
 
@@ -949,12 +944,35 @@ function applyTitleStyle() {
   const colorMap = { white:'#ffffff', black:'#000000', pink:'#ff30ff' };
   titleEl.style.color = colorMap[logoColor] || '#ffffff';
 
-  // Remove both position classes, apply the right one
+  // Clear all position props first
+  titleEl.style.left      = '';
+  titleEl.style.right     = '';
+  titleEl.style.top       = '';
+  titleEl.style.bottom    = '';
+  titleEl.style.transform = '';
   titleEl.classList.remove('pos-pt','pos-en');
+
   if (titleLang === 'PT') {
-    titleEl.classList.add('pos-pt');
+    /*
+      PT (ESPAÇO reference): appears to the left and below the logo's left edge.
+      In the reference the word is at ~bottom-left, below the logo body.
+      We place it at: left edge aligned with logo left, top at ~85% down the logo height.
+      A small negative left offset (-5%) shifts it slightly outside the logo to the left.
+    */
+    titleEl.style.left   = '-5%';
+    titleEl.style.right  = 'auto';
+    titleEl.style.top    = '82%';
+    titleEl.style.bottom = 'auto';
   } else {
-    titleEl.classList.add('pos-en');
+    /*
+      EN (SPACE reference): appears to the right and lower, but higher than PT baseline.
+      Title's left edge aligns roughly under the logo's right half.
+      We place it at: right edge of logo, top at ~75% down.
+    */
+    titleEl.style.right  = '-5%';
+    titleEl.style.left   = 'auto';
+    titleEl.style.top    = '72%';
+    titleEl.style.bottom = 'auto';
   }
 }
 
