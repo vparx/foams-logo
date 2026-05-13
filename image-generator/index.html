@@ -516,7 +516,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v7.1 · FOAMS Image Generator</div>
+<div class="version">v7.2 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -1043,7 +1043,7 @@ function applyElTransform() {
   document.addEventListener('touchmove', onMove, {passive:false});
 
   function onMove(e) {
-    const anyActive = elDragging || elRotating || elScaling || bgDragging || bgRotating || bgScaling;
+    const anyActive = elDragging || elRotating || elScaling || bgDragging || bgRotating || bgScaling || logoDragging2 || logoRotating2 || logoScaling2;
     if (!anyActive) return;
     e.preventDefault();
     const p  = xy(e);
