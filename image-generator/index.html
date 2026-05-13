@@ -1366,7 +1366,8 @@ async function generateImage() {
       prompt: prompt,
       n: 1,
       size: size,
-      quality: 'high',
+      quality: 'standard',
+      response_format: 'b64_json',  // always get base64 back
     };
 
     const res = await fetch('https://foams-generator.plattformplus.workers.dev/', {
@@ -1377,23 +1378,34 @@ async function generateImage() {
       body: JSON.stringify(requestBody),
     });
 
+    // Log raw response for debugging
+    const rawText = await res.text();
+    console.log('API raw response:', rawText.substring(0, 500));
+
+    let data;
+    try { data = JSON.parse(rawText); }
+    catch(e) { throw new Error('Invalid JSON from API: ' + rawText.substring(0, 200)); }
+
     if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      throw new Error(errData?.error?.message || `API error ${res.status}`);
+      throw new Error(data?.error?.message || `API error ${res.status}`);
     }
 
-    const data = await res.json();
+    console.log('API data keys:', Object.keys(data));
+    console.log('data.data:', JSON.stringify(data.data)?.substring(0, 200));
 
-    // gpt-image-1 returns base64, dall-e-3 returns URL — handle both
+    // Handle both b64_json and url formats
     const imgData = data.data?.[0];
     let imageUrl = null;
-    if (imgData?.url) {
-      imageUrl = imgData.url;
-    } else if (imgData?.b64_json) {
+    if (imgData?.b64_json) {
       imageUrl = `data:image/png;base64,${imgData.b64_json}`;
+    } else if (imgData?.url) {
+      imageUrl = imgData.url;
     }
 
-    if (!imageUrl) throw new Error('No image returned from API');
+    if (!imageUrl) {
+      console.error('Full API response:', JSON.stringify(data));
+      throw new Error('No image returned from API — check console for full response');
+    }
 
     // Display in play area
     const bg = $id('bgImage');
