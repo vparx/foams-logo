@@ -434,7 +434,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v4.6 · FOAMS Image Generator</div>
+<div class="version">v4.7 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -468,6 +468,19 @@
       </div>
 
       <span class="play-area-label" id="playAreaLabel">1920 × 1080</span>
+      <!-- Generation progress overlay -->
+      <div id="genProgress" style="display:none;position:absolute;inset:0;
+        display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;
+        background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);z-index:15;pointer-events:none;">
+        <div id="genProgressBar" style="width:160px;height:3px;background:rgba(255,255,255,0.15);
+          border-radius:2px;overflow:hidden;">
+          <div id="genProgressFill" style="height:100%;width:0%;background:#fff;
+            border-radius:2px;transition:width 0.4s ease;"></div>
+        </div>
+        <span id="genProgressText" style="font-family:'Trebuchet MS',sans-serif;
+          font-size:11px;font-weight:700;color:rgba(255,255,255,0.7);
+          letter-spacing:0.14em;text-transform:uppercase;"></span>
+      </div>
 
     </div>
 </div>
@@ -1300,6 +1313,21 @@ async function fileToBase64(url) {
   });
 }
 
+// Progress helpers
+function showProgress(pct, msg) {
+  const el  = $id('genProgress');
+  const bar = $id('genProgressFill');
+  const txt = $id('genProgressText');
+  if (!el) return;
+  el.style.display = 'flex';
+  if (bar) bar.style.width = pct + '%';
+  if (txt) txt.textContent = msg;
+}
+function hideProgress() {
+  const el = $id('genProgress');
+  if (el) el.style.display = 'none';
+}
+
 async function generateImage() {
   if (!selCat || !selBaseImg || !selEl || !selLogo) return;
   const btn = $id('genBtn');
@@ -1307,6 +1335,7 @@ async function generateImage() {
   btn.classList.remove('ready', 'regenerate');
   btn.classList.add('running');
   btn.textContent = 'Generating…';
+  showProgress(5, 'Preparing…');
 
   try {
     // Determine file paths
@@ -1322,7 +1351,7 @@ async function generateImage() {
     const prompt = buildPrompt(size);
 
     // Load both images as base64
-    btn.textContent = 'Loading images…';
+    showProgress(15, 'Loading images…');
     let baseB64, elB64;
     try {
       [baseB64, elB64] = await Promise.all([
@@ -1334,13 +1363,29 @@ async function generateImage() {
       throw new Error('Could not load image files. Make sure all files are on the server.');
     }
 
-    btn.textContent = 'Generating…';
+    showProgress(35, 'Sending to AI…');
+
+    // Slowly tick progress while API processes (can take 30-90s)
+    let _fakePct = 35;
+    const _ticker = setInterval(() => {
+      if (_fakePct < 70) {
+        _fakePct += 0.4;
+        const msgs = [
+          [35, 'Composing images…'],
+          [45, 'Blending layers…'],
+          [55, 'Refining details…'],
+          [65, 'Finalising…'],
+        ];
+        const msg = msgs.reduce((a, m) => _fakePct >= m[0] ? m : a, msgs[0]);
+        showProgress(Math.round(_fakePct), msg[1]);
+      }
+    }, 800);
 
     // Use GPT-4o Responses API with image_generation tool
     // This is the only OpenAI API that accepts image inputs AND outputs an image
     const requestBody = {
       _endpoint: 'https://api.openai.com/v1/responses',  // Worker reads this
-      model: 'gpt-image-1',
+      model: 'gpt-4o',
       input: [
         {
           role: 'user',
@@ -1366,6 +1411,8 @@ async function generateImage() {
       body: JSON.stringify(requestBody),
     });
 
+    clearInterval(_ticker);
+    showProgress(75, 'Processing response…');
     const rawText = await res.text();
     console.log('API raw response (first 500):', rawText.substring(0, 500));
 
@@ -1397,6 +1444,7 @@ async function generateImage() {
       }
     }
 
+    showProgress(95, 'Almost done…');
     if (!imageUrl) {
       console.error('Full API response:', JSON.stringify(data).substring(0, 1000));
       throw new Error('No image in API response — check console');
@@ -1417,6 +1465,8 @@ async function generateImage() {
       if (_ep2) _ep2.style.display = 'none';
     }, 700);
 
+    showProgress(100, 'Done!');
+    setTimeout(hideProgress, 600);
     imgGenerated = true;
     updateExportBtn();
     btn.innerHTML = '↺ Regenerate';
@@ -1425,6 +1475,8 @@ async function generateImage() {
     btn.disabled = false;
 
   } catch(err) {
+    try { clearInterval(_ticker); } catch(e) {}
+    hideProgress();
     console.error('Generation error:', err);
     btn.textContent = 'Error — Retry';
     btn.classList.remove('running');
