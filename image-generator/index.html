@@ -422,10 +422,49 @@
     .action-area { display: none; }
 
     @media (max-width:560px) {
-      body { padding: 0 0.75rem 4rem; }
-      .grid-5x2 { grid-template-columns: repeat(4,1fr); }
-      .title-grid { grid-template-columns: repeat(3,1fr); }
-      .play-area-outer.portrait { width: 200px; }
+      body { padding: 0 0.5rem 4rem; }
+
+      /* Play area: portrait narrower on small screens */
+      .play-area-outer.portrait { width: 160px; }
+
+      /* Controls bar: wrap to two lines gracefully */
+      .play-controls-bar { flex-wrap: wrap; gap: 5px; }
+      .orient-info { display: none; } /* hide resolution label on mobile */
+      .scale-strip { min-width: 100px; }
+
+      /* Sections */
+      .section-body { padding: 8px 10px; }
+      .section-header { padding: 8px 10px; gap: 6px; }
+      .section-title { font-size: 10px; }
+      .section-summary { max-width: 100px; font-size: 9px; }
+
+      /* Base category buttons: slightly shorter */
+      .base-choices { gap: 4px; }
+
+      /* Image grids: fewer columns */
+      .grid-5x2 { grid-template-columns: repeat(4,1fr); gap: 3px; }
+      .grid-4x4 { grid-template-columns: repeat(4,1fr); gap: 3px; }
+
+      /* Logo grid: 3 cols on mobile (was 6) */
+      .logo-grid-6 { grid-template-columns: repeat(3,1fr); }
+
+      /* Title chips */
+      .title-grid { grid-template-columns: repeat(3,1fr); gap: 3px; }
+      .title-chip { font-size: 9px; padding: 4px 2px; }
+
+      /* Overlay buttons: smaller text/padding */
+      .gen-btn, .export-btn { font-size: 11px; padding: 7px 14px; }
+      .play-area-btns { gap: 5px; right: 6px; bottom: 42px; }
+
+      /* Toggle groups: slightly smaller */
+      .tgl { font-size: 9px; padding: 4px 8px; }
+    }
+
+    @media (max-width:380px) {
+      .grid-5x2 { grid-template-columns: repeat(3,1fr); }
+      .logo-grid-6 { grid-template-columns: repeat(3,1fr); }
+      .gen-btn, .export-btn { font-size: 10px; padding: 6px 10px; }
+      .section-title { font-size: 9px; letter-spacing: 0.07em; }
     }
   </style>
 </head>
@@ -434,7 +473,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v5.0 · FOAMS Image Generator</div>
+<div class="version">v5.1 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -1494,52 +1533,129 @@ async function generateImage() {
 }
 
 function buildPrompt(size) {
-  return `You are given two images: a base photograph and a graphical element. Create a new, creative composed image using both.
+  return `You are given two images: a base photograph and a graphical element.
 
-Use both as creative raw material. You don't need to reproduce them exactly — feel free to reinterpret, resize, distort or recolour elements from both images. The result should feel inspired by both, not a literal copy.
-
-The graphical element should feel integrated into the scene — part of the atmosphere, not a floating overlay. It can be subtle or bold, but it should feel intentional.
-
-The base photograph sets the mood and environment. Keep the same general feeling and colour palette, but you can take creative liberties with composition and lighting.
-
-Blend modes, colour grading, double exposure effects are all welcome if they serve the image.
-
-Final result: a single cohesive image — elegant, modern, slightly mysterious. No added text, logos or symbols.`;
+Create a new composed image that combines both. Rules:
+- Keep the base photograph as the main scene. It can be very slightly reinterpreted in lighting or colour, but the content and mood should remain essentially the same.
+- The graphical element is your creative tool. You can freely scale it, crop it, repeat it, scatter it, abstract it, or transform its shape and size — as long as it feels intentional and enhances the scene. It does not need to look exactly like the original.
+- The graphical element should feel part of the scene, not a sticker placed on top.
+- No blend modes, overlays or transparency effects — composit cleanly.
+- No text, no logos, no new symbols.
+- Result: elegant, modern, slightly mysterious.`;
 }
 
 // ─── EXPORT ──────────────────────────────────────────────────────────────────
-function exportImage() {
+async function exportImage() {
   if (!generatedImageUrl) return;
 
-  // Determine filename
-  const orient = orientation === 'landscape' ? 'landscape' : 'portrait';
-  const filename = `foams-image-${orient}-${Date.now()}.png`;
+  const isLandscape = orientation === 'landscape';
+  const outW = isLandscape ? 1920 : 1080;
+  const outH = isLandscape ? 1080 : 1920;
+  const filename = `foams-image-${orientation}-${Date.now()}.png`;
 
-  // If it's a base64 data URL, convert and download directly
-  if (generatedImageUrl.startsWith('data:')) {
-    const a = document.createElement('a');
-    a.href = generatedImageUrl;
-    a.download = filename;
-    a.click();
-    return;
+  // Create off-screen canvas at full output resolution
+  const canvas = document.createElement('canvas');
+  canvas.width  = outW;
+  canvas.height = outH;
+  const ctx = canvas.getContext('2d');
+
+  // Helper: load an image from a src (data URL or URL) into an HTMLImageElement
+  function loadImg(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload  = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
   }
 
-  // If it's a regular URL, fetch it and download as blob
-  fetch(generatedImageUrl)
-    .then(r => r.blob())
-    .then(blob => {
+  try {
+    // 1. Draw the generated background image at full resolution
+    const bgImg = await loadImg(generatedImageUrl);
+    // Scale to cover the canvas (same as background-size:cover)
+    const scale = Math.max(outW / bgImg.width, outH / bgImg.height);
+    const dw = bgImg.width  * scale;
+    const dh = bgImg.height * scale;
+    const dx = (outW - dw) / 2;
+    const dy = (outH - dh) / 2;
+    ctx.drawImage(bgImg, dx, dy, dw, dh);
+
+    // 2. Draw the logo + title if present
+    if (selLogo) {
+      // Get play-area dimensions to compute scaling ratio
+      const area  = $id('playAreaInner');
+      const aW    = area.offsetWidth;
+      const aH    = area.offsetHeight;
+      const scaleX = outW / aW;
+      const scaleY = outH / aH;
+
+      // Logo: logoPctX/Y is center as % of play area; logoScale is % of min(aW,aH)
+      const baseSize   = Math.min(aW, aH);
+      const logoPxW    = baseSize * (logoScale / 100);  // logo size in play-area px
+      const logoCX_pa  = (logoPctX / 100) * aW;         // center x in play-area px
+      const logoCY_pa  = (logoPctY / 100) * aH;         // center y in play-area px
+
+      // Scale to output canvas coords
+      const logoOutSize = Math.min(outW, outH) * (logoScale / 100);
+      const logoOutX    = logoCX_pa * scaleX - logoOutSize / 2;
+      const logoOutY    = logoCY_pa * scaleY - logoOutSize / 2;
+
+      // Draw logo image
+      const logoSrc = $id('logoImg')?.src;
+      if (logoSrc && $id('logoImg').style.display !== 'none') {
+        const logoImg = await loadImg(logoSrc);
+        ctx.drawImage(logoImg, logoOutX, logoOutY, logoOutSize, logoOutSize);
+      }
+
+      // 3. Draw title text if present
+      if (selTitle) {
+        const titleEl = $id('logoTitle');
+        if (titleEl && titleEl.style.display !== 'none') {
+          // Get title position in play-area coords
+          const tRect   = titleEl.getBoundingClientRect();
+          const aRect   = area.getBoundingClientRect();
+          const tLeft_pa = tRect.left - aRect.left;  // in play-area px
+          const tTop_pa  = tRect.top  - aRect.top;
+
+          // Scale to canvas
+          const tLeft_out = tLeft_pa * scaleX;
+          const tTop_out  = tTop_pa  * scaleY;
+
+          // Font size: same proportion as in play-area but scaled up
+          const logoPxInPlayArea = Math.min(aW, aH) * (logoScale / 100);
+          const fontSizePlay = Math.max(5, Math.round(logoPxInPlayArea * 0.08 * (titleScale / 100)));
+          const fontSizeOut  = Math.round(fontSizePlay * scaleX);
+
+          ctx.save();
+          ctx.font = `700 ${fontSizeOut}px 'Trebuchet MS', Trebuchet, sans-serif`;
+          ctx.textBaseline = 'top';
+          const colorMap = { white:'#ffffff', black:'#000000', pink:'#ff30ff' };
+          ctx.fillStyle = colorMap[logoColor] || '#ffffff';
+          ctx.fillText(selTitle, tLeft_out, tTop_out);
+          ctx.restore();
+        }
+      }
+    }
+
+    // 4. Download
+    canvas.toBlob(blob => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = filename;
       a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    })
-    .catch(err => {
-      console.error('Export failed:', err);
-      // Fallback: open in new tab
-      window.open(generatedImageUrl, '_blank');
-    });
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }, 'image/png');
+
+  } catch(err) {
+    console.error('Export failed:', err);
+    // Fallback: just download the generated image without compositing
+    const a = document.createElement('a');
+    a.href = generatedImageUrl;
+    a.download = filename;
+    a.click();
+  }
 }
 
 // ─── RESIZE ──────────────────────────────────────────────────────────────────
