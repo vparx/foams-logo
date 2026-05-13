@@ -517,7 +517,7 @@
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
-    <div class="version" id="versionTag" style="position:absolute;top:8px;left:10px;z-index:20;pointer-events:none;">v8.5 · FOAMS Image Generator</div>
+    <div class="version" id="versionTag" style="position:absolute;top:8px;left:10px;z-index:20;pointer-events:none;">v8.6 · FOAMS Image Generator</div>
     <div class="play-area-inner" id="playAreaInner">
 
       <!-- Generated (remixed) result — draggable/scalable/rotatable after generation -->
@@ -925,17 +925,17 @@ function showTitleInPlayArea() {
   const area = $id('playAreaInner');
   const aW = area.offsetWidth, aH = area.offsetHeight;
   if (titleTX === 0 && titleTY === 0) {
-    // First time only — position near logo edge
+    // First time only — position relative to logo
     const logoSW = logoTW * logoTScale;
     const logoSH = logoTH * logoTScale;
     if (titleLang === 'PT') {
-      // PT (CASA): just above the logo, slightly left of center
-      titleTX = logoTX - logoSW * 0.15;
-      titleTY = logoTY - logoSH * 0.5 - 8;   // just above top edge
+      // PT (CASA): above and to the LEFT of the logo
+      titleTX = logoTX - logoSW * 0.35;   // left of logo center
+      titleTY = logoTY - logoSH * 0.55;   // above logo
     } else {
-      // EN (HOUSE): just below the logo, slightly right of center
-      titleTX = logoTX + logoSW * 0.15;
-      titleTY = logoTY + logoSH * 0.5 + 8;   // just below bottom edge
+      // EN (HOUSE): below and to the RIGHT of the logo
+      titleTX = logoTX + logoSW * 0.35;   // right of logo center
+      titleTY = logoTY + logoSH * 0.55;   // below logo
     }
     titleTScale = 1.0; titleTRot = 0;
   }
@@ -1431,7 +1431,6 @@ function toggleOrientation() {
     const aW2 = area2.offsetWidth, aH2 = area2.offsetHeight;
 
     if (selLogo) {
-      // Restore logo position and size proportionally
       logoTX = _logoPctX * aW2;
       logoTY = _logoPctY * aH2;
       const newBase = Math.min(aW2, aH2);
@@ -1440,11 +1439,23 @@ function toggleOrientation() {
       applyLogoTransform();
     }
 
-    // Restore title position proportionally (whether or not manually moved)
     if ($id('titleDraggable')?.style.display !== 'none') {
       titleTX = _titlePctX * aW2;
       titleTY = _titlePctY * aH2;
       applyTitleTransform(false);
+    }
+
+    // In landscape: always reset generated image to cover-fill (no repositioning needed)
+    // In portrait: keep whatever position the user set
+    if (orientation === 'landscape' && generatedImageUrl) {
+      const gi = $id('bgImage');
+      if (gi && gi.style.display !== 'none' && gi.src) {
+        genScale = Math.max(aW2 / genW, aH2 / genH);
+        genX = aW2 / 2; genY = aH2 / 2; genRot = 0;
+        genSelected = false;
+        const gh = $id('genHandles'); if (gh) gh.style.display = 'none';
+        applyGenTransform();
+      }
     }
   }, 420);
 }
