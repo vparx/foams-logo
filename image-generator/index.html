@@ -434,7 +434,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v4.1 · FOAMS Image Generator</div>
+<div class="version">v4.2 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -1366,7 +1366,7 @@ async function generateImage() {
       prompt: prompt,
       n: 1,
       size: size,
-      quality: 'standard',
+      quality: 'auto',
     };
 
     const res = await fetch('https://foams-generator.plattformplus.workers.dev/', {
