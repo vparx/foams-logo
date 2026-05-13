@@ -449,9 +449,9 @@
 
       <!-- Graphical element preview — shown when element is chosen -->
       <div id="elPreview" style="display:none;position:absolute;
-        right:8%;bottom:8%;width:32%;height:32%;
-        background-size:contain;background-position:center;background-repeat:no-repeat;
-        opacity:0.35;transition:opacity 0.5s ease;pointer-events:none;"></div>
+        inset:0;
+        background-size:60%;background-position:center;background-repeat:no-repeat;
+        opacity:0.4;transition:opacity 0.5s ease;pointer-events:none;"></div>
 
       <div id="logoLayer">
         <!--
@@ -695,9 +695,12 @@ function selectCat(cat) {
   imgGenerated = false;
   lockSection('step2Section',2); lockSection('step3Section',3);
   clearLogoFromPlayArea();
-  // Clear previews when starting over
-  const _bp = $id('basePreview'); if (_bp) { _bp.style.display='none'; _bp.style.backgroundImage=''; }
-  const _ep = $id('elPreview');   if (_ep) { _ep.style.display='none'; _ep.style.backgroundImage=''; }
+  // Reset play area completely when starting over
+  const _bg = $id('bgImage');
+  if (_bg) { _bg.classList.remove('visible'); _bg.style.background = ''; _bg.style.backgroundImage = ''; }
+  const _bp = $id('basePreview'); if (_bp) { _bp.style.display='none'; _bp.style.backgroundImage=''; _bp.style.opacity='0.45'; }
+  const _ep = $id('elPreview');   if (_ep) { _ep.style.display='none'; _ep.style.backgroundImage=''; _ep.style.opacity='0.4'; }
+  imgGenerated = false;
   updateGenBtn(); updateExportBtn();
 
   ['tropical','water','body'].forEach(c =>
@@ -1059,7 +1062,7 @@ function setTitleDefaultOffset() {
     //   dx: -60% of logoPx  (well into the left half, slightly outside visual edge)
     //   dy: -35% of logoPx  (into the upper portion of the image)
     titleOffDx = -(logoPx * 0.60);
-    titleOffDy = -(logoPx * 0.35);
+    titleOffDy = -(logoPx * 0.18);  // lower than before
   } else {
     // EN (HOUSE style): inside the logo image, lower-right area.
     // Offset from logo CENTER:
