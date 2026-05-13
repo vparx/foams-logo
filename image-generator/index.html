@@ -514,7 +514,7 @@
 <!-- ══════════════════════════════════════════
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
-<div class="version">v7.7 · FOAMS Image Generator</div>
+<div class="version">v7.8 · FOAMS Image Generator</div>
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
@@ -830,15 +830,14 @@ function applyLogoTransform() {
   const lh = $id('logoHandles');
   if (!ld || ld.style.display === 'none') return;
 
-  // Keep box at NATURAL size (logoTW × logoTH).
-  // Apply scale + rotation via CSS transform — everything inside (logo img, title text)
-  // scales together automatically without any JS font-size math.
+  // Natural size box, centered at logoTX/logoTY via translate.
+  // scale+rotate applied around center — visual center stays at logoTX/logoTY.
   ld.style.width     = logoTW + 'px';
   ld.style.height    = logoTH + 'px';
-  ld.style.left      = (logoTX - logoTW/2) + 'px';
-  ld.style.top       = (logoTY - logoTH/2) + 'px';
-  ld.style.transform = `scale(${logoTScale}) rotate(${logoTRot}deg)`;
-  ld.style.transformOrigin = 'center center';
+  ld.style.left      = '0';
+  ld.style.top       = '0';
+  ld.style.transformOrigin = '0 0';
+  ld.style.transform = `translate(${logoTX - logoTW/2}px, ${logoTY - logoTH/2}px) scale(${logoTScale}) rotate(${logoTRot}deg)`;
 
   // Keep logoPctX/Y in sync for export code
   const area = $id('playAreaInner');
