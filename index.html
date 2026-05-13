@@ -120,7 +120,7 @@
   </defs>
 </svg>
 
-<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v10.2</div>
+<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v10.4</div>
 <canvas id="measure" style="display:none"></canvas>
 
 <div class="stage-outer" id="stageOuter">
@@ -982,14 +982,6 @@ function positionWordTag() {
   tag.style.left = screenLeft + 'px';
   tag.style.top  = screenTop  + 'px';
 
-  // Store in stage coords for export.
-  // screenLeft/Top are stageOuter-relative screen pixels.
-  // Stage origin on screen = stageOuter center + (-SW/2 + panOffsetX) * zoom, etc.
-  // So: stageCoord = (screenPixel - stageOriginOnScreen) / zoom
-  // stageOriginX on screen = outerW/2 + panOffsetX * zoom - SW/2 * zoom... 
-  // Simpler: we know F is at fPos.left in stage coords, and at (anchorLeft + fRect.width*0.15) on screen.
-  // So: stageCoord = fPos.left + (screenLeft - anchorLeft - fRect.width*0.15 + fRect.width*0.15) / zoom... 
-  // Even simpler: tag screen position relative to F screen position, converted to stage offset from F stage position.
   const fScreenLeft = fRect.left - outerRect.left;
   const fScreenTop  = fRect.top  - outerRect.top;
   const fPos = letterPositions[0];
@@ -1046,8 +1038,8 @@ function initWordTagDrag() {
 }
 
 const WORD_SETS = {
-  pt: ['CASA','ESPAÇO','NÚCLEO','BASE','RETIRO','REFÚGIO','ESTÚDIOS','COLETIVO','RESIDÊNCIA','LABORATÓRIO','RESISTÊNCIA'],
-  en: ['HOUSE','SPACE','BASE','RETREAT','REFUGE','STUDIOS','COLLECTIVE','RESIDENCY','LABORATORY','RESISTANCE']
+  pt: ['CASA','ESPAÇO','ESTÚDIOS','COLETIVO','RESIDÊNCIA','LABORATÓRIO','RESISTÊNCIA'],
+  en: ['HOUSE','SPACE','STUDIOS','COLLECTIVE','RESIDENCY','LABORATORY','RESISTANCE']
 };
 let currentLang = 'none';
 let wordCycleIndex = 0;
