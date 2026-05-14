@@ -264,6 +264,21 @@
     .el-divider::after { content: ''; flex: 1; height: 1px; background: #222; }
     .body-note { font-size: 10px; color: #444; margin-bottom: 8px; font-style: italic; }
 
+    /* Open Logo Generator button */
+    .open-logo-gen-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; text-decoration: none;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+      color: #ff30ff; border: 1px solid rgba(255,48,255,0.3);
+      background: rgba(255,48,255,0.06); border-radius: 6px;
+      padding: 5px 10px; margin-bottom: 10px;
+      transition: all 0.15s; cursor: pointer;
+      float: right;
+    }
+    .open-logo-gen-btn:hover { color: #ff70ff; border-color: rgba(255,48,255,0.6); background: rgba(255,48,255,0.12); }
+    .open-logo-gen-btn svg { flex-shrink: 0; }
+
     /* ════════════ LOGO SECTION ════════════ */
     .logo-ctrl-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
     .ctrl-lbl {
@@ -517,7 +532,7 @@
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
   <div class="play-area-outer landscape" id="playAreaOuter">
-    <div class="version" id="versionTag" style="position:absolute;top:8px;left:10px;z-index:20;pointer-events:none;">v8.6 · FOAMS Image Generator</div>
+    <div class="version" id="versionTag" style="position:absolute;top:8px;left:10px;z-index:20;pointer-events:none;">v8.8 · FOAMS Image Generator</div>
     <div class="play-area-inner" id="playAreaInner">
 
       <!-- Generated (remixed) result — draggable/scalable/rotatable after generation -->
@@ -721,6 +736,15 @@
     <span class="collapse-arrow"><svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
   </div>
   <div class="section-body" id="step3Body">
+
+    <!-- Open Logo Generator link -->
+    <a href="https://casafoams.com/foams-logo" target="_blank" rel="noopener" class="open-logo-gen-btn">
+      <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+        <path d="M4.5 2H2a1 1 0 00-1 1v6a1 1 0 001 1h6a1 1 0 001-1V6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        <path d="M7 1h3v3M10 1L6 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Open Logo Generator
+    </a>
 
     <!-- Color toggle -->
     <div class="logo-ctrl-row">
