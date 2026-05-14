@@ -3,1727 +3,2499 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FOAMS Logo Generator</title>
+  <title>FOAMS Image Generator</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: sans-serif; background: #111; min-height: 100vh; padding: 1.5rem; padding-bottom: 3rem; }
 
-    /* ── Play area ── */
-    .stage-outer {
-      border-radius: 12px;
-      width: 100%;
-      height: 42vw;
-      min-height: 200px;
-      max-height: 340px;
-      margin-bottom: 0.5rem;
-      overflow: hidden; background: #fff;
-      cursor: default; position: relative;
-      transition: background 0.3s ease;
+    body {
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+      background: #111;
+      min-height: 100vh;
+      padding: 0 1rem 4rem;
+      color: #bbb;
     }
-    .stage-outer.inverted { background: #000; }
-    .stage-outer.inverted .word-tag { color: #fff; }
-    .lamp-btn {
-      position: absolute;
-      bottom: 10px; right: 10px;
-      width: 28px; height: 28px;
-      background: none;
-      border: 1px solid rgba(0,0,0,0.15);
-      border-radius: 50%;
-      cursor: pointer;
+
+    .version {
+      font-size: 10px; color: rgba(255,255,255,0.2); font-family: monospace;
+      letter-spacing: 0.05em;
+    }
+
+    /* ════════════ STICKY TOP ════════════ */
+    .sticky-top {
+      position: sticky; top: 0; z-index: 200;
+      background: #111;
+      padding-top: 6px; padding-bottom: 8px; margin-bottom: 10px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.8);
+    }
+
+    /* ════════════ PLAY AREA ════════════ */
+    .play-area-outer {
+      border-radius: 8px;
+      background: #000; position: relative;
+      transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
+    }
+    .play-area-outer.landscape { width: 100%; aspect-ratio: 1920 / 1080; }
+    .play-area-outer.portrait  { aspect-ratio: 1080 / 1920; width: 260px; margin: 0 auto; }
+
+    .play-area-inner {
+      width: 100%; height: 100%; position: relative;
       display: flex; align-items: center; justify-content: center;
-      z-index: 20;
-      transition: border-color 0.2s, opacity 0.2s;
-      opacity: 0.35;
-      padding: 0;
+      overflow: hidden;
+      border-radius: 8px; /* clip bg/logo to the rounded canvas */
     }
-    .lamp-btn:hover { opacity: 0.7; border-color: rgba(0,0,0,0.4); }
-    .lamp-btn svg { display: block; }
-    .stage-outer.inverted .lamp-btn { border-color: rgba(255,255,255,0.2); }
-    .stage-outer.inverted .lamp-btn:hover { border-color: rgba(255,255,255,0.6); }
-    .stage-outer.inverted .lamp-btn svg path { stroke: #fff; }
-    .stage { position: relative; width: 580px; height: 220px; pointer-events: none; }
-    .letter { position: absolute; font-weight: 900; line-height: 1; user-select: none; cursor: grab; touch-action: none; font-family: "Trebuchet MS", sans-serif; pointer-events: all; }
-    .letter:active { cursor: grabbing; }
-    .stage-outer.panning { cursor: grabbing; }
-    .word-tag { position: absolute; font-family: "Trebuchet MS", sans-serif; font-size: 12px; font-weight: 700; color: #000; letter-spacing: 0.08em; pointer-events: all; cursor: grab; transition: opacity 0.45s ease; z-index: 10; white-space: nowrap; }
-    .word-tag:active { cursor: grabbing; }
-    .word-tag.fade { opacity: 0; }
-    .hint { font-size: 13px; color: #aaa; margin-bottom: 2rem; text-align: center; }
 
-    /* ── Sections ── */
-    .section { margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #252525; }
-    .section:last-child { border-bottom: none; padding-bottom: 0; }
-    .section-title { font-size: 11px; font-weight: 700; color: #aaa; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 0.85rem; }
-    /* ── Two-col row for Motion + Title ── */
-    .section-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2.5rem; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #252525; }
-    .section-row .section { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+    #bgImage {
+      position: absolute;
+      opacity: 0; transition: opacity 0.5s ease;
+    }
+    #bgImage[src]:not([src=""]) { opacity: 1; }
 
-    /* ── Controls grid ── */
-    .ctrl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.5rem; }
-    .ctrl-group { display: flex; flex-direction: column; gap: 5px; }
-    .ctrl-group.full { grid-column: 1 / -1; }
-    label { font-size: 13px; color: #bbb; }
-    input[type=range] { width: 100%; accent-color: #fff; margin-top: 2px; }
 
-    /* ── Button rows ── */
-    .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
-    .btn { font-size: 13px; font-weight: 500; padding: 8px 18px; background: #1e1e1e; color: #bbb; border: 1px solid #3a3a3a; border-radius: 8px; cursor: pointer; font-family: sans-serif; transition: all 0.15s; }
-    .btn:hover { border-color: #777; color: #eee; }
-    .btn.active { background: #fff; color: #111; border-color: #fff; }
+    /* Transform corner handles */
+    .t-handle {
+      position: absolute; width: 10px; height: 10px;
+      border: 1.5px solid rgba(0,0,0,0.3);
+      border-radius: 2px; pointer-events: all; cursor: nwse-resize;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    }
+    .t-handle[data-corner="tr"], .t-handle[data-corner="bl"] { cursor: nesw-resize; }
+    .el-handle { background: #fff; }
+    .logo-handle { background: #ff64b4; }
+    .gen-handle { background: #64dcff; }
+    .title-handle { background: #ffdc3c; }
+    #titleDraggable, #titleHandles, #titleRotHandle, .title-handle { pointer-events: all !important; }
+    #elPreview:active, #basePreview:active { cursor: grabbing; }
 
-    .gen-btn { font-size: 12px; font-weight: 600; padding: 7px 16px; background: #fff; color: #111; border: none; border-radius: 20px; cursor: pointer; white-space: nowrap; }
-    .gen-btn:hover { background: #e8e8e8; }
-    .hint-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; }
+    #logoLayer { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+    #logoDraggable, #logoHandles, #logoRotHandle, .logo-handle { pointer-events: all !important; }
 
-    /* ── Export ── */
-    .export-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .exp-btn { font-size: 13px; font-weight: 500; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-family: sans-serif; border: 1px solid #444; text-align: left; line-height: 1.4; }
-    .exp-btn:hover { opacity: 0.85; }
-    .exp-btn .exp-title { font-size: 13px; font-weight: 600; display: block; }
-    .exp-btn .exp-sub { font-size: 12px; opacity: 0.75; display: block; margin-top: 2px; }
-    .exp-black-white { background: #fff; color: #111; border-color: #ddd; }
-    .exp-white-black { background: #000; color: #fff; border-color: #444; }
-    .exp-black-trans { background: repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 0 0/16px 16px; color: #111; border-color: #999; }
-    .exp-white-trans { background: repeating-conic-gradient(#555 0% 25%, #333 0% 50%) 0 0/16px 16px; color: #fff; border-color: #555; }
-    .exp-pink-white  { background: #fff; color: #ff30ff; border-color: #ffaaff; }
-    .exp-pink-black  { background: #000; color: #ff30ff; border-color: #aa00aa; }
-    .exp-pink-trans  { background: repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%) 0 0/16px 16px; color: #ff30ff; border-color: #ffaaff; }
+    #logoDraggable {
+      position: absolute; cursor: grab;
+      user-select: none; touch-action: none;
+      pointer-events: all; display: none; overflow: visible;
+      background: transparent;  /* ensures the hit area covers the full box */
+    }
+    #logoDraggable:active { cursor: grabbing; }
 
-    @media (max-width: 640px) {
-      body { padding: 0.75rem; padding-bottom: 3rem; }
-      .stage-outer { height: 55vw; max-height: 280px; }
-      .ctrl-grid { grid-template-columns: 1fr; }
-      .ctrl-group.full { grid-column: 1; }
-      .section-row { grid-template-columns: 1fr; }
-      .hint-row { flex-direction: column; gap: 8px; align-items: flex-start; }
-      .export-grid { grid-template-columns: 1fr; }
+    #logoImg {
+      display: none; width: 100%; height: 100%;
+      object-fit: contain; pointer-events: all; position: relative; z-index: 1;
+    }
+    #logoPlaceholder {
+      position: absolute; inset: 0; z-index: 1;
+      border: 1.5px dashed rgba(255,255,255,0.15); border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 8px; font-weight: 700; letter-spacing: 0.2em;
+      text-transform: uppercase; color: rgba(255,255,255,0.15); pointer-events: all;
+    }
+
+    #logoTitle {
+      display: none;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+      font-weight: 700; text-transform: uppercase;
+      white-space: nowrap; line-height: 1; letter-spacing: 0.06em;
+    }
+
+    .play-area-label {
+      font-size: 10px; color: #252525;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      font-weight: 700; pointer-events: none; transition: opacity 0.3s;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+    }
+    .play-area-label.hidden { opacity: 0; }
+
+    /* ════════════ PLAY CONTROLS BAR ════════════ */
+    .play-controls-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding-top: 6px; flex-wrap: nowrap;
+    }
+    .orient-btn {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 600; padding: 5px 12px;
+      background: #1a1a1a; color: #777;
+      border: 1px solid #2a2a2a; border-radius: 20px;
+      cursor: pointer; transition: all 0.15s;
+      letter-spacing: 0.06em; white-space: nowrap; flex-shrink: 0;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+    }
+    .orient-btn:hover { border-color: #666; color: #ccc; }
+
+    /* Scale strip — logo + optional text slider in one row */
+    .scale-strip { display: none; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+    .scale-strip.visible { display: flex; }
+    .scale-lbl {
+      font-size: 10px; color: #555; white-space: nowrap;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif; flex-shrink: 0;
+    }
+    .scale-val {
+      font-size: 10px; color: #444; white-space: nowrap; min-width: 26px;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif; text-align: right; flex-shrink: 0;
+    }
+    .scale-divider { color: #333; font-size: 12px; flex-shrink: 0; padding: 0 2px; }
+    .scale-strip input[type=range] { flex: 1; accent-color: #fff; min-width: 40px; }
+
+    .orient-info {
+      font-size: 10px; color: #3a3a3a; font-family: monospace;
+      margin-left: auto; white-space: nowrap; flex-shrink: 0;
+    }
+
+    /* ════════════ SECTIONS ════════════ */
+    .section {
+      margin-bottom: 6px; border: 1px solid #222;
+      border-radius: 10px; overflow: hidden; transition: opacity 0.25s;
+    }
+    .section.locked { opacity: 0.25; pointer-events: none; }
+
+    .section-header {
+      display: flex; align-items: center; gap: 8px; padding: 9px 13px;
+      cursor: pointer; background: #181818;
+      transition: background 0.15s; user-select: none;
+    }
+    .section-header:hover { background: #1e1e1e; }
+    .section.locked .section-header { cursor: default; }
+    .section.locked .section-header:hover { background: #181818; }
+
+    .step-badge {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.14em; color: #444;
+      background: #1f1f1f; border-radius: 4px; padding: 2px 7px;
+      text-transform: uppercase; flex-shrink: 0; transition: all 0.2s;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif; border: 1px solid #2a2a2a;
+    }
+    .step-badge.active { background: #fff; color: #111; border-color: #fff; }
+    .step-badge.done   { background: #1a1a1a; color: #3a3a3a; border-color: #222; }
+
+    .section-title {
+      font-size: 12px; font-weight: 700; color: #3a3a3a;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      transition: color 0.2s; flex: 1;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+    }
+    .section-title.active { color: #aaa; }
+    .section-title.done   { color: #3a3a3a; }
+
+    .section-summary {
+      font-size: 10px; color: #555; letter-spacing: 0.06em;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px;
+    }
+    .collapse-arrow {
+      color: #333; flex-shrink: 0; transition: transform 0.25s, color 0.2s;
+      display: flex; align-items: center;
+    }
+    .section.active .collapse-arrow { color: #666; }
+    .section.open   .collapse-arrow { transform: rotate(180deg); }
+
+    .section-body { padding: 10px 12px; display: none; }
+    .section.open .section-body { display: block; }
+
+    /* ════════════ BASE CATEGORY BUTTONS ════════════ */
+    .base-choices { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 10px; }
+    .base-choice {
+      position: relative; border-radius: 7px; overflow: hidden;
+      cursor: pointer; border: 2px solid #252525; transition: all 0.15s;
+      aspect-ratio: 3/2;
+    }
+    .base-choice:hover { border-color: #666; }
+    .base-choice.selected { border-color: #fff; }
+    /* After choosing a category, dim the non-selected ones slightly */
+    .base-choices.has-selection .base-choice:not(.selected) { opacity: 0.45; }
+    .base-choices.has-selection .base-choice:not(.selected):hover { opacity: 0.8; }
+
+    .ph-bg { width: 100%; height: 100%; }
+    .ph-bg.tropical { background: linear-gradient(135deg,#1a3a1a,#3a6a2a); }
+    .ph-bg.water    { background: linear-gradient(135deg,#0a1a3a,#1a4a7a); }
+    .ph-bg.body     { background: linear-gradient(135deg,#2a1515,#5a2a2a); }
+    .base-choice .choice-label {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent,rgba(0,0,0,0.85));
+      font-size: 9px; font-weight: 700; letter-spacing: 0.16em;
+      color: #fff; text-align: center; padding: 10px 6px 5px;
+      text-transform: uppercase; font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+    }
+
+    /* ════════════ PICKER LABEL ════════════ */
+    .picker-label {
+      font-size: 10px; color: #555; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; margin-bottom: 6px;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+    }
+
+    /* ════════════ IMAGE GRIDS ════════════ */
+    .grid-5x2 { display: grid; grid-template-columns: repeat(5,1fr); gap: 4px; }
+    .grid-5x2 .img-tile { aspect-ratio: 16/10; }
+    .grid-4x4 { display: grid; grid-template-columns: repeat(5,1fr); gap: 3px; }
+
+    @keyframes shimmer {
+      0%   { background-position: -200% 0; }
+      100% { background-position:  200% 0; }
+    }
+    .img-tile {
+      aspect-ratio: 1; border-radius: 6px; border: 2px solid #1e1e1e;
+      cursor: pointer; overflow: hidden; position: relative;
+      transition: border-color 0.15s;
+      background: linear-gradient(90deg, #181818 25%, #222 50%, #181818 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s ease-in-out infinite;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 2px;
+    }
+    /* Stop shimmer once an img child has loaded */
+    .img-tile:has(img[src]:not([src=""])) { animation: none; background: #181818; }
+    .img-tile:hover  { border-color: #666; }
+    .img-tile.selected { border-color: #fff; }
+    .img-tile .t-num {
+      font-size: 10px; font-weight: 700; color: #2a2a2a;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif; line-height: 1;
+    }
+    .img-tile .t-lbl {
+      font-size: 6px; color: #2a2a2a; letter-spacing: 0.1em;
+      text-transform: uppercase; font-weight: 600;
+    }
+    .img-tile.defocus { background: radial-gradient(ellipse,#0e0e22,#080810); }
+    .img-tile.defocus .t-num, .img-tile.defocus .t-lbl { color: #26264a; }
+    .img-tile.pinkvec { background: radial-gradient(ellipse,#180a18,#0d040d); }
+    .img-tile.pinkvec .t-num, .img-tile.pinkvec .t-lbl { color: #3a1540; }
+
+    /* ════════════ STEP 2 DIVIDERS ════════════ */
+    .el-divider {
+      font-size: 9px; font-weight: 700; color: #3a3a3a; letter-spacing: 0.14em;
+      text-transform: uppercase; display: flex; align-items: center; gap: 8px;
+      margin: 10px 0 6px; font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+    }
+    .el-divider::after { content: ''; flex: 1; height: 1px; background: #222; }
+    .body-note { font-size: 10px; color: #444; margin-bottom: 8px; font-style: italic; }
+
+    /* Open Logo Generator button */
+    .open-logo-gen-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; text-decoration: none;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+      color: #ff30ff; border: 1px solid rgba(255,48,255,0.3);
+      background: rgba(255,48,255,0.06); border-radius: 6px;
+      padding: 5px 10px; margin-bottom: 10px;
+      transition: all 0.15s; cursor: pointer;
+      float: right;
+    }
+    .open-logo-gen-btn:hover { color: #ff70ff; border-color: rgba(255,48,255,0.6); background: rgba(255,48,255,0.12); }
+    .open-logo-gen-btn svg { flex-shrink: 0; }
+
+    /* ════════════ LOGO SECTION ════════════ */
+    .logo-ctrl-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+    .ctrl-lbl {
+      font-size: 10px; color: #555; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+    }
+
+    .tgl-group { display: flex; border: 1px solid #252525; border-radius: 6px; overflow: hidden; }
+    .tgl {
+      font-size: 10px; font-weight: 700; padding: 4px 11px;
+      background: #1a1a1a; color: #555; border: none; cursor: pointer;
+      letter-spacing: 0.07em; transition: all 0.12s;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+    }
+    .tgl:not(:last-child) { border-right: 1px solid #222; }
+    .tgl:hover { color: #aaa; }
+    .tgl.on-w { background: #fff;    color: #111; }
+    .tgl.on-b { background: #111;    color: #fff; border: 1px solid #555; }
+    .tgl.on-p { background: #ff30ff; color: #fff; }
+    .tgl.on   { background: #fff;    color: #111; }
+
+    .logo-sub {
+      font-size: 9px; font-weight: 700; color: #3a3a3a; letter-spacing: 0.14em;
+      text-transform: uppercase; display: flex; align-items: center; gap: 8px; margin: 8px 0 6px;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+    }
+    .logo-sub::after { content: ''; flex: 1; height: 1px; background: #222; }
+
+    .logo-grid-6 { display: grid; grid-template-columns: repeat(6,1fr); gap: 4px; }
+
+    .logo-tile {
+      aspect-ratio: 1; border-radius: 6px; border: 2px solid #1e1e1e;
+      cursor: pointer; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.15s; background: #181818; position: relative;
+    }
+    .logo-tile:hover  { border-color: #666; }
+    .logo-tile.selected { border-color: #fff; }
+    .logo-tile.bg-blk { background: #000; }
+    .logo-tile.bg-pnk { background: #130013; }
+    .logo-tile .tile-in {
+      font-size: 7px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; text-align: center; color: #2a2a2a;
+      padding: 4px; line-height: 1.4; font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+    }
+    .logo-tile.c-w .tile-in { color: rgba(255,255,255,0.2); }
+    .logo-tile.c-b .tile-in { color: rgba(255,255,255,0.12); }
+    .logo-tile.c-p .tile-in { color: rgba(255,48,255,0.3); }
+    .logo-tile img { width: 70%; height: 70%; object-fit: contain; pointer-events: none; display: block; }
+
+    .logo-tile.upload-tile {
+      border-style: dashed; border-color: #2a2a2a; flex-direction: column; gap: 4px;
+    }
+    .logo-tile.upload-tile:hover { border-color: #666; }
+    .up-icon { color: #3a3a3a; transition: color 0.15s; display: block; }
+    .logo-tile.upload-tile:hover .up-icon { color: #999; }
+    .up-lbl {
+      font-size: 7px; font-weight: 700; color: #3a3a3a; letter-spacing: 0.1em;
+      text-transform: uppercase; transition: color 0.15s;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+    }
+    .logo-tile.upload-tile:hover .up-lbl { color: #999; }
+    .logo-tile.upload-tile.has-upload { border-style: solid; border-color: #555; }
+    #uploadPreview { width: 85%; height: 85%; object-fit: contain; display: none; }
+    .logo-tile.upload-tile.has-upload .up-icon,
+    .logo-tile.upload-tile.has-upload .up-lbl { display: none; }
+    #uploadInput { display: none; }
+
+    /* ════════════ TITLE CHOOSER ════════════ */
+    .title-chooser {
+      margin-top: 12px; padding-top: 12px;
+      border-top: 1px solid #222; display: none;
+    }
+    .title-chooser.visible { display: block; }
+
+    .title-grid {
+      display: grid; grid-template-columns: repeat(4,1fr); gap: 4px; margin-top: 6px;
+    }
+    .title-chip {
+      padding: 5px 3px; border-radius: 5px; border: 1px solid #222;
+      cursor: pointer;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+      font-size: 10px; font-weight: 700;
+      text-align: center; color: #555;
+      background: #181818; transition: all 0.14s;
+      letter-spacing: 0.05em; text-transform: uppercase;
+    }
+    .title-chip:hover   { border-color: #666; color: #bbb; }
+    .title-chip.selected { border-color: #fff; color: #fff; background: #1e1e1e; }
+    .title-chip.none-chip { font-size: 9px; letter-spacing: 0.1em; color: #3a3a3a; }
+    .title-chip.none-chip.selected { color: #aaa; }
+
+    /* ════════════ ACTION BUTTONS ════════════ */
+    .play-area-btns {
+      position: absolute;
+      right: 10px;
+      bottom: 46px;
+      z-index: 20;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    /* Tooltip wrapper for gen button */
+    .gen-btn-wrap {
+      position: relative; display: inline-flex;
+    }
+    .gen-btn-wrap .gen-tooltip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 8px);
+      right: 0;
+      white-space: nowrap;
+      background: rgba(20,20,20,0.95);
+      color: rgba(255,255,255,0.75);
+      font-size: 10px; font-weight: 600;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+      letter-spacing: 0.07em;
+      padding: 5px 10px; border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.1);
+      pointer-events: none;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+    }
+    .gen-btn-wrap .gen-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%; right: 14px;
+      border: 5px solid transparent;
+      border-top-color: rgba(20,20,20,0.95);
+    }
+    .gen-btn-wrap.body-locked:hover .gen-tooltip { display: block; }
+
+    /* Base button style — disabled/waiting state */
+    .gen-btn {
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 9px 20px; border-radius: 24px;
+      border: 1px solid rgba(255,255,255,0.12);
+      cursor: pointer; transition: all 0.18s;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      color: rgba(255,255,255,0.25);
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+      display: flex; align-items: center; gap: 6px;
+      white-space: nowrap;
+    }
+    .gen-btn:disabled { cursor: not-allowed; }
+
+    /* Remix: violet/purple pill */
+    .gen-btn.ready {
+      background: linear-gradient(135deg, rgba(140,80,255,0.92), rgba(100,40,220,0.96));
+      color: #fff; border-color: rgba(180,120,255,0.4);
+      box-shadow: 0 3px 20px rgba(120,60,220,0.5);
+    }
+    .gen-btn.ready:hover {
+      background: linear-gradient(135deg, rgba(155,95,255,0.98), rgba(115,55,235,1));
+      transform: translateY(-1px);
+      box-shadow: 0 5px 28px rgba(120,60,220,0.65);
+    }
+
+    /* ↺ Remix after generation: faded violet */
+    .gen-btn.regenerate {
+      background: rgba(80,30,160,0.45); color: rgba(200,160,255,0.7);
+      border-color: rgba(160,100,255,0.25);
+    }
+    .gen-btn.regenerate:hover {
+      background: rgba(100,40,180,0.6); color: rgba(220,180,255,0.9);
+      border-color: rgba(180,120,255,0.45);
+      transform: translateY(-1px);
+    }
+
+    .gen-btn.running {
+      background: rgba(60,20,130,0.7); color: rgba(200,160,255,0.6);
+      cursor: wait; border-color: rgba(160,100,255,0.2);
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.45} }
+
+    /* Export Image: solid white, clearly actionable */
+    .export-btn {
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 9px 20px; border-radius: 24px;
+      border: 2px solid #fff;
+      cursor: pointer; transition: all 0.18s;
+      background: #fff;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      color: #111;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+      display: none; white-space: nowrap;
+      box-shadow: 0 3px 18px rgba(0,0,0,0.45);
+    }
+    .export-btn.show { display: block; }
+    .export-btn.show:hover {
+      background: #f5f5f5; transform: translateY(-1px);
+      box-shadow: 0 5px 24px rgba(0,0,0,0.55);
+    }
+
+    /* Keep old action-area for any leftover references but hide it */
+    .action-area { display: none; }
+
+    @media (max-width:560px) {
+      body { padding: 0 0.5rem 4rem; }
+
+      /* Play area: portrait narrower on small screens */
+      .play-area-outer.portrait { width: 160px; }
+
+      /* Controls bar: wrap to two lines gracefully */
+      .play-controls-bar { flex-wrap: wrap; gap: 5px; }
+      .orient-info { display: none; } /* hide resolution label on mobile */
+      .scale-strip { min-width: 100px; }
+
+      /* Sections */
+      .section-body { padding: 8px 10px; }
+      .section-header { padding: 8px 10px; gap: 6px; }
+      .section-title { font-size: 10px; }
+      .section-summary { max-width: 100px; font-size: 9px; }
+
+      /* Base category buttons: slightly shorter */
+      .base-choices { gap: 4px; }
+
+      /* Image grids: fewer columns */
+      .grid-5x2 { grid-template-columns: repeat(4,1fr); gap: 3px; }
+      .grid-4x4 { grid-template-columns: repeat(4,1fr); gap: 3px; }
+
+      /* Logo grid: 3 cols on mobile (was 6) */
+      .logo-grid-6 { grid-template-columns: repeat(3,1fr); }
+
+      /* Title chips */
+      .title-grid { grid-template-columns: repeat(3,1fr); gap: 3px; }
+      .title-chip { font-size: 9px; padding: 4px 2px; }
+
+      /* Overlay buttons: smaller text/padding */
+      .gen-btn, .export-btn { font-size: 11px; padding: 7px 14px; }
+      .play-area-btns { gap: 5px; right: 6px; bottom: 42px; }
+
+      /* Toggle groups: slightly smaller */
+      .tgl { font-size: 9px; padding: 4px 8px; }
+    }
+
+    @media (max-width:380px) {
+      .grid-5x2 { grid-template-columns: repeat(3,1fr); }
+      .logo-grid-6 { grid-template-columns: repeat(3,1fr); }
+      .gen-btn, .export-btn { font-size: 10px; padding: 6px 10px; }
+      .section-title { font-size: 9px; letter-spacing: 0.07em; }
     }
   </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
-<script src="https://unpkg.com/pako@2.1.0/dist/pako.min.js"></script>
 </head>
 <body>
 
-<svg id="svgfilters" width="0" height="0" style="position:absolute">
-  <defs>
-    <filter id="blobonly" color-interpolation-filters="sRGB" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
-      <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9" result="sharp"/>
-      <feComposite in="SourceGraphic" in2="sharp" operator="atop"/>
-    </filter>
-    <filter id="blobdefocus" color-interpolation-filters="sRGB" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blob"/>
-      <feColorMatrix in="blob" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9" result="sharp"/>
-      <feComposite in="SourceGraphic" in2="sharp" operator="atop" result="crispshape"/>
-      <feGaussianBlur in="crispshape" stdDeviation="0" result="defocused"/>
-    </filter>
-  </defs>
-</svg>
+<!-- ══════════════════════════════════════════
+     STICKY PLAY AREA
+═══════════════════════════════════════════ -->
+<div class="sticky-top">
+  <div class="play-area-outer landscape" id="playAreaOuter">
+    <div class="version" id="versionTag" style="position:absolute;top:8px;left:10px;z-index:20;pointer-events:none;">v8.8 · FOAMS Image Generator</div>
+    <div class="play-area-inner" id="playAreaInner">
 
-<div style="font-size:10px;color:#444;font-family:monospace;margin-bottom:6px;">v10.4</div>
-<canvas id="measure" style="display:none"></canvas>
+      <!-- Generated (remixed) result — draggable/scalable/rotatable after generation -->
+      <img id="bgImage" src="" alt=""
+        style="display:none;position:absolute;transform-origin:center center;
+        cursor:default;user-select:none;touch-action:none;max-width:none;max-height:none;"
+        draggable="false">
+      <!-- Handles for generated image (cyan) -->
+      <div id="genHandles" style="display:none;position:absolute;pointer-events:none;
+        border:1.5px dashed rgba(100,220,255,0.7);box-sizing:border-box;">
+        <div class="t-handle gen-handle" data-corner="tl" style="top:-5px;left:-5px"></div>
+        <div class="t-handle gen-handle" data-corner="tr" style="top:-5px;right:-5px"></div>
+        <div class="t-handle gen-handle" data-corner="bl" style="bottom:-5px;left:-5px"></div>
+        <div class="t-handle gen-handle" data-corner="br" style="bottom:-5px;right:-5px"></div>
+      </div>
 
-<div class="stage-outer" id="stageOuter">
-  <div id="zoomWrap" style="position:absolute; top:50%; left:50%; transform-origin: center center; transform: translate(-50%,-50%);">
-    <div class="stage" id="stage"></div>
-    <svg id="aHoleSvg" xmlns="http://www.w3.org/2000/svg"
-      style="position:absolute;top:0;left:0;width:580px;height:220px;pointer-events:none;overflow:visible;display:none;">
-      <path id="aHolePath" fill="white" filter="url(#blobonly)" style="cursor:grab;"
-        d="M 0 0" pointer-events="all"/>
-    </svg>
+      <!-- Base image — static, fills play area -->
+      <img id="basePreview" src="" alt=""
+        style="display:none;position:absolute;width:100%;height:100%;object-fit:cover;"
+        draggable="false">
+
+
+
+      <!-- Graphical element — draggable/scalable/rotatable img element -->
+      <img id="elPreview" src="" alt=""
+        style="display:none;position:absolute;transform-origin:center center;
+        cursor:grab;user-select:none;touch-action:none;max-width:none;max-height:none;"
+        draggable="false">
+
+      <!-- Graphical element transform handles (white) -->
+      <div id="elHandles" style="display:none;position:absolute;pointer-events:none;
+        border:1.5px dashed rgba(255,255,255,0.6);box-sizing:border-box;">
+        <div class="t-handle el-handle" data-corner="tl" style="top:-5px;left:-5px"></div>
+        <div class="t-handle el-handle" data-corner="tr" style="top:-5px;right:-5px"></div>
+        <div class="t-handle el-handle" data-corner="bl" style="bottom:-5px;left:-5px"></div>
+        <div class="t-handle el-handle" data-corner="br" style="bottom:-5px;right:-5px"></div>
+        <div id="rotHandle" style="position:absolute;top:-26px;left:50%;transform:translateX(-50%);
+          width:10px;height:10px;background:#fff;border-radius:50%;cursor:crosshair;
+          pointer-events:all;box-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>
+        <div style="position:absolute;top:-20px;left:50%;width:1px;height:14px;
+          background:rgba(255,255,255,0.4);transform:translateX(-50%);"></div>
+        <!-- Mirror button: bottom-left of handles -->
+        <button id="mirrorBtn" onclick="toggleMirror()" style="position:absolute;bottom:-24px;left:0;
+          background:rgba(0,0,0,0.6);color:rgba(255,255,255,0.8);border:1px solid rgba(255,255,255,0.3);
+          border-radius:4px;font-size:9px;font-weight:700;letter-spacing:0.08em;
+          padding:2px 7px;cursor:pointer;pointer-events:all;
+          font-family:'Trebuchet MS',sans-serif;white-space:nowrap;">
+          ⇄ Mirror
+        </button>
+      </div>
+
+      <div id="logoLayer">
+        <div id="logoDraggable">
+          <!-- Transparent full-cover drag surface — ensures the whole box is clickable -->
+          <div id="logoDragSurface" style="position:absolute;inset:0;z-index:10;cursor:grab;"></div>
+          <div id="logoPlaceholder">LOGO</div>
+          <img id="logoImg" src="" alt="" draggable="false" style="user-select:none;-webkit-user-drag:none;">
+        </div>
+
+        <!-- Title text — independent element with own transform handles -->
+        <div id="titleDraggable" style="display:none;position:absolute;cursor:grab;
+          user-select:none;touch-action:none;transform-origin:center center;">
+          <span id="logoTitle" style="display:block;position:relative;top:0;left:0;"></span>
+        </div>
+
+        <!-- Title transform handles (yellow) -->
+        <div id="titleHandles" style="display:none;position:absolute;pointer-events:none;
+          border:1.5px dashed rgba(255,220,60,0.7);box-sizing:border-box;z-index:6;">
+          <div class="t-handle title-handle" data-corner="tl" style="top:-5px;left:-5px"></div>
+          <div class="t-handle title-handle" data-corner="tr" style="top:-5px;right:-5px"></div>
+          <div class="t-handle title-handle" data-corner="bl" style="bottom:-5px;left:-5px"></div>
+          <div class="t-handle title-handle" data-corner="br" style="bottom:-5px;right:-5px"></div>
+          <div id="titleRotHandle" style="position:absolute;top:-26px;left:50%;transform:translateX(-50%);
+            width:10px;height:10px;background:#ffdc3c;border-radius:50%;cursor:crosshair;
+            pointer-events:all;box-shadow:0 1px 4px rgba(0,0,0,0.5);z-index:7;"></div>
+          <div style="position:absolute;top:-20px;left:50%;width:1px;height:14px;
+            background:rgba(255,220,60,0.4);transform:translateX(-50%);"></div>
+        </div>
+
+        <!-- Logo transform handles (pink) — shown when logo selected -->
+        <div id="logoHandles" style="display:none;position:absolute;
+          border:1.5px dashed rgba(255,100,180,0.7);box-sizing:border-box;z-index:5;">
+          <div class="t-handle logo-handle" data-corner="tl" style="top:-5px;left:-5px"></div>
+          <div class="t-handle logo-handle" data-corner="tr" style="top:-5px;right:-5px"></div>
+          <div class="t-handle logo-handle" data-corner="bl" style="bottom:-5px;left:-5px"></div>
+          <div class="t-handle logo-handle" data-corner="br" style="bottom:-5px;right:-5px"></div>
+          <div id="logoRotHandle" style="position:absolute;top:-26px;left:50%;transform:translateX(-50%);
+            width:10px;height:10px;background:#ff64b4;border-radius:50%;cursor:crosshair;
+            pointer-events:all;box-shadow:0 1px 4px rgba(0,0,0,0.5);z-index:6;"></div>
+          <div style="position:absolute;top:-20px;left:50%;width:1px;height:14px;
+            background:rgba(255,100,180,0.4);transform:translateX(-50%);"></div>
+        </div>
+      </div>
+
+      <span class="play-area-label" id="playAreaLabel">1920 × 1080</span>
+      <!-- Generation progress overlay -->
+      <div id="genProgress" style="display:none;position:absolute;inset:0;
+        display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;
+        background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);z-index:15;pointer-events:none;">
+        <div id="genProgressBar" style="width:160px;height:3px;background:rgba(255,255,255,0.15);
+          border-radius:2px;overflow:hidden;">
+          <div id="genProgressFill" style="height:100%;width:0%;background:#fff;
+            border-radius:2px;transition:width 0.4s ease;"></div>
+        </div>
+        <span id="genProgressText" style="font-family:'Trebuchet MS',sans-serif;
+          font-size:11px;font-weight:700;color:rgba(255,255,255,0.7);
+          letter-spacing:0.14em;text-transform:uppercase;"></span>
+      </div>
+
+    </div>
+</div>
+
+  <!-- Action buttons: absolute inside sticky-top, always bottom-right of play area -->
+  <div class="play-area-btns" id="playAreaBtns">
+    <div class="gen-btn-wrap" id="genBtnWrap">
+      <span class="gen-tooltip" id="genTooltip"></span>
+      <button class="gen-btn" id="genBtn" disabled onclick="generateImage()">✦ Remix Image</button>
+    </div>
+    <button class="export-btn" id="exportBtn" onclick="exportImage()">↓ Export Image</button>
   </div>
-  <button class="lamp-btn" id="lampBtn" onclick="toggleInvert()" title="Invert colours">
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M7 1.5a4 4 0 0 1 2.2 7.3c-.4.3-.7.8-.7 1.2v.5H5.5V10c0-.4-.3-.9-.7-1.2A4 4 0 0 1 7 1.5Z" stroke="#000" stroke-width="1.1" stroke-linejoin="round"/>
-      <path d="M5.5 11.5h3M6 13h2" stroke="#000" stroke-width="1.1" stroke-linecap="round"/>
-    </svg>
-  </button>
-  <button id="pinkBtn" onclick="togglePink()" title="Pink mode" style="position:absolute;bottom:10px;right:46px;width:28px;height:28px;background:none;border:1px solid rgba(0,0,0,0.15);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:20;opacity:0.4;transition:opacity 0.2s,border-color 0.2s;padding:0;">
-    <div style="width:14px;height:14px;border-radius:50%;background:#ff30ff;"></div>
-  </button>
-</div>
-<div class="hint-row">
-  <p class="hint" style="margin-bottom:0;">Click to drag letters · Click empty space to pan · Scroll to zoom</p>
-  <button class="gen-btn" onclick="randomize()">&#8635; New variation</button>
+
+  <div class="play-controls-bar">
+    <button class="orient-btn" onclick="toggleOrientation()">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <rect x="0.5" y="2.5" width="7" height="9" rx="1" stroke="#777" stroke-width="1.1"/>
+        <rect x="4.5" y="0.5" width="7" height="9" rx="1" stroke="#444" stroke-width="1.1" stroke-dasharray="2 1"/>
+      </svg>
+      <span id="orientBtnTxt">Portrait</span>
+    </button>
+
+    <!-- Sliders replaced by transform handles on canvas -->
+    <div class="scale-strip visible" id="scaleStrip" style="flex:1"></div>
+
+    <span class="orient-info" id="orientInfo">Landscape · 1920×1080</span>
+  </div>
 </div>
 
-<!-- Logo section -->
-<div class="section">
-  <p class="section-title">Logo</p>
-  <div class="ctrl-grid">
-    <div class="ctrl-group">
-      <label>Letter size: <span id="szOut">96</span>px</label>
-      <input type="range" id="sz" min="50" max="140" value="96" step="2" oninput="document.getElementById('szOut').textContent=this.value; draw()">
-    </div>
-    <div class="ctrl-group">
-      <label>Merge softness: <span id="blurOut">7</span></label>
-      <input type="range" id="blurR" min="4" max="24" value="7" step="1" oninput="document.getElementById('blurOut').textContent=this.value; updateFilters()">
-    </div>
-    <div class="ctrl-group">
-      <label>Vertical spread: <span id="vspreadOut">40</span>%</label>
-      <input type="range" id="vspread" min="0" max="100" value="40" step="5" oninput="document.getElementById('vspreadOut').textContent=this.value; draw()">
-    </div>
-    <div class="ctrl-group">
-      <label>Horizontal spread: <span id="hspreadOut">-10</span>%</label>
-      <input type="range" id="hspread" min="-50" max="50" value="-10" step="5" oninput="document.getElementById('hspreadOut').textContent=this.value; draw()">
-    </div>
-    <div class="ctrl-group">
-      <label>Stroke weight: <span id="strokeOut">0</span>px</label>
-      <input type="range" id="strokeW" min="0" max="20" value="0" step="1" oninput="document.getElementById('strokeOut').textContent=this.value; updateLetterStyle()">
-    </div>
-    <div class="ctrl-group">
-      <label>Fill opacity: <span id="fillOut">100</span>%</label>
-      <input type="range" id="fillOp" min="0" max="100" value="100" step="5" oninput="document.getElementById('fillOut').textContent=this.value; updateLetterStyle()">
-    </div>
-    <div class="ctrl-group">
-      <label>Edge defocus: <span id="defocusOut">0.0</span></label>
-      <input type="range" id="defocus" min="0" max="12" value="0" step="0.5" oninput="document.getElementById('defocusOut').textContent=parseFloat(this.value).toFixed(1); updateFilters()">
-    </div>
-    <div class="ctrl-group">
-      <label>A hole</label>
-      <div style="display:flex;gap:8px;align-items:center;margin-top:4px;">
-        <button class="btn" id="aHoleToggle" onclick="toggleAHole()" style="padding:6px 14px;font-size:12px;">Show</button>
-        <input type="range" id="aHoleSize" min="10" max="80" value="20" step="1" style="flex:1;accent-color:#fff;" oninput="resizeAHole()">
+<input type="file" id="uploadInput" accept="image/png,image/jpeg,image/svg+xml,image/webp"
+  onchange="handleUpload(this)">
+
+<div style="padding: 0 1rem;">
+<!-- ══════════════════════════════════════════
+     STEP 1
+═══════════════════════════════════════════ -->
+<div class="section open active" id="step1Section">
+  <div class="section-header" onclick="toggleSection('step1Section')">
+    <span class="step-badge active" id="badge1">STEP 1</span>
+    <span class="section-title active" id="title1">Choose the Base Image</span>
+    <span class="section-summary" id="summary1"></span>
+    <span class="collapse-arrow"><svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+  </div>
+  <div class="section-body">
+    <div class="base-choices">
+      <div class="base-choice" id="basebtn-tropical" onclick="selectCat('tropical')">
+        <img src="Foams-Brand-Images-Tropical-Landscape-01.jpg" style="width:100%;height:100%;object-fit:cover;display:block;"
+          onerror="this.style.display='none';this.parentElement.querySelector('.ph-bg').style.display='block'">
+        <div class="ph-bg tropical" style="display:none"></div>
+        <span class="choice-label">Tropical</span>
+      </div>
+      <div class="base-choice" id="basebtn-water" onclick="selectCat('water')">
+        <img src="Foams-Brand-Images-Water-Landscape-05.jpg" style="width:100%;height:100%;object-fit:cover;display:block;"
+          onerror="this.style.display='none';this.parentElement.querySelector('.ph-bg').style.display='block'">
+        <div class="ph-bg water" style="display:none"></div>
+        <span class="choice-label">Water</span>
+      </div>
+      <div class="base-choice" id="basebtn-body" onclick="selectCat('body')">
+        <img src="Foams-Brand-Images-Body-Landscape-04.jpg" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;"
+          onerror="this.style.display='none';this.parentElement.querySelector('.ph-bg').style.display='block'">
+        <div class="ph-bg body" style="position:absolute;inset:0;display:none"></div>
+        <span class="choice-label">Body</span>
       </div>
     </div>
+    <div id="baseImgPicker" style="display:none">
+      <div class="picker-label" id="basePickerLbl">Choose one image</div>
+      <div class="grid-5x2" id="baseImgGrid"></div>
     </div>
-</div>
-
-<!-- Motion + Title side by side -->
-<div class="section-row">
-
-<!-- Motion section -->
-<div class="section">
-  <p class="section-title">Motion</p>
-  <div class="btn-group" style="margin-bottom:0.85rem;flex-wrap:wrap;">
-    <button class="btn active" id="m-none"   onclick="setMotion('none')">None</button>
-    <button class="btn"        id="m-side"   onclick="setMotion('side')">Side to side</button>
-    <button class="btn"        id="m-random" onclick="setMotion('random')">Random</button>
-    <button class="btn"        id="m-pause"  onclick="toggleMotionPause()">⏸ Pause</button>
-  </div>
-  <div id="motionAmtRow" style="display:none;">
-    <label>Amount: <span id="motionAmtOut">6</span>px</label>
-    <input type="range" id="motionAmt" min="1" max="20" value="6" step="1" style="width:100%;accent-color:#fff;margin-top:4px;" oninput="document.getElementById('motionAmtOut').textContent=this.value">
   </div>
 </div>
 
-<!-- Title section -->
-<div class="section">
-  <p class="section-title">Title</p>
-  <div class="btn-group" style="margin-bottom:0.85rem;flex-wrap:wrap;">
-    <button class="btn active" id="btn-none-lang"  onclick="setLanguage('none')">None</button>
-    <button class="btn"        id="btn-pt"          onclick="setLanguage('pt')">Português</button>
-    <button class="btn"        id="btn-en"           onclick="setLanguage('en')">English</button>
-    <button class="btn"        id="btn-pause"        onclick="togglePause()">⏸ Pause</button>
-    <button class="btn"        id="btn-lock-title"   onclick="toggleTitleLock()" title="Title stays in place, doesn't follow the logo">📌 Lock</button>
+<!-- ══════════════════════════════════════════
+     STEP 2
+═══════════════════════════════════════════ -->
+<div class="section locked" id="step2Section">
+  <div class="section-header" onclick="toggleSection('step2Section')">
+    <span class="step-badge" id="badge2">STEP 2</span>
+    <span class="section-title" id="title2">Choose a Graphical Element</span>
+    <span class="section-summary" id="summary2"></span>
+    <span class="collapse-arrow"><svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
   </div>
-  <div id="titleSizeRow">
-    <label>Title size: <span id="titleSzOut">12</span>px</label>
-    <input type="range" id="titleSz" min="8" max="28" value="12" step="1" style="width:100%;accent-color:#fff;margin-top:4px;" oninput="document.getElementById('titleSzOut').textContent=this.value; updateTitleSize()">
+  <div class="section-body" id="step2Body"></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     STEP 3
+═══════════════════════════════════════════ -->
+<div class="section locked" id="step3Section">
+  <div class="section-header" onclick="toggleSection('step3Section')">
+    <span class="step-badge" id="badge3">STEP 3</span>
+    <span class="section-title" id="title3">Choose a Logo</span>
+    <span class="section-summary" id="summary3"></span>
+    <span class="collapse-arrow"><svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+  </div>
+  <div class="section-body" id="step3Body">
+
+    <!-- Open Logo Generator link -->
+    <a href="https://casafoams.com/foams-logo" target="_blank" rel="noopener" class="open-logo-gen-btn">
+      <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+        <path d="M4.5 2H2a1 1 0 00-1 1v6a1 1 0 001 1h6a1 1 0 001-1V6.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        <path d="M7 1h3v3M10 1L6 5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Open Logo Generator
+    </a>
+
+    <!-- Color toggle -->
+    <div class="logo-ctrl-row">
+      <span class="ctrl-lbl">Color</span>
+      <div class="tgl-group" id="colorTgl">
+        <button class="tgl on-w" onclick="setLogoColor('white')">White</button>
+        <button class="tgl"      onclick="setLogoColor('black')">Black</button>
+        <button class="tgl"      onclick="setLogoColor('pink')">Pink</button>
+      </div>
+    </div>
+
+    <!-- Logo grid: slot 0=upload, 1-5=presets -->
+    <div class="logo-sub">Logo</div>
+    <div class="logo-grid-6" id="lgGrid"></div>
+
+    <!-- Title chooser — revealed after logo chosen -->
+    <div class="title-chooser" id="titleChooser">
+      <div class="logo-ctrl-row">
+        <span class="ctrl-lbl">Title</span>
+        <div class="tgl-group" id="titleLangTgl">
+          <button class="tgl on" onclick="setTitleLang('PT')">PT</button>
+          <button class="tgl"    onclick="setTitleLang('EN')">EN</button>
+          <button class="tgl"    onclick="setTitleLang('NONE')">None</button>
+        </div>
+      </div>
+      <div class="title-grid" id="titleGrid"></div>
+    </div>
+
   </div>
 </div>
 
-</div><!-- end section-row -->
+</div><!-- /content-pad -->
 
-<!-- Export section -->
-<div class="section">
-  <p class="section-title">Export — auto-cropped &amp; centred</p>
-  <div class="export-grid">
-    <button class="exp-btn exp-black-white" onclick="exportLogo('black','white')">
-      <span class="exp-title">↓ Black on white</span>
-      <span class="exp-sub">PNG · white background</span>
-    </button>
-    <button class="exp-btn exp-white-black" onclick="exportLogo('white','black')">
-      <span class="exp-title">↓ White on black</span>
-      <span class="exp-sub">PNG · black background</span>
-    </button>
-    <button class="exp-btn exp-black-trans" onclick="exportLogo('black','transparent')">
-      <span class="exp-title">↓ Black on transparent</span>
-      <span class="exp-sub">PNG · alpha channel</span>
-    </button>
-    <button class="exp-btn exp-white-trans" onclick="exportLogo('white','transparent')">
-      <span class="exp-title">↓ White on transparent</span>
-      <span class="exp-sub">PNG · alpha channel</span>
-    </button>
-  </div>
-  <hr style="border:none;border-top:1px solid #252525;margin:1rem 0;">
-  <div class="export-grid">
-    <button class="exp-btn exp-pink-white" onclick="exportLogo('pink','white')">
-      <span class="exp-title">↓ Pink on white</span>
-      <span class="exp-sub">PNG · white background</span>
-    </button>
-    <button class="exp-btn exp-pink-black" onclick="exportLogo('pink','black')">
-      <span class="exp-title">↓ Pink on black</span>
-      <span class="exp-sub">PNG · black background</span>
-    </button>
-    <button class="exp-btn exp-pink-trans" onclick="exportLogo('pink','transparent')">
-      <span class="exp-title">↓ Pink on transparent</span>
-      <span class="exp-sub">PNG · alpha channel</span>
-    </button>
-  </div>
-  <hr style="border:none;border-top:1px solid #252525;margin:1rem 0;">
-  <p class="section-title" style="margin-bottom:0.85rem;">Animated GIF</p>
-  <div class="export-grid">
-    <button class="exp-btn exp-black-white" onclick="exportGif('black')">
-      <span class="exp-title">↓ Black · animated</span>
-      <span class="exp-sub">GIF · white background</span>
-    </button>
-    <button class="exp-btn exp-white-black" onclick="exportGif('white')">
-      <span class="exp-title">↓ White · animated</span>
-      <span class="exp-sub">GIF · black background</span>
-    </button>
-    <button class="exp-btn exp-pink-white" onclick="exportGif('pink','white')">
-      <span class="exp-title">↓ Pink · animated</span>
-      <span class="exp-sub">GIF · white background</span>
-    </button>
-    <button class="exp-btn exp-pink-black" onclick="exportGif('pink','black')">
-      <span class="exp-title">↓ Pink on black · animated</span>
-      <span class="exp-sub">GIF · black background</span>
-    </button>
-  </div>
-  <div id="gifProgress" style="display:none;margin-top:8px;font-size:12px;color:#aaa;text-align:center;"></div>
-  <hr style="border:none;border-top:1px solid #252525;margin:1rem 0;">
-  <p class="section-title" style="margin-bottom:0.85rem;">Animated PNG — transparent</p>
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-    <label style="font-size:12px;color:#aaa;">Quality:</label>
-    <select id="apngQuality" style="background:#1a1a1a;color:#eee;border:1px solid #333;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;">
-      <option value="small">Small file — 400px · 12fps</option>
-      <option value="medium" selected>Balanced — 600px · 18fps</option>
-      <option value="high">High quality — 800px · 25fps</option>
-    </select>
-  </div>
-  <div class="export-grid">
-    <button class="exp-btn exp-black-trans" onclick="exportAPNG('black')">
-      <span class="exp-title">↓ Black · transparent</span>
-      <span class="exp-sub">APNG · alpha channel</span>
-    </button>
-    <button class="exp-btn exp-white-trans" onclick="exportAPNG('white')">
-      <span class="exp-title">↓ White · transparent</span>
-      <span class="exp-sub">APNG · alpha channel</span>
-    </button>
-    <button class="exp-btn exp-pink-trans" onclick="exportAPNG('pink')">
-      <span class="exp-title">↓ Pink · transparent</span>
-      <span class="exp-sub">APNG · alpha channel</span>
-    </button>
-  </div>
-  <div id="apngProgress" style="display:none;margin-top:8px;font-size:12px;color:#aaa;text-align:center;"></div>
-
-</div>
 
 <script>
-const FONT = 'Trebuchet MS';
-const SW = 580, SH = 220;
-let seed = 315866;
-let letterPositions = [], basePositions = [], motionPhases = [];
-let motionMode = 'none', animFrame = null, t = 0;
-let motionPaused = false;
-let panOffsetX = 0, panOffsetY = 0;
-let zoomScale = 1.35;
-let isInverted = false;
-let isPink = false;
-const PINK = '#ff30ff';
+// ─── DATA ────────────────────────────────────────────────────────────────────
+const TITLES_PT = ['CASA','ESPAÇO','NÚCLEO','ESTÚDIOS','COLETIVO','RESIDÊNCIA','LABORATÓRIO','RESISTÊNCIA'];
+const TITLES_EN = ['HOUSE','SPACE','HUB','STUDIOS','COLLECTIVE','RESIDENCY','LABORATORY','RESISTANCE'];
 
-function getLogoColor() {
-  if (isPink)     return `rgba(255,48,255,${parseInt(document.getElementById('fillOp').value)/100})`;
-  if (isInverted) return `rgba(255,255,255,${parseInt(document.getElementById('fillOp').value)/100})`;
-  return `rgba(0,0,0,${parseInt(document.getElementById('fillOp').value)/100})`;
-}
-function getStrokeColor() {
-  if (isPink) return PINK;
-  return isInverted ? 'white' : 'black';
+function logoFilename(color, n) {
+  return `foams-${color}-on-transparent-variation-0${n}.png`;
 }
 
-function togglePink() {
-  isPink = !isPink;
-  const btn = document.getElementById('pinkBtn');
-  btn.style.opacity = isPink ? '1' : '0.4';
-  btn.style.borderColor = isPink ? '#ff30ff' : 'rgba(0,0,0,0.15)';
-  const tag = document.getElementById('wordTag');
-  if (tag) tag.style.color = isPink ? PINK : (isInverted ? '#fff' : '#000');
-  updateLetterStyle();
-  updateAHoleColor();
-}
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let orientation  = 'landscape';
+let selCat       = null;
+let selBaseImg   = null;
+let selEl        = null;
+let selLogo      = null;   // 'upload' | 'preset-N'
+let selBaseFile  = null;   // actual filename of chosen base image
+let uploadedSrc  = null;
+let logoColor    = 'white';
+let titleLang    = 'PT';
+let selTitle     = null;   // word string (already uppercased) or null
+let imgGenerated = false;
+let generatedImageUrl = null;  // stores the last generated image for export
+// Generated (remixed) image transform state
+let genX = 0, genY = 0, genW = 0, genH = 0, genScale = 1.0, genRot = 0;
+let genDragging = false, genDragOffX = 0, genDragOffY = 0;
+let genScaling  = false, genScaleStartDist = 0, genScaleStart = 1.0;
+let genSelected = false;
 
-function toggleInvert() {
-  isInverted = !isInverted;
-  const outer = document.getElementById('stageOuter');
-  const tag   = document.getElementById('wordTag');
-  outer.classList.toggle('inverted', isInverted);
-  updateLetterStyle();
-  if (tag) tag.style.color = isPink ? PINK : (isInverted ? '#fff' : '#000');
-  updateAHoleColor();
-}
+// Graphical element transform state (all relative to play-area)
+let elX = 0, elY = 0;       // center position in play-area px
+let elW = 0, elH = 0;       // natural size in play-area px (set on load)
+let elScale = 1.0;           // scale multiplier
+let elRot = 0;               // rotation in degrees
+let elFile = '';             // current element filename
+let elFlipX = false;  // mirror state for graphical element
+let elDragging = false, elDragOffX = 0, elDragOffY = 0;
+let elRotating = false, elRotStartAngle = 0, elRotStartRot = 0;
+let elScaling = false, elScaleCorner = '', elScaleStartDist = 0, elScaleStart = 1.0;
+let elSelected = false;  // whether el transform handles are shown
 
-function applyZoom() {
-  const wrap = document.getElementById('zoomWrap');
-  wrap.style.transform = `translate(calc(-50% + ${panOffsetX}px), calc(-50% + ${panOffsetY}px)) scale(${zoomScale})`;
-  positionWordTag();
-}
+// Base image transform state
+let bgX = 0, bgY = 0, bgW = 0, bgH = 0, bgScale = 1.0, bgRot = 0;
+let bgDragging = false, bgDragOffX = 0, bgDragOffY = 0;
+let bgRotating = false, bgRotStartAngle = 0, bgRotStartRot = 0;
+let bgScaling  = false, bgScaleStartDist = 0, bgScaleStart = 1.0;
+let bgSelected = false;  // whether bg transform handles are shown
 
-function initZoom() {
-  const outer = document.getElementById('stageOuter');
+let logoPctX = 26, logoPctY = 70;  // center of logo as % of play-area
+let logoScale = 55;                 // % of min(aW,aH) — kept for export math
+let dragging = false, dOffX = 0, dOffY = 0;
 
-  // Desktop: scroll wheel
-  outer.addEventListener('wheel', e => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.06 : 0.06;
-    zoomScale = Math.min(3.0, Math.max(0.2, zoomScale + delta));
-    applyZoom();
-  }, { passive: false });
+// Logo transform (mirrors elX/elY system — position in play-area px)
+let logoTX = 0, logoTY = 0;      // center in play-area px
+let logoTW = 0, logoTH = 0;      // natural size of the logo img in play-area px
+let logoTScale = 1.0;
+let logoTRot   = 0;
+let logoSelected = false;
+let logoDragging2 = false, logoDragOff2X = 0, logoDragOff2Y = 0;
+let logoRotating2 = false, logoRotStart2 = 0, logoRotStartRot2 = 0;
+let logoScaling2  = false, logoScaleStart2Dist = 0, logoScaleStart2 = 1.0;
 
-  // Mobile: pinch-to-zoom
-  let lastDist = null;
-  outer.addEventListener('touchstart', e => {
-    if (e.touches.length === 2) {
-      lastDist = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-    }
-  }, { passive: true });
+// Title transform state — independent element in play-area coords
+let titleTX = 0, titleTY = 0;          // center in play-area px
+let titleTW = 0, titleTH = 0;          // natural size of title text in px
+let titleTScale = 1.0;                  // scale multiplier
+let titleTRot   = 0;                    // rotation degrees
+let titleSelected = false;
+let titleDragging2 = false, titleDragOff2X = 0, titleDragOff2Y = 0;
+let titleRotating2 = false, titleRotStart2 = 0, titleRotStartRot2 = 0;
+let titleScaling2  = false, titleScaleStart2Dist = 0, titleScaleStart2 = 1.0;
 
-  outer.addEventListener('touchmove', e => {
-    if (e.touches.length === 2) {
-      e.preventDefault();
-      const dist = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-      if (lastDist) {
-        const delta = (dist - lastDist) * 0.008;
-        zoomScale = Math.min(3.0, Math.max(0.2, zoomScale + delta));
-        applyZoom();
-      }
-      lastDist = dist;
-    }
-  }, { passive: false });
+// Legacy (kept for compat)
+let titleManuallyMoved = false;
+let titleDragging = false, tOffX = 0, tOffY = 0;
 
-  outer.addEventListener('touchend', () => { lastDist = null; });
-}
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function $id(id) { return document.getElementById(id); }
 
-// ── Responsive default zoom based on screen width ─────────────────────────
-function getDefaultZoom() {
-  const outer = document.getElementById('stageOuter');
-  const outerW = outer.getBoundingClientRect().width || outer.offsetWidth || 300;
-  const fit = (outerW / SW) * 0.88;
-  return Math.min(fit, 1.35);
-}
-
-function applyDefaultZoom() {
-  zoomScale = getDefaultZoom();
-  applyZoom();
-}
-
-// Re-center when window resizes (orientation change on mobile)
-if (window.ResizeObserver) {
-  const ro = new ResizeObserver(() => {
-    if (letterPositions.length > 0) applyDefaultZoom();
-  });
-  ro.observe(document.getElementById('stageOuter'));
-}
-
-
-
-// ── A-hole draggable shape ───────────────────────────────────────────────────
-let aHoleVisible = false;
-let aHoleX = 290, aHoleY = 110; // position in stage coords
-let aHoleOffsetX = 0, aHoleOffsetY = 0; // offset from A letter center
-
-function aHolePathD(cx, cy, size) {
-  // Vertical egg: very narrow top, wider bottom, overall slimmer
-  const w = size * 0.30;
-  const h = size * 0.55;
-  return `M ${cx} ${cy - h}
-    C ${cx + w*0.15} ${cy - h}, ${cx + w} ${cy - h*0.1}, ${cx + w} ${cy + h*0.15}
-    C ${cx + w} ${cy + h*0.65}, ${cx + w*0.6} ${cy + h}, ${cx} ${cy + h}
-    C ${cx - w*0.6} ${cy + h}, ${cx - w} ${cy + h*0.65}, ${cx - w} ${cy + h*0.15}
-    C ${cx - w} ${cy - h*0.1}, ${cx - w*0.15} ${cy - h}, ${cx} ${cy - h} Z`;
-}
-
-function updateAHoleColor() {
-  const p = document.getElementById('aHolePath');
-  if (!p) return;
-  // Hole should always be the background color (punching through the logo)
-  if (isInverted) p.setAttribute('fill', '#000');
-  else p.setAttribute('fill', '#fff');
-}
-
-function renderAHole() {
-  const path = document.getElementById('aHolePath');
-  if (!path) return;
-  const size = parseInt(document.getElementById('aHoleSize').value);
-  path.setAttribute('d', aHolePathD(aHoleX, aHoleY, size));
-  // Use same filter as the logo so softness matches automatically
-  const defocus = parseFloat(document.getElementById('defocus').value);
-  path.setAttribute('filter', defocus > 0 ? 'url(#blobdefocus)' : 'url(#blobonly)');
-  updateAHoleColor();
-}
-
-function getACenter() {
-  const mc = document.getElementById('measure');
-  const sz = parseInt(document.getElementById('sz').value);
-  mc.width = 300; mc.height = 150;
-  const mctx = mc.getContext('2d');
-  mctx.font = `900 ${sz}px "Trebuchet MS", sans-serif`;
-  const aW = mctx.measureText('A').width;
-  const aPos = letterPositions[2]; // A is always index 2
-  if (!aPos) return null;
-  return { x: aPos.left + aW * 0.5, y: aPos.top + sz * 0.42 };
-}
-
-function toggleAHole() {
-  aHoleVisible = !aHoleVisible;
-  const svg = document.getElementById('aHoleSvg');
-  const btn = document.getElementById('aHoleToggle');
-  svg.style.display = aHoleVisible ? 'block' : 'none';
-  btn.textContent   = aHoleVisible ? 'Hide' : 'Show';
-  btn.classList.toggle('active', aHoleVisible);
-  if (aHoleVisible) {
-    // Snap hole to A letter center on first show
-    const ac = getACenter();
-    if (ac) { aHoleX = ac.x; aHoleY = ac.y; }
-    else { aHoleX = 290; aHoleY = 110; }
-    aHoleOffsetX = 0; aHoleOffsetY = 0;
-    renderAHole();
-    initAHoleDrag();
+// ─── GENERATED IMAGE TRANSFORM ───────────────────────────────────────────────
+function applyGenTransform() {
+  const gi = $id('bgImage');
+  const gh = $id('genHandles');
+  if (!gi || gi.style.display === 'none') return;
+  const w = genW * genScale, h = genH * genScale;
+  gi.style.width  = w + 'px'; gi.style.height = h + 'px';
+  gi.style.left   = (genX - w/2) + 'px'; gi.style.top = (genY - h/2) + 'px';
+  gi.style.transform = `rotate(${genRot}deg)`;
+  if (gh && genSelected) {
+    gh.style.width  = w + 'px'; gh.style.height  = h + 'px';
+    gh.style.left   = (genX - w/2) + 'px'; gh.style.top = (genY - h/2) + 'px';
+    gh.style.transform = `rotate(${genRot}deg)`;
   }
 }
 
-function resizeAHole() { renderAHole(); }
+// ─── TITLE TRANSFORM ─────────────────────────────────────────────────────────
+// Measure and lock title size — only called when font changes, not during drag
+function measureTitleSize() {
+  const titleEl = $id('logoTitle');
+  const td = $id('titleDraggable');
+  if (!titleEl || !td) return;
+  // Temporarily make visible off-screen to measure
+  const prevLeft = td.style.left, prevTop = td.style.top;
+  td.style.left = '-9999px'; td.style.top = '-9999px';
+  td.style.width = 'auto'; td.style.height = 'auto';
+  const w = titleEl.offsetWidth  || 80;
+  const h = titleEl.offsetHeight || 20;
+  td.style.left = prevLeft; td.style.top = prevTop;
+  titleTW = w; titleTH = h;
+}
 
-function initAHoleDrag() {
-  const path = document.getElementById('aHolePath');
-  if (!path || path._dragInit) return;
-  path._dragInit = true;
-  path.style.cursor = 'grab';
+function applyTitleStyle_font() {
+  const titleEl = $id('logoTitle');
+  if (!titleEl) return;
+  const baseFontPx = (logoTW > 0 ? logoTW * logoTScale : 80) * 0.08;
+  const fontSize   = Math.max(4, Math.round(baseFontPx * titleTScale));
+  titleEl.style.fontSize   = fontSize + 'px';
+  titleEl.style.whiteSpace = 'nowrap';
+  titleEl.style.fontFamily = "'Trebuchet MS', Trebuchet, sans-serif";
+  titleEl.style.fontWeight = '700';
+  titleEl.style.textTransform = 'uppercase';
+  titleEl.style.letterSpacing = '0.06em';
+  const colorMap = { white:'#ffffff', black:'#000000', pink:'#ff30ff' };
+  titleEl.style.color = colorMap[logoColor] || '#ffffff';
+}
 
-  let dragging = false, startX, startY, startHX, startHY;
+function applyTitleTransform(remeasure) {
+  const td = $id('titleDraggable');
+  const th = $id('titleHandles');
+  if (!td || td.style.display === 'none') return;
 
-  path.addEventListener('mousedown', e => {
-    e.preventDefault(); e.stopPropagation();
-    dragging = true;
-    startX = e.clientX; startY = e.clientY;
-    startHX = aHoleX; startHY = aHoleY;
-    path.style.cursor = 'grabbing';
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-  });
-  path.addEventListener('touchstart', e => {
-    e.stopPropagation();
-    dragging = true;
-    startX = e.touches[0].clientX; startY = e.touches[0].clientY;
-    startHX = aHoleX; startHY = aHoleY;
-    document.addEventListener('touchmove', onMoveT, { passive: false });
-    document.addEventListener('touchend', onUp);
-  }, { passive: true });
+  // Update font styles
+  applyTitleStyle_font();
 
-  function onMove(e) {
-    if (!dragging) return;
-    aHoleX = startHX + (e.clientX - startX) / zoomScale;
-    aHoleY = startHY + (e.clientY - startY) / zoomScale;
-    // Update offset relative to A center
-    const ac = getACenter();
-    if (ac) { aHoleOffsetX = aHoleX - ac.x; aHoleOffsetY = aHoleY - ac.y; }
-    renderAHole();
+  // Only remeasure size when explicitly requested (font/scale change), not during drag
+  if (remeasure || !titleTW) {
+    measureTitleSize();
   }
-  function onMoveT(e) {
-    if (!dragging) return;
-    e.preventDefault();
-    aHoleX = startHX + (e.touches[0].clientX - startX) / zoomScale;
-    aHoleY = startHY + (e.touches[0].clientY - startY) / zoomScale;
-    const ac = getACenter();
-    if (ac) { aHoleOffsetX = aHoleX - ac.x; aHoleOffsetY = aHoleY - ac.y; }
-    renderAHole();
-  }
-  function onUp() {
-    dragging = false;
-    path.style.cursor = 'grab';
-    document.removeEventListener('mousemove', onMove);
-    document.removeEventListener('mouseup', onUp);
-    document.removeEventListener('touchmove', onMoveT);
-    document.removeEventListener('touchend', onUp);
-  }
-}
+  const w = titleTW || 80;
+  const h = titleTH || 20;
 
-function updateTitleSize() {
-  const sz = parseInt(document.getElementById('titleSz').value);
-  const tag = document.getElementById('wordTag');
-  if (tag) tag.style.fontSize = sz + 'px';
-  positionWordTag();
-}
+  // Position using locked size — stable during drag
+  td.style.width           = w + 'px';
+  td.style.height          = h + 'px';
+  td.style.left            = (titleTX - w/2) + 'px';
+  td.style.top             = (titleTY - h/2) + 'px';
+  td.style.transform       = `rotate(${titleTRot}deg)`;
+  td.style.transformOrigin = 'center center';
 
-function seededRand(s, i) {
-  let x = Math.sin(s * 127.1 + i * 311.7) * 43758.5453;
-  return x - Math.floor(x);
-}
-
-function measureLetters(letters, sz) {
-  const mc = document.getElementById('measure');
-  mc.width = 800; mc.height = 300;
-  const mctx = mc.getContext('2d');
-  mctx.font = `900 ${sz}px "${FONT}", sans-serif`;
-  return letters.map(l => mctx.measureText(l).width);
-}
-
-function updateFilters() {
-  const b = parseInt(document.getElementById('blurR').value);
-  const d = parseFloat(document.getElementById('defocus').value);
-  const threshold = 22 - (b - 4) * 0.3;
-  const cutoff    = -9  + (b - 4) * 0.1;
-  const vals = `1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${threshold.toFixed(1)} ${cutoff.toFixed(1)}`;
-  document.querySelectorAll('#svgfilters feGaussianBlur[result="blur"], #svgfilters feGaussianBlur[result="blob"]')
-    .forEach(el => el.setAttribute('stdDeviation', b));
-  document.querySelectorAll('#svgfilters feColorMatrix[result="sharp"]')
-    .forEach(el => el.setAttribute('values', vals));
-  const defEl = document.querySelector('#svgfilters feGaussianBlur[result="defocused"]');
-  if (defEl) defEl.setAttribute('stdDeviation', d);
-  document.getElementById('stage').style.filter = d > 0 ? 'url(#blobdefocus)' : 'url(#blobonly)';
-  if (aHoleVisible) renderAHole();
-}
-
-function updateLetterStyle() {
-  const sw = parseInt(document.getElementById('strokeW').value);
-  document.querySelectorAll('.letter').forEach(el => {
-    el.style.color = getLogoColor();
-    el.style.webkitTextStroke = sw > 0 ? `${sw}px ${getStrokeColor()}` : '0px';
-  });
-}
-
-function toggleMotionPause() {
-  motionPaused = !motionPaused;
-  const btn = document.getElementById('m-pause');
-  if (motionPaused) {
-    btn.textContent = '▶ Resume';
-    btn.classList.add('active');
-  } else {
-    btn.textContent = '⏸ Pause';
-    btn.classList.remove('active');
+  if (th && titleSelected) {
+    th.style.width     = w + 'px'; th.style.height  = h + 'px';
+    th.style.left      = (titleTX - w/2) + 'px'; th.style.top = (titleTY - h/2) + 'px';
+    th.style.transform = `rotate(${titleTRot}deg)`;
+    th.style.transformOrigin = 'center center';
   }
 }
 
-function setMotion(mode) {
-  motionMode = mode;
-  // Reset pause state when switching motion mode
-  motionPaused = false;
-  const pauseBtn = document.getElementById('m-pause');
-  pauseBtn.textContent = '⏸ Pause';
-  pauseBtn.classList.remove('active');
-  document.querySelectorAll('#m-none, #m-side, #m-random').forEach(b => b.classList.remove('active'));
-  document.getElementById('m-' + mode).classList.add('active');
-  document.getElementById('motionAmtRow').style.display = mode === 'none' ? 'none' : '';
-  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
-  mode !== 'none' ? startAnimation() : resetToBase();
-}
-
-function resetToBase() {
-  document.querySelectorAll('#stage .letter').forEach((el, i) => {
-    if (!basePositions[i]) return;
-    el.style.left = basePositions[i].left + 'px';
-    el.style.top  = basePositions[i].top  + 'px';
-    letterPositions[i] = { ...basePositions[i] };
-  });
-}
-
-function startAnimation() {
-  t = 0;
-  (function tick() {
-    const amt = parseInt(document.getElementById('motionAmt').value);
-    if (!motionPaused) {
-      t += 0.022;
-      document.querySelectorAll('#stage .letter').forEach((el, i) => {
-        if (!basePositions[i]) return;
-        const ph = motionPhases[i] || 0;
-        let dx = 0, dy = 0;
-        if      (motionMode === 'side')   dx = Math.sin(t + ph * 0.4) * amt * 1.4;
-        else if (motionMode === 'random') { dx = Math.sin(t * 1.1 + ph * 2.3) * amt * 1.3; dy = Math.cos(t * 0.8 + ph * 1.7) * amt * 1.3; }
-        el.style.left = (basePositions[i].left + dx) + 'px';
-        el.style.top  = (basePositions[i].top  + dy) + 'px';
-        letterPositions[i] = { left: basePositions[i].left + dx, top: basePositions[i].top + dy };
-      });
-      positionWordTag();
-      if (aHoleVisible) {
-        const ac = getACenter();
-        if (ac) { aHoleX = ac.x + aHoleOffsetX; aHoleY = ac.y + aHoleOffsetY; renderAHole(); }
-      }
-    }
-    animFrame = requestAnimationFrame(tick);
-  })();
-}
-
-// ── Per-letter drag ──────────────────────────────────────────────────────────
-function makeDraggable(el, stageEl, idx) {
-  let sx, sy, sl, st;
-  function down(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    const cx = e.touches ? e.touches[0].clientX : e.clientX;
-    const cy = e.touches ? e.touches[0].clientY : e.clientY;
-    sx = cx; sy = cy; sl = parseFloat(el.style.left); st = parseFloat(el.style.top);
-    document.addEventListener('mousemove', move);
-    document.addEventListener('mouseup', up);
-    document.addEventListener('touchmove', move, { passive: false });
-    document.addEventListener('touchend', up);
+function showTitleInPlayArea() {
+  const td = $id('titleDraggable');
+  if (!td || !selTitle) return;
+  const titleEl = $id('logoTitle');
+  if (titleEl) {
+    titleEl.style.display = 'block';
+    titleEl.textContent   = selTitle;
   }
-  function move(e) {
-    e.preventDefault();
-    const cx = e.touches ? e.touches[0].clientX : e.clientX;
-    const cy = e.touches ? e.touches[0].clientY : e.clientY;
-    const r  = stageEl.getBoundingClientRect();
-    const nl = Math.max(-60, Math.min(r.width  + 20, sl + cx - sx));
-    const nt = Math.max(-60, Math.min(r.height + 20, st + cy - sy));
-    el.style.left = nl + 'px'; el.style.top = nt + 'px';
-    letterPositions[idx] = basePositions[idx] = { left: nl, top: nt };
-    if (idx === 2 && aHoleVisible) {
-      const ac = getACenter();
-      if (ac) { aHoleX = ac.x + aHoleOffsetX; aHoleY = ac.y + aHoleOffsetY; renderAHole(); }
-    }
-  }
-  function up() {
-    document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up);
-    document.removeEventListener('touchmove', move); document.removeEventListener('touchend', up);
-  }
-  el.addEventListener('mousedown', down);
-  el.addEventListener('touchstart', down, { passive: false });
-}
+  td.style.display = 'block';
 
-// ── Canvas pan (click empty space) ──────────────────────────────────────────
-function initPan() {
-  const outer = document.getElementById('stageOuter');
-  let panning = false, psx, psy;
-
-  outer.addEventListener('mousedown', e => {
-    // Only pan if we clicked the outer div or stage itself (not a letter)
-    if (e.target.classList.contains('letter')) return;
-    panning = true;
-    psx = e.clientX; psy = e.clientY;
-    outer.classList.add('panning');
-    document.addEventListener('mousemove', onPanMove);
-    document.addEventListener('mouseup', onPanUp);
-  });
-
-  outer.addEventListener('touchstart', e => {
-    if (e.target.classList.contains('letter')) return;
-    if (e.touches.length !== 1) return; // ignore pinch
-    panning = true;
-    psx = e.touches[0].clientX; psy = e.touches[0].clientY;
-    document.addEventListener('touchmove', onPanMoveT, { passive: false });
-    document.addEventListener('touchend', onPanUpT);
-  }, { passive: true });
-
-  function applyTransform() {
-    const wrap = document.getElementById('zoomWrap');
-    wrap.style.transform = `translate(calc(-50% + ${panOffsetX}px), calc(-50% + ${panOffsetY}px)) scale(${zoomScale})`;
-  }
-
-  function onPanMove(e) {
-    if (!panning) return;
-    const dx = e.clientX - psx; const dy = e.clientY - psy;
-    psx = e.clientX; psy = e.clientY;
-    panOffsetX += dx; panOffsetY += dy;
-    applyTransform();
-    positionWordTag();
-  }
-  function onPanUp() {
-    panning = false;
-    outer.classList.remove('panning');
-    document.removeEventListener('mousemove', onPanMove);
-    document.removeEventListener('mouseup', onPanUp);
-  }
-  function onPanMoveT(e) {
-    if (!panning) return;
-    if (e.touches.length !== 1) { panning = false; return; } // second finger = pinch, stop pan
-    e.preventDefault();
-    const dx = e.touches[0].clientX - psx; const dy = e.touches[0].clientY - psy;
-    psx = e.touches[0].clientX; psy = e.touches[0].clientY;
-    panOffsetX += dx; panOffsetY += dy;
-    applyTransform();
-    positionWordTag();
-  }
-  function onPanUpT() {
-    panning = false;
-    document.removeEventListener('touchmove', onPanMoveT);
-    document.removeEventListener('touchend', onPanUpT);
-  }
-}
-
-function draw() {
-  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
-  const stage   = document.getElementById('stage');
-  const sz      = parseInt(document.getElementById('sz').value);
-  const vspread = parseInt(document.getElementById('vspread').value) / 100;
-  const hspread = parseInt(document.getElementById('hspread').value) / 100;
-  const sw      = parseInt(document.getElementById('strokeW').value);
-  const fo      = parseInt(document.getElementById('fillOp').value) / 100;
-  const letters = ['F','O','A','M','S'];
-  const widths  = measureLetters(letters, sz);
-  const gap     = sz * hspread;
-  const totalW  = widths.reduce((a,b) => a+b, 0) + gap * (letters.length - 1);
-  let curX      = (SW - totalW) / 2;
-
-  letterPositions = []; basePositions = [];
-  motionPhases = letters.map((_, i) => seededRand(seed * 3.7, i) * Math.PI * 2);
-  stage.innerHTML = '';
-  panOffsetX = 0; panOffsetY = 0;
-
-  letters.forEach((l, i) => {
-    const div = document.createElement('div');
-    div.className = 'letter';
-    div.textContent = l;
-    div.style.fontSize   = sz + 'px';
-    div.style.fontWeight = '900';
-    div.style.color      = getLogoColor();
-    if (sw > 0) div.style.webkitTextStroke = `${sw}px ${isInverted ? 'white' : 'black'}`;
-    const maxDy = (SH * 0.5 - sz * 0.5) * vspread;
-    const dy    = (seededRand(seed, i) - 0.5) * 2 * maxDy;
-    const left  = curX;
-    const top   = Math.max(4, Math.min(SH - sz - 4, SH / 2 - sz * 0.75 + dy));
-    div.style.left = left + 'px'; div.style.top = top + 'px';
-    letterPositions.push({ left, top }); basePositions.push({ left, top });
-    curX += widths[i] + gap;
-    makeDraggable(div, stage, i);
-    stage.appendChild(div);
-  });
-
-  updateFilters();
-  if (motionMode !== 'none') startAnimation();
-}
-
-function randomize() {
-  seed = Math.random() * 99999;
-  wordTagOffsetX = 0; wordTagOffsetY = 0;
-  zoomScale = getDefaultZoom(); applyZoom();
-  draw();
-  document.getElementById('stageOuter').classList.toggle('inverted', isInverted);
-  const tag = document.getElementById('wordTag');
-  if (tag) tag.style.color = isInverted ? '#fff' : '#000';
-  setTimeout(() => {
-    positionWordTag();
-    // Reposition A hole to new A center + preserved offset
-    if (aHoleVisible) {
-      const ac = getACenter();
-      if (ac) {
-        aHoleX = ac.x + aHoleOffsetX;
-        aHoleY = ac.y + aHoleOffsetY;
-        renderAHole();
-      }
-    }
-  }, 60);
-}
-
-// ── Export ───────────────────────────────────────────────────────────────────
-function exportLogo(logoColor, bgColor) {
-  const SCALE    = 4;
-  const letters  = ['F','O','A','M','S'];
-  const fo       = parseInt(document.getElementById('fillOp').value) / 100;
-  const sw       = parseInt(document.getElementById('strokeW').value);
-  const blobBlur = parseInt(document.getElementById('blurR').value);
-  const defocus  = parseFloat(document.getElementById('defocus').value);
-  const baseSz   = parseInt(document.getElementById('sz').value);
-  const color    = logoColor === 'pink' ? `rgba(255,48,255,${fo})` : logoColor === 'black' ? `rgba(0,0,0,${fo})` : `rgba(255,255,255,${fo})`;
-  const PAD      = 24 * SCALE;
-
-  const margin = 300;
-  const BIGW = (SW + margin * 2) * SCALE;
-  const BIGH = (SH + margin * 2) * SCALE;
-  const OX = margin, OY = margin;
-
-  const fsSVG   = baseSz   * SCALE;
-  const swSVG   = sw       * SCALE;
-  const blobSVG = blobBlur * SCALE;
-  const defSVG  = defocus  * SCALE;
-
-  const threshold = (22 - (blobBlur - 4) * 0.3) * SCALE;
-  const cutoff    = (-9  + (blobBlur - 4) * 0.1) * SCALE;
-  const vals = `1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${threshold.toFixed(1)} ${cutoff.toFixed(1)}`;
-  const defocusStep = defSVG > 0 ? `<feGaussianBlur in="crisp" stdDeviation="${defSVG}"/>` : '';
-
-  // Letters: stage coords + pan
-  let textEls = '';
-  letterPositions.forEach((pos, i) => {
-    const x = (pos.left + panOffsetX + OX) * SCALE;
-    const y = (pos.top  + panOffsetY + OY) * SCALE + fsSVG * 0.75;
-    const strokeAttr = sw > 0 ? `stroke="${color}" stroke-width="${swSVG}" paint-order="stroke"` : '';
-    textEls += `<text x="${x}" y="${y}" font-family="'Trebuchet MS',sans-serif" font-size="${fsSVG}" font-weight="900" fill="${color}" ${strokeAttr}>${letters[i]}</text>\n`;
-  });
-
-  // Title: measure screen position relative to F, convert offset to stage coords
-  let titleEl = '';
-  const tagEl = document.getElementById('wordTag');
-  if (tagEl && tagEl.style.display !== 'none' && currentLang !== 'none') {
-    const tagColor  = logoColor === 'pink' ? '#ff30ff' : logoColor === 'black' ? 'black' : 'white';
-    const tagSzSVG  = wordTagStageSz * SCALE;
-    const fEl2      = document.querySelector('#stage .letter');
-    const fRect2    = fEl2 ? fEl2.getBoundingClientRect() : null;
-    const tagRect2  = tagEl.getBoundingClientRect();
-    const fPos0     = letterPositions[0];
-    if (fRect2 && fPos0) {
-      // Difference in screen pixels between tag and F, divided by zoom = stage offset
-      const dxStage = (tagRect2.left - fRect2.left) / zoomScale;
-      const dyStage = (tagRect2.top  - fRect2.top)  / zoomScale;
-      const tagX = (fPos0.left + panOffsetX + dxStage + OX) * SCALE;
-      const tagY = (fPos0.top  + panOffsetY + dyStage + OY) * SCALE + tagSzSVG * 0.55;
-      titleEl = `<text x="${tagX}" y="${tagY}" font-family="'Trebuchet MS',sans-serif" font-size="${tagSzSVG}" font-weight="700" fill="${tagColor}" letter-spacing="${tagSzSVG * 0.08}">${tagEl.textContent}</text>`;
-    }
-  }
-
-  // A hole: same approach — measure screen offset from A letter
-  let aHoleEl = '';
-  let aHoleCutoutSvg = null; // for transparent exports: separate SVG to cut with destination-out
-  if (aHoleVisible) {
-    const aHoleSz = parseInt(document.getElementById('aHoleSize').value) * SCALE;
-    const ahCX = (aHoleX + panOffsetX + OX) * SCALE;
-    const ahCY = (aHoleY + panOffsetY + OY) * SCALE - aHoleSz * 0.35;
-    const w = aHoleSz * 0.30, h = aHoleSz * 0.55;
-    const d = `M ${ahCX} ${ahCY-h} C ${ahCX+w*0.15} ${ahCY-h}, ${ahCX+w} ${ahCY-h*0.1}, ${ahCX+w} ${ahCY+h*0.15} C ${ahCX+w} ${ahCY+h*0.65}, ${ahCX+w*0.6} ${ahCY+h}, ${ahCX} ${ahCY+h} C ${ahCX-w*0.6} ${ahCY+h}, ${ahCX-w} ${ahCY+h*0.65}, ${ahCX-w} ${ahCY+h*0.15} C ${ahCX-w} ${ahCY-h*0.1}, ${ahCX-w*0.15} ${ahCY-h}, ${ahCX} ${ahCY-h} Z`;
-    if (bgColor === 'transparent') {
-      // For transparent: we'll cut the hole out using destination-out after rendering
-      aHoleCutoutSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${BIGW}" height="${BIGH}"><defs><filter id="blob2" color-interpolation-filters="sRGB" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur in="SourceGraphic" stdDeviation="${blobSVG}" result="blur"/><feColorMatrix in="blur" mode="matrix" values="${vals}" result="sharp"/><feComposite in="SourceGraphic" in2="sharp" operator="atop" result="crisp"/>${defocusStep}</filter></defs><path d="${d}" fill="black" filter="url(#blob2)"/></svg>`;
+  // Default position: relative to logo if logo is shown
+  const area = $id('playAreaInner');
+  const aW = area.offsetWidth, aH = area.offsetHeight;
+  if (titleTX === 0 && titleTY === 0) {
+    // First time only — position relative to logo
+    const logoSW = logoTW * logoTScale;
+    const logoSH = logoTH * logoTScale;
+    if (titleLang === 'PT') {
+      // PT (CASA): above and to the LEFT of the logo
+      titleTX = logoTX - logoSW * 0.35;   // left of logo center
+      titleTY = logoTY - logoSH * 0.55;   // above logo
     } else {
-      const ahColor = bgColor === 'black' ? 'black' : 'white';
-      aHoleEl = `<path d="${d}" fill="${ahColor}" filter="url(#blob)"/>`;
+      // EN (HOUSE): below and to the RIGHT of the logo
+      titleTX = logoTX + logoSW * 0.35;   // right of logo center
+      titleTY = logoTY + logoSH * 0.55;   // below logo
     }
+    titleTScale = 1.0; titleTRot = 0;
   }
-
-  const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${BIGW}" height="${BIGH}">
-  <defs>
-    <filter id="blob" color-interpolation-filters="sRGB" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="${blobSVG}" result="blur"/>
-      <feColorMatrix in="blur" mode="matrix" values="${vals}" result="sharp"/>
-      <feComposite in="SourceGraphic" in2="sharp" operator="atop" result="crisp"/>
-      ${defocusStep}
-    </filter>
-  </defs>
-  <g filter="url(#blob)">${textEls}</g>
-  ${aHoleEl}
-  ${titleEl}
-</svg>`;
-
-  const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
-  const url  = URL.createObjectURL(blob);
-  const img  = new Image();
-  img.onload = () => {
-    const bigCanvas = document.createElement('canvas');
-    bigCanvas.width = BIGW; bigCanvas.height = BIGH;
-    const bctx = bigCanvas.getContext('2d');
-    bctx.drawImage(img, 0, 0);
-    URL.revokeObjectURL(url);
-
-    // For transparent exports: cut the A hole out using destination-out
-    const applyHoleCutout = () => {
-      if (!aHoleCutoutSvg) return Promise.resolve();
-      return new Promise(resolve => {
-        const holeBlob = new Blob([aHoleCutoutSvg], { type: 'image/svg+xml;charset=utf-8' });
-        const holeUrl = URL.createObjectURL(holeBlob);
-        const holeImg = new Image();
-        holeImg.onload = () => {
-          bctx.globalCompositeOperation = 'destination-out';
-          bctx.drawImage(holeImg, 0, 0);
-          bctx.globalCompositeOperation = 'source-over';
-          URL.revokeObjectURL(holeUrl);
-          resolve();
-        };
-        holeImg.onerror = () => { URL.revokeObjectURL(holeUrl); resolve(); };
-        holeImg.src = holeUrl;
-      });
-    };
-
-    applyHoleCutout().then(() => {
-    const id = bctx.getImageData(0, 0, BIGW, BIGH); const d2 = id.data;
-    let minX=BIGW,maxX=0,minY=BIGH,maxY=0;
-    for(let py=0;py<BIGH;py++) for(let px=0;px<BIGW;px++){const i=(py*BIGW+px)*4;if(d2[i+3]>10){if(px<minX)minX=px;if(px>maxX)maxX=px;if(py<minY)minY=py;if(py>maxY)maxY=py;}}
-    minX=Math.max(0,minX-PAD);minY=Math.max(0,minY-PAD);maxX=Math.min(BIGW,maxX+PAD);maxY=Math.min(BIGH,maxY+PAD);
-    const cropW=maxX-minX,cropH=maxY-minY;
-    const fc=document.createElement('canvas');fc.width=cropW;fc.height=cropH;
-    const fctx=fc.getContext('2d');
-    if(bgColor==='white'){fctx.fillStyle='#fff';fctx.fillRect(0,0,cropW,cropH);}
-    else if(bgColor==='black'){fctx.fillStyle='#000';fctx.fillRect(0,0,cropW,cropH);}
-    fctx.drawImage(bigCanvas,minX,minY,cropW,cropH,0,0,cropW,cropH);
-    const a=document.createElement('a');a.download=`foams-${logoColor}-on-${bgColor}.png`;a.href=fc.toDataURL('image/png');a.click();
-    }); // end applyHoleCutout
-  };
-  img.onerror=()=>{URL.revokeObjectURL(url);alert('Export failed — try Chrome.');};
-  img.src=url;
+  applyTitleTransform(true);  // remeasure on first show
 }
 
-
-
-
-
-
-
-
-
-// ── Cycling word tag ─────────────────────────────────────────────────────────
-let wordTagOffsetX = 0;
-let wordTagOffsetY = 0;
-let wordTagStageX = 0;  // tag position in unscaled stage coords
-let wordTagStageY = 0;
-let wordTagStageSz = 12; // font size in unscaled stage px (= screen px / zoomScale)
-
-function positionWordTag() {
-  if (titleLocked) return; // locked: title stays where user placed it
-  const outer = document.getElementById('stageOuter');
-  const stage = document.getElementById('stage');
-  const tag   = document.getElementById('wordTag');
-  if (!tag) return;
-
-  const fEl = Array.from(stage.querySelectorAll('.letter')).find(el => el.textContent === 'F');
-  if (!fEl) return;
-
-  const outerRect = outer.getBoundingClientRect();
-  const fRect     = fEl.getBoundingClientRect();
-
-  const anchorLeft = fRect.left - outerRect.left - fRect.width * 0.15;
-  const anchorTop  = fRect.top  - outerRect.top  - 18;
-
-  const screenLeft = anchorLeft + wordTagOffsetX;
-  const screenTop  = anchorTop  + wordTagOffsetY;
-
-  tag.style.left = screenLeft + 'px';
-  tag.style.top  = screenTop  + 'px';
-
-  const fScreenLeft = fRect.left - outerRect.left;
-  const fScreenTop  = fRect.top  - outerRect.top;
-  const fPos = letterPositions[0];
-  if (fPos) {
-    wordTagStageX = fPos.left + (screenLeft - fScreenLeft) / zoomScale;
-    wordTagStageY = fPos.top  + (screenTop  - fScreenTop)  / zoomScale;
-  }
-  const tagSzScreen = parseInt(document.getElementById('titleSz').value);
-  wordTagStageSz = tagSzScreen / zoomScale;
+function hideTitleTransform() {
+  const td = $id('titleDraggable');
+  const th = $id('titleHandles');
+  if (td) td.style.display = 'none';
+  if (th) th.style.display = 'none';
+  titleSelected = false;
+  // titleTW preserved — position kept when changing word
 }
 
-function initWordTagDrag() {
-  const outer = document.getElementById('stageOuter');
-  let dragging = false, sx, sy, ox, oy;
+// When logo moves, shift title by same delta
+function shiftTitleWithLogo(deltaX, deltaY) {
+  titleTX += deltaX;
+  titleTY += deltaY;
+  if ($id('titleDraggable')?.style.display !== 'none') applyTitleTransform(false);
+}
+
+// ─── LOGO TRANSFORM ──────────────────────────────────────────────────────────
+function applyLogoTransform() {
+  const ld = $id('logoDraggable');
+  const lh = $id('logoHandles');
+  if (!ld || ld.style.display === 'none') return;
+
+  // Scaled size in actual screen px
+  const sw = logoTW * logoTScale;
+  const sh = logoTH * logoTScale;
+
+  // Position box: top-left at (logoTX - sw/2, logoTY - sh/2)
+  // Rotation around center
+  ld.style.width          = sw + 'px';
+  ld.style.height         = sh + 'px';
+  ld.style.left           = (logoTX - sw/2) + 'px';
+  ld.style.top            = (logoTY - sh/2) + 'px';
+  ld.style.transform      = `rotate(${logoTRot}deg)`;
+  ld.style.transformOrigin = 'center center';
+
+  // Sync % coords for export
+  const area = $id('playAreaInner');
+  const aW = area.offsetWidth, aH = area.offsetHeight;
+  if (aW && aH) {
+    logoPctX = (logoTX / aW) * 100;
+    logoPctY = (logoTY / aH) * 100;
+    logoScale = (sw / Math.min(aW, aH)) * 100;
+  }
+
+  // Sync handles
+  if (lh && logoSelected) {
+    lh.style.width          = sw + 'px';
+    lh.style.height         = sh + 'px';
+    lh.style.left           = (logoTX - sw/2) + 'px';
+    lh.style.top            = (logoTY - sh/2) + 'px';
+    lh.style.transform      = `rotate(${logoTRot}deg)`;
+    lh.style.transformOrigin = 'center center';
+  }
+
+  // Title position handled by titleDraggable, not here
+}
+
+function toggleMirror() {
+  elFlipX = !elFlipX;
+  const btn = $id('mirrorBtn');
+  if (btn) btn.style.color = elFlipX ? '#7af' : 'rgba(255,255,255,0.8)';
+  applyElTransform();
+}
+
+// ─── BASE IMAGE TRANSFORM ─────────────────────────────────────────────────────
+function applyBgTransform() {
+  const bp = $id('basePreview');
+  const bh = $id('bgHandles');
+  if (!bp || bp.style.display === 'none') return;
+  const w = bgW * bgScale, h = bgH * bgScale;
+  bp.style.width  = w + 'px';
+  bp.style.height = h + 'px';
+  bp.style.left   = (bgX - w/2) + 'px';
+  bp.style.top    = (bgY - h/2) + 'px';
+  bp.style.transform = `rotate(${bgRot}deg)`;
+  if (bh && bgSelected) {
+    bh.style.width  = w + 'px'; bh.style.height  = h + 'px';
+    bh.style.left   = (bgX - w/2) + 'px'; bh.style.top = (bgY - h/2) + 'px';
+    bh.style.transform = `rotate(${bgRot}deg)`;
+  }
+}
+
+// ─── ELEMENT TRANSFORM ───────────────────────────────────────────────────────
+function applyElTransform() {
+  const ep = $id('elPreview');
+  const eh = $id('elHandles');
+  if (!ep || ep.style.display === 'none') return;
+
+  const w = elW * elScale;
+  const h = elH * elScale;
+
+  // Position and transform the element image
+  ep.style.width  = w + 'px';
+  ep.style.height = h + 'px';
+  ep.style.left   = (elX - w/2) + 'px';
+  ep.style.top    = (elY - h/2) + 'px';
+  // Rotate first, then flip — keeps rotation direction consistent with handles
+  ep.style.transform = elFlipX ? `rotate(${elRot}deg) scaleX(-1)` : `rotate(${elRot}deg)`;
+
+  // Sync the dashed handles box
+  if (eh) {
+    eh.style.width   = w + 'px';
+    eh.style.height  = h + 'px';
+    eh.style.left    = (elX - w/2) + 'px';
+    eh.style.top     = (elY - h/2) + 'px';
+    eh.style.transform = `rotate(${elRot}deg)`;
+  }
+}
+
+// ─── TRANSFORM SYSTEM (base image + graphical element) ──────────────────────
+(function initTransforms() {
+  function xy(e) {
+    return e.touches
+      ? {x: e.touches[0].clientX, y: e.touches[0].clientY}
+      : {x: e.clientX, y: e.clientY};
+  }
+
+  function selectEl() {
+    elSelected=true; bgSelected=false; logoSelected=false;
+    const eh=$id('elHandles'); if(eh) eh.style.display='block';
+
+    const lh=$id('logoHandles'); if(lh) lh.style.display='none';
+    applyElTransform();
+  }
+  function selectBg() { /* base image is static, no selection */ }
+  function selectLogo() {
+    logoSelected=true; elSelected=false; bgSelected=false;
+    const lh=$id('logoHandles'); if(lh){ lh.style.display='block'; applyLogoTransform(); }
+    const eh=$id('elHandles'); if(eh) eh.style.display='none';
+
+  }
+  function deselect() {
+    elSelected=false; bgSelected=false; logoSelected=false;
+    const eh=$id('elHandles'); if(eh) eh.style.display='none';
+
+    const lh=$id('logoHandles'); if(lh) lh.style.display='none';
+  }
+
+  // Expose deselect for external use
+  window.deselectAll = deselect;
+
+  document.addEventListener('mousedown', onDown);
+  document.addEventListener('touchstart', onDown, {passive:false});
 
   function onDown(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    dragging = true;
-    sx = e.touches ? e.touches[0].clientX : e.clientX;
-    sy = e.touches ? e.touches[0].clientY : e.clientY;
-    ox = wordTagOffsetX;
-    oy = wordTagOffsetY;
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-    document.addEventListener('touchmove', onMove, { passive: false });
-    document.addEventListener('touchend', onUp);
+    const ep = $id('elPreview');
+    const bp = $id('basePreview');
+    const p  = xy(e);
+    const ld = $id('logoDraggable');
+    const gi = $id('bgImage');
+    const isGenHandle   = e.target.classList.contains('gen-handle');
+    const isGen         = gi && gi.style.display !== 'none' && gi.src && e.target === gi;
+    const td            = $id('titleDraggable');
+    const isTitleHandle = e.target.classList.contains('title-handle');
+    const isTitleRot    = e.target.id === 'titleRotHandle';
+    const isTitleDrag   = !!(td && td.style.display !== 'none' && td.contains(e.target) && !isTitleHandle && !isTitleRot);
+    const isElHandle    = e.target.classList.contains('el-handle');
+    const isElRot       = e.target.id === 'rotHandle';
+    const isBgHandle    = false;  // no bg handles
+    const isBgRot       = false;  // no bg rotation
+    const isLogoHandle  = e.target.classList.contains('logo-handle');
+    const isLogoRot     = e.target.id === 'logoRotHandle';
+    const isEl          = ep && ep.style.display !== 'none' && e.target === ep;
+    const isBg          = false;  // base image is now static, no transform
+    const titleEl_      = $id('logoTitle');
+    const isTitle       = titleEl_ && e.target === titleEl_;
+    const isDragSurface = e.target.id === 'logoDragSurface';
+    const isLogo        = ld && ld.style.display !== 'none' &&
+                          (e.target === ld || isDragSurface || (ld.contains(e.target) && !isTitle)) &&
+                          !isLogoHandle && !isLogoRot;
+
+    // ── Click on element → select it ──
+    if (isEl) {
+      e.preventDefault(); e.stopPropagation();
+      selectEl();
+      elDragging = true;
+      const r = ep.getBoundingClientRect();
+      elDragOffX = p.x - (r.left + r.width/2);
+      elDragOffY = p.y - (r.top  + r.height/2);
+      return;
+    }
+
+    // ── Click on base image → select it ──
+    if (isBg) {
+      e.preventDefault(); e.stopPropagation();
+      selectBg();
+      bgDragging = true;
+      const r = bp.getBoundingClientRect();
+      bgDragOffX = p.x - (r.left + r.width/2);
+      bgDragOffY = p.y - (r.top  + r.height/2);
+      return;
+    }
+
+    // ── El rotate handle ──
+    if (isElRot) {
+      e.preventDefault(); e.stopPropagation();
+      elRotating = true;
+      const r  = ep.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      elRotStartAngle = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI;
+      elRotStartRot   = elRot;
+      return;
+    }
+
+    // ── Bg rotate handle ──
+    if (isBgRot) {
+      e.preventDefault(); e.stopPropagation();
+      bgRotating = true;
+      const r  = bp.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      bgRotStartAngle = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI;
+      bgRotStartRot   = bgRot;
+      return;
+    }
+
+    // ── Click on generated image → select + drag (portrait only) ──
+    if (isGen && orientation === 'portrait') {
+      e.preventDefault(); e.stopPropagation();
+      genSelected = true;
+      const gh = $id('genHandles');
+      if (gh) { gh.style.display = 'block'; applyGenTransform(); }
+      genDragging = true;
+      const r = gi.getBoundingClientRect();
+      genDragOffX = p.x - (r.left + r.width/2);
+      genDragOffY = p.y - (r.top  + r.height/2);
+      return;
+    }
+
+    // ── Gen image corner handle (portrait only) ──
+    if (isGenHandle && orientation === 'portrait') {
+      e.preventDefault(); e.stopPropagation();
+      genScaling = true;
+      const r  = gi.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      genScaleStartDist = Math.hypot(p.x - cx, p.y - cy);
+      genScaleStart = genScale;
+      return;
+    }
+
+    // ── Click on title → select + drag ──
+    if (isTitleDrag) {
+      e.preventDefault(); e.stopPropagation();
+      titleSelected = true; elSelected=false; bgSelected=false; logoSelected=false; genSelected=false;
+      const th = $id('titleHandles'); if (th) { th.style.display='block'; applyTitleTransform(); }
+      const eh=$id('elHandles'); if(eh) eh.style.display='none';
+      const bh=$id('bgHandles'); if(bh) bh.style.display='none';
+      const lh=$id('logoHandles'); if(lh) lh.style.display='none';
+      const gh=$id('genHandles'); if(gh) gh.style.display='none';
+      titleDragging2 = true;
+      // Offset = mouse position relative to play area, minus title center
+      // titleTX/TY are already in play-area px — no getBoundingClientRect needed
+      const _ar = $id('playAreaInner').getBoundingClientRect();
+      titleDragOff2X = (p.x - _ar.left) - titleTX;
+      titleDragOff2Y = (p.y - _ar.top)  - titleTY;
+      return;
+    }
+
+    // ── Title rotate handle ──
+    if (isTitleRot) {
+      e.preventDefault(); e.stopPropagation();
+      titleRotating2 = true;
+      const r  = td.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      titleRotStart2    = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI;
+      titleRotStartRot2 = titleTRot;
+      return;
+    }
+
+    // ── Title corner handle ──
+    if (isTitleHandle) {
+      e.preventDefault(); e.stopPropagation();
+      titleScaling2 = true;
+      const r  = td.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      titleScaleStart2Dist = Math.hypot(p.x - cx, p.y - cy);
+      titleScaleStart2     = titleTScale;
+      return;
+    }
+
+    // ── Click on logo → select + drag ──
+    if (isLogo) {
+      e.preventDefault(); e.stopPropagation();
+      selectLogo();
+      logoDragging2 = true;
+      const r = ld.getBoundingClientRect();
+      logoDragOff2X = p.x - (r.left + r.width/2);
+      logoDragOff2Y = p.y - (r.top  + r.height/2);
+      return;
+    }
+
+    // ── Logo rotate handle ──
+    if (isLogoRot) {
+      e.preventDefault(); e.stopPropagation();
+      logoRotating2 = true;
+      const r  = ld.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      logoRotStart2    = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI;
+      logoRotStartRot2 = logoTRot;
+      return;
+    }
+
+    // ── Logo corner handle ──
+    if (isLogoHandle) {
+      e.preventDefault(); e.stopPropagation();
+      logoScaling2 = true;
+      const r  = ld.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      logoScaleStart2Dist = Math.hypot(p.x - cx, p.y - cy);
+      logoScaleStart2     = logoTScale;
+      return;
+    }
+
+    // ── El corner handle ──
+    if (isElHandle) {
+      e.preventDefault(); e.stopPropagation();
+      elScaling = true;
+      const r  = ep.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      elScaleStartDist = Math.hypot(p.x - cx, p.y - cy);
+      elScaleStart = elScale;
+      return;
+    }
+
+    // ── Bg corner handle ──
+    if (isBgHandle) {
+      e.preventDefault(); e.stopPropagation();
+      bgScaling = true;
+      const r  = bp.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      bgScaleStartDist = Math.hypot(p.x - cx, p.y - cy);
+      bgScaleStart = bgScale;
+      return;
+    }
+
+    // ── Click on play area background → deselect ──
+    // Don't deselect if clicking on the mirror button or any button inside handles
+    const area = $id('playAreaInner');
+    if (area && area.contains(e.target) && e.target.tagName !== 'BUTTON') {
+      deselect();
+      genSelected = false;
+      const gh2 = $id('genHandles'); if(gh2) gh2.style.display='none';
+      titleSelected = false;
+      const th2 = $id('titleHandles'); if(th2) th2.style.display='none';
+    }
   }
+
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('touchmove', onMove, {passive:false});
+
   function onMove(e) {
-    if (!dragging) return;
+    const anyActive = elDragging || elRotating || elScaling || bgDragging || bgRotating || bgScaling || logoDragging2 || logoRotating2 || logoScaling2 || genDragging || genScaling || titleDragging2 || titleRotating2 || titleScaling2;
+    if (!anyActive) return;
     e.preventDefault();
-    const cx = e.touches ? e.touches[0].clientX : e.clientX;
-    const cy = e.touches ? e.touches[0].clientY : e.clientY;
-    wordTagOffsetX = ox + (cx - sx);
-    wordTagOffsetY = oy + (cy - sy);
-    positionWordTag();
+    const p  = xy(e);
+    const area = $id('playAreaInner');
+    const ar   = area.getBoundingClientRect();
+
+    if (elDragging) {
+      elX = p.x - ar.left - elDragOffX;
+      elY = p.y - ar.top  - elDragOffY;
+      applyElTransform();
+    }
+    if (bgDragging) {
+      bgX = p.x - ar.left - bgDragOffX;
+      bgY = p.y - ar.top  - bgDragOffY;
+      applyBgTransform();
+    }
+    if (elRotating) {
+      const ep = $id('elPreview'), r = ep.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      const angle = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI;
+      elRot = elRotStartRot + (angle - elRotStartAngle);
+      applyElTransform();
+    }
+    if (bgRotating) {
+      const bp = $id('basePreview'), r = bp.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      const angle = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI;
+      bgRot = bgRotStartRot + (angle - bgRotStartAngle);
+      applyBgTransform();
+    }
+    if (elScaling) {
+      const ep = $id('elPreview'), r = ep.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      elScale = Math.max(0.05, elScaleStart * (Math.hypot(p.x-cx, p.y-cy) / elScaleStartDist));
+      applyElTransform();
+    }
+    if (bgScaling) {
+      const bp = $id('basePreview'), r = bp.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      bgScale = Math.max(0.05, bgScaleStart * (Math.hypot(p.x-cx, p.y-cy) / bgScaleStartDist));
+      applyBgTransform();
+    }
+    if (titleDragging2) {
+      titleTX = p.x - ar.left - titleDragOff2X;
+      titleTY = p.y - ar.top  - titleDragOff2Y;
+      applyTitleTransform(false);  // no remeasure during drag
+    }
+    if (titleRotating2) {
+      const td2 = $id('titleDraggable'), r = td2.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      const angle = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI;
+      titleTRot = titleRotStartRot2 + (angle - titleRotStart2);
+      applyTitleTransform();
+    }
+    if (titleScaling2) {
+      const td2 = $id('titleDraggable'), r = td2.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      titleTScale = Math.max(0.1, titleScaleStart2 * (Math.hypot(p.x-cx, p.y-cy) / titleScaleStart2Dist));
+      applyTitleTransform(true);  // remeasure — font size changed
+    }
+    if (genDragging) {
+      genX = p.x - ar.left - genDragOffX;
+      genY = p.y - ar.top  - genDragOffY;
+      applyGenTransform();
+    }
+    if (genScaling) {
+      const gi2 = $id('bgImage'), r = gi2.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      genScale = Math.max(0.05, genScaleStart * (Math.hypot(p.x-cx, p.y-cy) / genScaleStartDist));
+      applyGenTransform();
+    }
+    if (logoDragging2) {
+      const prevLX = logoTX, prevLY = logoTY;
+      logoTX = p.x - ar.left - logoDragOff2X;
+      logoTY = p.y - ar.top  - logoDragOff2Y;
+      applyLogoTransform();
+      // Title follows logo drag
+      if ($id('titleDraggable')?.style.display !== 'none') {
+        shiftTitleWithLogo(logoTX - prevLX, logoTY - prevLY);
+      }
+    }
+    if (logoRotating2) {
+      const ld = $id('logoDraggable'), r = ld.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      const angle = Math.atan2(p.y - cy, p.x - cx) * 180 / Math.PI;
+      logoTRot = logoRotStartRot2 + (angle - logoRotStart2);
+      applyLogoTransform();
+    }
+    if (logoScaling2) {
+      const ld = $id('logoDraggable'), r = ld.getBoundingClientRect();
+      const cx = r.left + r.width/2, cy = r.top + r.height/2;
+      logoTScale = Math.max(0.05, logoScaleStart2 * (Math.hypot(p.x-cx, p.y-cy) / logoScaleStart2Dist));
+      applyLogoTransform();
+    }
   }
+
+  document.addEventListener('mouseup',  onUp);
+  document.addEventListener('touchend', onUp);
   function onUp() {
-    dragging = false;
-    document.removeEventListener('mousemove', onMove);
-    document.removeEventListener('mouseup', onUp);
-    document.removeEventListener('touchmove', onMove);
-    document.removeEventListener('touchend', onUp);
+    elDragging=false; elRotating=false; elScaling=false;
+    bgDragging=false; bgRotating=false; bgScaling=false;
+    logoDragging2=false; logoRotating2=false; logoScaling2=false;
+    genDragging=false; genScaling=false;
+    titleDragging2=false; titleRotating2=false; titleScaling2=false;
   }
+})();
 
-  // Attach after tag exists
+// ─── ORIENTATION ─────────────────────────────────────────────────────────────
+function toggleOrientation() {
+  orientation = orientation === 'landscape' ? 'portrait' : 'landscape';
+  const outer = $id('playAreaOuter');
+  if (orientation === 'landscape') {
+    outer.className = 'play-area-outer landscape';
+    $id('playAreaLabel').textContent = '1920 × 1080';
+    $id('orientInfo').textContent    = 'Landscape · 1920×1080';
+    $id('orientBtnTxt').textContent  = 'Portrait';
+  } else {
+    outer.className = 'play-area-outer portrait';
+    $id('playAreaLabel').textContent = '1080 × 1920';
+    $id('orientInfo').textContent    = 'Portrait · 1080×1920';
+    $id('orientBtnTxt').textContent  = 'Landscape';
+  }
+  // Snapshot positions as % of current play area BEFORE transition
+  const area0 = $id('playAreaInner');
+  const aW0 = area0.offsetWidth, aH0 = area0.offsetHeight;
+  const _logoPctX = aW0 > 0 ? logoTX / aW0 : 0.26;
+  const _logoPctY = aH0 > 0 ? logoTY / aH0 : 0.70;
+  const _logoScalePct = aH0 > 0 ? (logoTW * logoTScale) / Math.min(aW0, aH0) : 0.45;
+  // Title position as % too
+  const _titlePctX = aW0 > 0 ? titleTX / aW0 : 0.5;
+  const _titlePctY = aH0 > 0 ? titleTY / aH0 : 0.3;
+
+  // After CSS transition settles, restore positions in new play area coords
   setTimeout(() => {
-    const tag = document.getElementById('wordTag');
-    if (tag) {
-      tag.addEventListener('mousedown', onDown);
-      tag.addEventListener('touchstart', onDown, { passive: false });
+    const area2 = $id('playAreaInner');
+    const aW2 = area2.offsetWidth, aH2 = area2.offsetHeight;
+
+    if (selLogo) {
+      logoTX = _logoPctX * aW2;
+      logoTY = _logoPctY * aH2;
+      const newBase = Math.min(aW2, aH2);
+      const targetSize = _logoScalePct * newBase;
+      logoTW = targetSize / logoTScale;
+      applyLogoTransform();
     }
-  }, 100);
+
+    if ($id('titleDraggable')?.style.display !== 'none') {
+      titleTX = _titlePctX * aW2;
+      titleTY = _titlePctY * aH2;
+      applyTitleTransform(false);
+    }
+
+    // In landscape: always reset generated image to cover-fill (no repositioning needed)
+    // In portrait: keep whatever position the user set
+    if (orientation === 'landscape' && generatedImageUrl) {
+      const gi = $id('bgImage');
+      if (gi && gi.style.display !== 'none' && gi.src) {
+        genScale = Math.max(aW2 / genW, aH2 / genH);
+        genX = aW2 / 2; genY = aH2 / 2; genRot = 0;
+        genSelected = false;
+        const gh = $id('genHandles'); if (gh) gh.style.display = 'none';
+        applyGenTransform();
+      }
+    }
+  }, 420);
 }
 
-const WORD_SETS = {
-  pt: ['CASA','ESPAÇO','NÚCLEO','ESTÚDIOS','COLETIVO','RESIDÊNCIA','LABORATÓRIO','RESISTÊNCIA'],
-  en: ['HOUSE','SPACE','HUB','STUDIOS','COLLECTIVE','RESIDENCY','LABORATORY','RESISTANCE']
-};
-let currentLang = 'none';
-let wordCycleIndex = 0;
-let wordCycleTimer = null;
-let wordCyclePaused = false;
-let titleLocked = false; // when true, title stays in fixed position, doesn't follow F
-
-function toggleTitleLock() {
-  titleLocked = !titleLocked;
-  const btn = document.getElementById('btn-lock-title');
-  btn.classList.toggle('active', titleLocked);
-  btn.textContent = titleLocked ? '📌 Locked' : '📌 Lock';
+// ─── SECTIONS ────────────────────────────────────────────────────────────────
+function toggleSection(id) {
+  const s = $id(id);
+  if (s.classList.contains('locked')) return;
+  s.classList.toggle('open');
+}
+function activateSection(id, n) {
+  const s = $id(id);
+  s.classList.remove('locked'); s.classList.add('open','active');
+  $id('badge'+n).className = 'step-badge active';
+  $id('title'+n).className = 'section-title active';
+  $id('summary'+n).textContent = '';
+}
+function markDone(id, n, txt) {
+  $id(id).classList.remove('active','open');
+  $id('badge'+n).className = 'step-badge done';
+  $id('title'+n).className = 'section-title done';
+  $id('summary'+n).textContent = txt;
+}
+function lockSection(id, n) {
+  const s = $id(id);
+  s.classList.add('locked'); s.classList.remove('open','active');
+  $id('badge'+n).className = 'step-badge';
+  $id('title'+n).className = 'section-title';
+  $id('summary'+n).textContent = '';
 }
 
-function togglePause() {
-  wordCyclePaused = !wordCyclePaused;
-  const btn = document.getElementById('btn-pause');
-  if (wordCyclePaused) {
-    if (wordCycleTimer) clearTimeout(wordCycleTimer);
-    btn.textContent = '▶ Resume';
-    btn.classList.add('active');
-  } else {
-    btn.textContent = '⏸ Pause';
-    btn.classList.remove('active');
-    scheduleWordNext();
+// ─── STEP 1 ──────────────────────────────────────────────────────────────────
+function selectCat(cat) {
+  selCat = cat; selBaseImg = null; selEl = null;
+  imgGenerated = false;
+  lockSection('step2Section',2); lockSection('step3Section',3);
+  // Do NOT clear logo — user keeps their logo/title when switching base image
+  // Reset play area completely when starting over
+  const _bg = $id('bgImage');
+  if (_bg) { _bg.classList.remove('visible'); _bg.style.background = ''; _bg.style.backgroundImage = ''; }
+  const _bp = $id('basePreview'); if (_bp) { _bp.style.display='none'; _bp.src=''; }
+  const _ep = $id('elPreview'); if (_ep) { _ep.style.display='none'; _ep.src=''; }
+  const _bp3 = $id('basePreview'); if (_bp3) { _bp3.style.display='none'; _bp3.src=''; }
+  const _eh = $id('elHandles'); if (_eh) _eh.style.display='none';
+  const _bh = $id('bgHandles'); if (_bh) _bh.style.display='none';
+  elX=0; elY=0; elScale=1; elRot=0; elFile='';
+  bgX=0; bgY=0; bgScale=1; bgRot=0; elSelected=false; bgSelected=false;
+  imgGenerated = false;
+  updateGenBtn(); updateExportBtn();
+
+  ['tropical','water','body'].forEach(c =>
+    $id('basebtn-'+c).classList.toggle('selected', c===cat)
+  );
+  // Dim non-selected buttons (CSS handles it via .has-selection)
+  document.querySelector('.base-choices').classList.add('has-selection');
+  $id('basePickerLbl').textContent = cat.toUpperCase() + ' — Pick one of 10 images';
+  buildBaseGrid(cat);
+  $id('baseImgPicker').style.display = 'block';
+}
+
+function buildBaseGrid(cat) {
+  // Files: Landscape 01-05 then Portrait 01-05
+  // Display order: 1-5 = Landscape, 6-10 = Portrait
+  const catName = { tropical:'Tropical', water:'Water', body:'Body' }[cat];
+  const files = [
+    ...Array.from({length:5}, (_,i) => `Foams-Brand-Images-${catName}-Landscape-0${i+1}.jpg`),
+    ...Array.from({length:5}, (_,i) => `Foams-Brand-Images-${catName}-Portrait-0${i+1}.jpg`),
+  ];
+  const labels = [
+    ...Array.from({length:5}, (_,i) => `L${String(i+1).padStart(2,'0')}`),
+    ...Array.from({length:5}, (_,i) => `P${String(i+1).padStart(2,'0')}`),
+  ];
+
+  const grid = $id('baseImgGrid');
+  grid.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    const t = document.createElement('div');
+    t.className = 'img-tile'; t.id = 'bimg-'+(i+1);
+    t.style.position = 'relative'; t.style.overflow = 'hidden';
+    t.innerHTML = `
+      <img src="${files[i]}" alt="${labels[i]}"
+        loading="lazy" decoding="async"
+        width="80" height="50"
+        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <span class="t-num" style="display:none">${labels[i]}</span>
+      <span class="t-lbl" style="position:absolute;bottom:3px;left:0;right:0;text-align:center;
+        font-size:7px;font-weight:800;letter-spacing:0.1em;color:rgba(255,255,255,0.7);
+        text-shadow:0 1px 3px rgba(0,0,0,0.8);text-transform:uppercase;pointer-events:none;">
+        ${labels[i]}
+      </span>
+    `;
+    t.onclick = () => selectBaseImg(i+1);
+    grid.appendChild(t);
   }
 }
 
-function initWordCycle() {
-  const outer = document.getElementById('stageOuter');
-  const tag = document.createElement('div');
-  tag.className = 'word-tag';
-  tag.id = 'wordTag';
-  tag.textContent = WORD_SETS['pt'][0];
-  tag.style.display = 'none'; // default is None
-  outer.appendChild(tag);
-  // Hide title size row by default
-  const sizeRow = document.getElementById('titleSizeRow');
-  if (sizeRow) sizeRow.style.display = 'none';
-}
-
-function scheduleWordNext() {
-  if (wordCycleTimer) clearTimeout(wordCycleTimer);
-  if (wordCyclePaused) return;
-  wordCycleTimer = setTimeout(() => {
-    if (wordCyclePaused) return;
-    const tag = document.getElementById('wordTag');
-    if (!tag) return;
-    tag.classList.add('fade');
-    setTimeout(() => {
-      wordCycleIndex = (wordCycleIndex + 1) % WORD_SETS[currentLang].length;
-      tag.textContent = WORD_SETS[currentLang][wordCycleIndex];
-      tag.classList.remove('fade');
-    }, 450);
-    scheduleWordNext();
-  }, 1600 + Math.random() * 1200);
-}
-
-function setLanguage(lang) {
-  currentLang = lang;
-  wordCycleIndex = 0;
-  document.getElementById('btn-pt').classList.toggle('active', lang === 'pt');
-  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
-  document.getElementById('btn-none-lang').classList.toggle('active', lang === 'none');
-  const tag = document.getElementById('wordTag');
-  const sizeRow = document.getElementById('titleSizeRow');
-  if (lang === 'none') {
-    if (wordCycleTimer) clearTimeout(wordCycleTimer);
-    if (tag) { tag.classList.add('fade'); setTimeout(() => { tag.style.display = 'none'; }, 450); }
-    if (sizeRow) sizeRow.style.display = 'none';
+function selectBaseImg(n) {
+  selBaseImg = n;
+  // Determine the actual filename (1-5 = Landscape, 6-10 = Portrait)
+  const catName = { tropical:'Tropical', water:'Water', body:'Body' }[selCat];
+  if (n <= 5) {
+    selBaseFile = `Foams-Brand-Images-${catName}-Landscape-0${n}.jpg`;
   } else {
-    if (tag) {
-      tag.style.display = '';
-      tag.classList.add('fade');
-      setTimeout(() => {
-        tag.textContent = WORD_SETS[lang][0];
-        tag.classList.remove('fade');
-        positionWordTag();
-      }, 300);
-    }
-    if (sizeRow) sizeRow.style.display = '';
-    scheduleWordNext();
+    selBaseFile = `Foams-Brand-Images-${catName}-Portrait-0${n-5}.jpg`;
+  }
+  $id('baseImgGrid').querySelectorAll('.img-tile').forEach(t => t.classList.remove('selected'));
+  $id('bimg-'+n).classList.add('selected');
+  const catLabel = {tropical:'Tropical',water:'Water',body:'Body'}[selCat];
+
+  // Reset play area whenever a new base image is chosen (even same category)
+  const _bg = $id('bgImage');
+  if (_bg) { _bg.classList.remove('visible'); _bg.style.background = ''; _bg.style.backgroundImage = ''; }
+  const _ep2 = $id('elPreview'); if (_ep2) { _ep2.style.display='none'; _ep2.src=''; }
+  const _eh2 = $id('elHandles'); if (_eh2) _eh2.style.display='none';
+  elX=0; elY=0; elScale=1; elRot=0; elFile='';
+  generatedImageUrl = null; imgGenerated = false;
+  const _gi = $id('bgImage'); if (_gi) { _gi.style.display='none'; _gi.src=''; }
+  const _gh = $id('genHandles'); if (_gh) _gh.style.display='none';
+  genX=0; genY=0; genW=0; genH=0; genScale=1; genRot=0; genSelected=false;
+  updateExportBtn();
+
+  markDone('step1Section',1, catLabel+' · Image '+n);
+
+  // Show base image — static, CSS cover handles sizing
+  const bp = $id('basePreview');
+  if (bp) {
+    bp.src = selBaseFile;
+    bp.style.display = 'block';
+    bp.onload = () => { updateExportBtn(); };
+  }
+  // Reset element
+  const ep0 = $id('elPreview'); if (ep0) { ep0.style.display='none'; ep0.src=''; }
+  const eh0 = $id('elHandles'); if (eh0) eh0.style.display='none';
+  const bh0 = $id('bgHandles'); if (bh0) bh0.style.display='none';
+  elSelected=false; bgSelected=false;
+  elX=0; elY=0; elScale=1; elRot=0; elFile='';
+
+  buildStep2(selCat);
+  activateSection('step2Section',2);
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+// ─── STEP 2 ──────────────────────────────────────────────────────────────────
+function buildStep2(cat) {
+  const body = $id('step2Body');
+  body.innerHTML = ''; selEl = null;
+  if (cat === 'tropical') {
+    $id('title2').textContent = 'Graphical Element — Light Defocus';
+    body.appendChild(makeElGrid('defocus'));
+  } else if (cat === 'water') {
+    $id('title2').textContent = 'Graphical Element — Pink Vectors';
+    body.appendChild(makeElGrid('pinkvec'));
+  } else {
+    $id('title2').textContent = 'Graphical Element';
+    const note = document.createElement('p');
+    note.className = 'body-note';
+    note.textContent = 'Choose one element from either category below.';
+    body.appendChild(note);
+    const d1 = document.createElement('div'); d1.className='el-divider'; d1.textContent='Light Defocus'; body.appendChild(d1);
+    body.appendChild(makeElGrid('defocus'));
+    const d2 = document.createElement('div'); d2.className='el-divider'; d2.textContent='Pink Vectors'; body.appendChild(d2);
+    body.appendChild(makeElGrid('pinkvec'));
+  }
+}
+function makeElGrid(type) {
+  const filePrefix = type === 'defocus'
+    ? 'Foams-Brand-Graphic-DefocusLight-'
+    : 'Foams-Brand-Graphic-PinkVectors-';
+
+  const g = document.createElement('div'); g.className = 'grid-4x4';
+  for (let i = 1; i <= 16; i++) {
+    const fname = filePrefix + String(i).padStart(2,'0') + '.png';
+    const t = document.createElement('div');
+    t.className = 'img-tile '+type; t.id = 'el-'+type+'-'+i;
+    t.style.position = 'relative'; t.style.overflow = 'hidden';
+    t.innerHTML = `
+      <img src="${fname}" alt="${i}"
+        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <span class="t-num" style="display:none">${String(i).padStart(2,'0')}</span>
+    `;
+    t.onclick = () => selectEl(type,i,t);
+    g.appendChild(t);
+  }
+  return g;
+}
+function selectEl(type, n, tile) {
+  $id('step2Body').querySelectorAll('.img-tile').forEach(t => t.classList.remove('selected'));
+  tile.classList.add('selected');
+  selEl = type+'-'+n;
+  markDone('step2Section',2,(type==='defocus'?'Light Defocus':'Pink Vectors')+' #'+n);
+
+  // Load element as transformable <img>
+  const filePrefix = type === 'defocus'
+    ? 'Foams-Brand-Graphic-DefocusLight-'
+    : 'Foams-Brand-Graphic-PinkVectors-';
+  elFile = filePrefix + String(n).padStart(2,'0') + '.png';
+  const ep = $id('elPreview');
+  if (ep) {
+    ep.src = elFile;
+    ep.style.display = 'block';
+    ep.onload = () => {
+      const area = $id('playAreaInner');
+      const aW = area.offsetWidth, aH = area.offsetHeight;
+      const nat = ep.naturalWidth / ep.naturalHeight;
+      elW = aW * 0.5;
+      elH = elW / nat;
+      elScale = 1.0; elRot = 0;
+      elX = aW / 2; elY = aH / 2;
+      applyElTransform();
+      $id('elHandles').style.display = 'block';
+    };
+  }
+
+  buildStep3();
+  activateSection('step3Section',3);
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+// ─── STEP 3: LOGO ────────────────────────────────────────────────────────────
+function buildStep3() {
+  buildLogoGrid();
+  updateLogoTileColors();
+
+  // If logo already chosen, keep title selection and show chooser
+  if (selLogo) {
+    $id('titleChooser').classList.add('visible');
+    buildTitleGrid();
+    if (selTitle) applyTitleStyle(false);
+  } else {
+    // First time through — reset title
+    $id('titleChooser').classList.remove('visible');
+    selTitle = null;
+    titleLang = 'PT';
+    hideTitle();
   }
 }
 
-initPan();
-initZoom();
-draw();
-// Wait for layout to complete before calculating zoom
-requestAnimationFrame(() => {
-  requestAnimationFrame(() => {
-    zoomScale = getDefaultZoom();
-    applyZoom();
-    initWordCycle();
-    initWordTagDrag();
-    setTimeout(positionWordTag, 80);
+function buildLogoGrid() {
+  const grid = $id('lgGrid');
+  grid.innerHTML = '';
+
+  // Slot 0: Upload
+  const uploadTile = document.createElement('div');
+  uploadTile.className = 'logo-tile upload-tile';
+  uploadTile.id = 'lg-upload';
+  uploadTile.innerHTML = `
+    <svg class="up-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <path d="M10 13V4M10 4L7 7M10 4l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M4 14v1a2 2 0 002 2h8a2 2 0 002-2v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <span class="up-lbl">Upload</span>
+    <img id="uploadPreview" src="" alt="">
+  `;
+  if (uploadedSrc) {
+    const prev = uploadTile.querySelector('#uploadPreview');
+    prev.src = uploadedSrc; prev.style.display = 'block';
+    uploadTile.classList.add('has-upload');
+    if (selLogo === 'upload') uploadTile.classList.add('selected');
+  }
+  uploadTile.onclick = () => $id('uploadInput').click();
+  grid.appendChild(uploadTile);
+
+  // Slots 1-5: preset logos
+  for (let i = 1; i <= 5; i++) {
+    const t = document.createElement('div');
+    t.className = 'logo-tile c-w'; t.id = 'lg-preset-'+i;
+    const fname = logoFilename(logoColor, i);
+    t.innerHTML = `
+      <img src="${fname}" alt="Logo ${i}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+      <div class="tile-in" style="display:none">Var. ${i}</div>
+    `;
+    if (selLogo === 'preset-'+i) t.classList.add('selected');
+    t.onclick = () => selectLogo('preset-'+i, t);
+    grid.appendChild(t);
+  }
+}
+
+function setLogoColor(color) {
+  logoColor = color;
+  const [bW,bB,bP] = $id('colorTgl').querySelectorAll('.tgl');
+  bW.className = 'tgl'+(color==='white'?' on-w':'');
+  bB.className = 'tgl'+(color==='black'?' on-b':'');
+  bP.className = 'tgl'+(color==='pink' ?' on-p':'');
+  updateLogoTileColors();
+  // Refresh preset img src
+  for (let i=1; i<=5; i++) {
+    const tile = $id('lg-preset-'+i);
+    if (!tile) continue;
+    const img = tile.querySelector('img');
+    if (img) { img.style.display=''; img.src = logoFilename(color,i); }
+    const fb = tile.querySelector('.tile-in');
+    if (fb) fb.style.display = 'none';
+  }
+  // Update live logo if preset active
+  if (selLogo && selLogo.startsWith('preset-')) {
+    setLogoSrc(logoFilename(color, parseInt(selLogo.split('-')[1])));
+  }
+  // Update title color
+  applyTitleStyle();
+}
+
+function updateLogoTileColors() {
+  document.querySelectorAll('.logo-tile:not(.upload-tile)').forEach(t => {
+    t.classList.remove('bg-blk','bg-pnk','c-w','c-b','c-p');
+    if (logoColor==='black')     t.classList.add('bg-blk','c-b');
+    else if (logoColor==='pink') t.classList.add('bg-pnk','c-p');
+    else                          t.classList.add('c-w');
   });
-});
-
-// ── GIF Export ───────────────────────────────────────────────────────────────
-function exportGif(logoColor, bgColor) {
-  bgColor = bgColor || (logoColor === 'white' ? 'black' : 'white');
-  const hasMotion = motionMode !== 'none' && !motionPaused;
-  const hasTitle  = currentLang !== 'none' && !wordCyclePaused;
-
-  const progress = document.getElementById('gifProgress');
-  progress.style.display = 'block';
-  progress.textContent = 'Preparing…';
-
-  const blobBlur = parseInt(document.getElementById('blurR').value);
-  const defocus  = parseFloat(document.getElementById('defocus').value);
-  const baseSz   = parseInt(document.getElementById('sz').value);
-  const fo       = parseInt(document.getElementById('fillOp').value) / 100;
-  const sw       = parseInt(document.getElementById('strokeW').value);
-  const letters  = ['F','O','A','M','S'];
-  const SCALE    = 3;
-
-  // Live: 60fps, t += 0.022 per frame → t advances 0.022/16.67ms = 0.00132 per ms
-  // GIF at 25fps (40ms/frame): t should advance 0.00132 * 40 = 0.0528 per frame
-  const FRAME_MS      = 33; // ~30fps
-  // Live: t += 0.022 per frame at 60fps. Multiply by 3x to match visual speed in GIF.
-  const T_PER_GIF     = 0.022 * (60 / 30) * 2.5; // ~0.11 per frame
-  const MOTION_FRAMES = Math.round((Math.PI * 2) / T_PER_GIF);
-
-  const logoFill  = logoColor === 'pink'  ? `rgba(255,48,255,${fo})`
-                  : logoColor === 'white' ? `rgba(255,255,255,${fo})`
-                  :                         `rgba(0,0,0,${fo})`;
-  const titleFill = logoColor === 'pink' ? '#ff30ff' : logoColor === 'white' ? '#fff' : '#000';
-  const bgFill    = bgColor === 'black' ? '#000000' : '#ffffff';
-
-  const margin = 300;
-  const OX = margin, OY = margin;
-  const BIGW = (SW + margin * 2) * SCALE;
-  const BIGH = (SH + margin * 2) * SCALE;
-
-  const threshold = (22 - (blobBlur - 4) * 0.3) * SCALE;
-  const cutoff    = (-9  + (blobBlur - 4) * 0.1) * SCALE;
-  const vals      = `1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${threshold.toFixed(1)} ${cutoff.toFixed(1)}`;
-  const blobSVG   = blobBlur * SCALE;
-  const fsSVG     = baseSz * SCALE;
-  const swSVG     = sw * SCALE;
-  const defSVG    = defocus * SCALE;
-  const defocusStep = defSVG > 0 ? `<feGaussianBlur in="crisp" stdDeviation="${defSVG}"/>` : '';
-
-  const motionAmtV = document.getElementById('motionAmt') ? parseInt(document.getElementById('motionAmt').value) : 6;
-
-  function getPositions(tVal) {
-    if (motionMode === 'none' || !hasMotion) return letterPositions;
-    return basePositions.map((base, i) => {
-      if (!base) return letterPositions[i];
-      const ph = motionPhases[i] || 0;
-      let dx = 0, dy = 0;
-      if (motionMode === 'side')   dx = Math.sin(tVal + ph * 0.4) * motionAmtV * 1.4;
-      if (motionMode === 'random') { dx = Math.sin(tVal*1.1+ph*2.3)*motionAmtV*1.3; dy = Math.cos(tVal*0.8+ph*1.7)*motionAmtV*1.3; }
-      return { left: base.left + dx, top: base.top + dy };
-    });
-  }
-
-  function buildAHoleEl(positions) {
-    if (!aHoleVisible) return '';
-    const aHoleSz = parseInt(document.getElementById('aHoleSize').value) * SCALE;
-    const ahColor = bgColor === 'black' ? 'black' : 'white';
-
-    // Compute A hole position tracking the animated A letter
-    const aPos2 = positions[2]; // A is index 2
-    const mc2 = document.getElementById('measure');
-    mc2.width = 300; mc2.height = 150;
-    const mc2ctx = mc2.getContext('2d');
-    mc2ctx.font = `900 ${baseSz}px "Trebuchet MS", sans-serif`;
-    const aW = mc2ctx.measureText('A').width;
-    const aCenterX = aPos2.left + aW * 0.5;
-    const aCenterY = aPos2.top  + baseSz * 0.42;
-
-    const ahX = aCenterX + aHoleOffsetX;
-    const ahY = aCenterY + aHoleOffsetY;
-    const ahCX = (ahX + panOffsetX + OX) * SCALE;
-    const ahCY = (ahY + panOffsetY + OY) * SCALE - aHoleSz * 0.35;
-    const w = aHoleSz * 0.30, h = aHoleSz * 0.55;
-    const d = `M ${ahCX} ${ahCY-h} C ${ahCX+w*0.15} ${ahCY-h}, ${ahCX+w} ${ahCY-h*0.1}, ${ahCX+w} ${ahCY+h*0.15} C ${ahCX+w} ${ahCY+h*0.65}, ${ahCX+w*0.6} ${ahCY+h}, ${ahCX} ${ahCY+h} C ${ahCX-w*0.6} ${ahCY+h}, ${ahCX-w} ${ahCY+h*0.65}, ${ahCX-w} ${ahCY+h*0.15} C ${ahCX-w} ${ahCY-h*0.1}, ${ahCX-w*0.15} ${ahCY-h}, ${ahCX} ${ahCY-h} Z`;
-    return `<path d="${d}" fill="${ahColor}" filter="url(#blob)"/>`;
-  }
-
-  function buildSVG(positions, word, wordOpacity) {
-    let textEls = '';
-    positions.forEach((pos, i) => {
-      const x = (pos.left + panOffsetX + OX) * SCALE;
-      const y = (pos.top  + panOffsetY + OY) * SCALE + fsSVG * 0.75;
-      const sa = sw > 0 ? `stroke="${logoFill}" stroke-width="${swSVG}" paint-order="stroke"` : '';
-      textEls += `<text x="${x}" y="${y}" font-family="'Trebuchet MS',sans-serif" font-size="${fsSVG}" font-weight="900" fill="${logoFill}" ${sa}>${letters[i]}</text>\n`;
-    });
-
-    let titleEl = '';
-    if (word && wordOpacity > 0.01) {
-      const fEl    = document.querySelector('#stage .letter');
-      const tagEl  = document.getElementById('wordTag');
-      const fPos0  = positions[0];
-      if (fEl && tagEl && fPos0) {
-        const fRect   = fEl.getBoundingClientRect();
-        const tagRect = tagEl.getBoundingClientRect();
-        const dxStage = (tagRect.left - fRect.left) / zoomScale;
-        const dyStage = (tagRect.top  - fRect.top)  / zoomScale;
-        const tagSzSVG = wordTagStageSz * SCALE;
-        const tagX = (fPos0.left + panOffsetX + dxStage + OX) * SCALE;
-        const tagY = (fPos0.top  + panOffsetY + dyStage + OY) * SCALE + tagSzSVG * 0.55;
-        titleEl = `<text x="${tagX}" y="${tagY}" font-family="'Trebuchet MS',sans-serif" font-size="${tagSzSVG}" font-weight="700" fill="${titleFill}" opacity="${wordOpacity.toFixed(3)}" letter-spacing="${tagSzSVG * 0.08}">${word}</text>`;
-      }
-    }
-
-    const aHoleEl = buildAHoleEl(positions);
-
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${BIGW}" height="${BIGH}">
-  <defs><filter id="blob" color-interpolation-filters="sRGB" x="-30%" y="-30%" width="160%" height="160%">
-    <feGaussianBlur in="SourceGraphic" stdDeviation="${blobSVG}" result="blur"/>
-    <feColorMatrix in="blur" mode="matrix" values="${vals}" result="sharp"/>
-    <feComposite in="SourceGraphic" in2="sharp" operator="atop" result="crisp"/>
-    ${defocusStep}
-  </filter></defs>
-  <g filter="url(#blob)">${textEls}</g>
-  ${aHoleEl}
-  ${titleEl}
-</svg>`;
-  }
-
-  function svgToCanvas(svgStr) {
-    return new Promise((resolve, reject) => {
-      const blob = new Blob([svgStr], {type:'image/svg+xml;charset=utf-8'});
-      const url  = URL.createObjectURL(blob);
-      const img  = new Image();
-      img.onload = () => {
-        const tmp = document.createElement('canvas');
-        tmp.width = BIGW; tmp.height = BIGH;
-        tmp.getContext('2d').drawImage(img, 0, 0);
-        URL.revokeObjectURL(url);
-        resolve(tmp);
-      };
-      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('SVG render failed')); };
-      img.src = url;
-    });
-  }
-
-  function getCropBounds(canvas) {
-    const PAD = 32 * SCALE;
-    const ctx = canvas.getContext('2d');
-    const id  = ctx.getImageData(0, 0, BIGW, BIGH);
-    const d   = id.data;
-    let mnX=BIGW, mxX=0, mnY=BIGH, mxY=0;
-    for (let py=0; py<BIGH; py++) {
-      for (let px=0; px<BIGW; px++) {
-        const i = (py*BIGW+px)*4;
-        if (d[i+3] > 20) { if(px<mnX)mnX=px; if(px>mxX)mxX=px; if(py<mnY)mnY=py; if(py>mxY)mxY=py; }
-      }
-    }
-    return { minX:Math.max(0,mnX-PAD), minY:Math.max(0,mnY-PAD), maxX:Math.min(BIGW,mxX+PAD), maxY:Math.min(BIGH,mxY+PAD) };
-  }
-
-  let cropBounds = null;
-  let gif = null;
-  let gifW = 800, gifH = 400;
-
-  function addFrame(canvas, delay) {
-    const {minX,minY,maxX,maxY} = cropBounds;
-    const cw = maxX-minX, ch = maxY-minY;
-    const fc = document.createElement('canvas');
-    fc.width = gifW; fc.height = gifH;
-    const fctx = fc.getContext('2d');
-    fctx.fillStyle = bgFill;
-    fctx.fillRect(0,0,gifW,gifH);
-    fctx.drawImage(canvas, minX, minY, cw, ch, 0, 0, gifW, gifH);
-    gif.addFrame(fc, {delay, copy: true});
-  }
-
-  async function runCapture() {
-    // Measure bounds across full motion cycle
-    progress.textContent = 'Measuring…';
-    const probeTs = hasMotion ? [0, 0.25, 0.5, 0.75].map(f => f * Math.PI * 2) : [0];
-    const probeWord = hasTitle ? (WORD_SETS[currentLang]||[])[0] || null : null;
-    for (const tProbe of probeTs) {
-      const svg = buildSVG(getPositions(tProbe), probeWord, 1.0);
-      const c   = await svgToCanvas(svg);
-      const b   = getCropBounds(c);
-      if (!cropBounds) cropBounds = {...b};
-      else {
-        cropBounds.minX = Math.min(cropBounds.minX, b.minX);
-        cropBounds.minY = Math.min(cropBounds.minY, b.minY);
-        cropBounds.maxX = Math.max(cropBounds.maxX, b.maxX);
-        cropBounds.maxY = Math.max(cropBounds.maxY, b.maxY);
-      }
-    }
-
-    const cw = cropBounds.maxX - cropBounds.minX;
-    const ch = cropBounds.maxY - cropBounds.minY;
-    gifW = Math.min(800, cw);
-    gifH = Math.round(ch * (gifW / cw));
-
-    gif = new GIF({
-      workers: 2, quality: 6, width: gifW, height: gifH,
-      workerScript: URL.createObjectURL(new Blob(
-        [`importScripts('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js')`],
-        {type:'application/javascript'}
-      ))
-    });
-
-    const words = hasTitle ? WORD_SETS[currentLang] : null;
-    const HOLD_F = Math.round(1800 / FRAME_MS);
-    const FADE_F = Math.round(450  / FRAME_MS);
-
-    if (hasMotion && !hasTitle) {
-      for (let f = 0; f < MOTION_FRAMES; f++) {
-        if (f % 5 === 0) progress.textContent = `Frame ${f+1}/${MOTION_FRAMES}…`;
-        const c = await svgToCanvas(buildSVG(getPositions(f * T_PER_GIF), null, 0));
-        addFrame(c, FRAME_MS);
-      }
-
-    } else if (!hasMotion && hasTitle) {
-      const wordList = wordCyclePaused
-        ? [document.getElementById('wordTag').textContent]
-        : words;
-      const pos = letterPositions;
-      for (let w = 0; w < wordList.length; w++) {
-        progress.textContent = `Word ${w+1}/${wordList.length}`;
-        for (let f = 0; f < HOLD_F; f++) {
-          const c = await svgToCanvas(buildSVG(pos, wordList[w], 1.0));
-          addFrame(c, FRAME_MS);
-        }
-        if (wordList.length === 1) continue;
-        const next = wordList[(w+1) % wordList.length];
-        // fade out current
-        for (let f = 0; f < FADE_F; f++) {
-          const c = await svgToCanvas(buildSVG(pos, wordList[w], 1 - f/FADE_F));
-          addFrame(c, FRAME_MS);
-        }
-        // fade in next (start from 0 opacity, no jump)
-        for (let f = 0; f < FADE_F; f++) {
-          const c = await svgToCanvas(buildSVG(pos, next, f/FADE_F));
-          addFrame(c, FRAME_MS);
-        }
-      }
-
-    } else {
-      // Both: motion + title
-      const FRAMES_PER_WORD = HOLD_F + FADE_F * 2;
-      const totalFrames = words.length * FRAMES_PER_WORD;
-      let tVal = 0;
-      for (let f = 0; f < totalFrames; f++) {
-        if (f % 5 === 0) progress.textContent = `Frame ${f+1}/${totalFrames}…`;
-        const pos  = getPositions(tVal);
-        const wIdx = Math.floor(f / FRAMES_PER_WORD);
-        const wf   = f % FRAMES_PER_WORD;
-        const word = words[wIdx % words.length];
-        const next = words[(wIdx+1) % words.length];
-        let op = 1.0, displayWord = word;
-        if (wf < FADE_F) {
-          // fade in current word from 0
-          op = wf / FADE_F; displayWord = word;
-        } else if (wf >= HOLD_F + FADE_F) {
-          // fade out current word
-          op = 1 - (wf - HOLD_F - FADE_F) / FADE_F; displayWord = word;
-        }
-        const c = await svgToCanvas(buildSVG(pos, displayWord, op));
-        addFrame(c, FRAME_MS);
-        tVal += T_PER_GIF;
-      }
-    }
-
-    progress.textContent = 'Encoding GIF…';
-    gif.on('finished', blob => {
-      const a = document.createElement('a');
-      a.download = `foams-animated-${logoColor}.gif`;
-      a.href = URL.createObjectURL(blob);
-      a.click();
-      progress.style.display = 'none';
-    });
-    gif.on('progress', p => { progress.textContent = `Encoding… ${Math.round(p*100)}%`; });
-    gif.render();
-  }
-
-  runCapture().catch(err => { progress.style.display = 'none'; alert('GIF failed: ' + err); });
 }
 
-// ── Animated PNG Export (full alpha transparency) ─────────────────────────────
-async function exportAPNG(logoColor) {
-  const hasMotion = motionMode !== 'none' && !motionPaused;
-  const hasTitle  = currentLang !== 'none' && !wordCyclePaused;
-
-  const progress = document.getElementById('apngProgress');
-  progress.style.display = 'block';
-  progress.textContent = 'Preparing…';
-
-  // Reuse the same SVG building logic from exportGif
-  // but render to canvas with transparent background
-  const blobBlur = parseInt(document.getElementById('blurR').value);
-  const defocus  = parseFloat(document.getElementById('defocus').value);
-  const baseSz   = parseInt(document.getElementById('sz').value);
-  const fo       = parseInt(document.getElementById('fillOp').value) / 100;
-  const sw       = parseInt(document.getElementById('strokeW').value);
-  const letters  = ['F','O','A','M','S'];
-  const SCALE    = 3;
-  const quality = (document.getElementById('apngQuality')||{}).value || 'medium';
-  const qualSettings = {
-    small:  { maxW: 400, fps: 12, compress: 9 },
-    medium: { maxW: 600, fps: 18, compress: 8 },
-    high:   { maxW: 800, fps: 25, compress: 6 },
-  }[quality];
-
-  const FRAME_MS = Math.round(1000 / qualSettings.fps);
-  const T_PER_FRAME = 0.022 * (60 / qualSettings.fps) * 2.5;
-  const MOTION_FRAMES = Math.round((Math.PI * 2) / T_PER_FRAME);
-
-  const logoFill  = logoColor === 'pink'  ? `rgba(255,48,255,${fo})`
-                  : logoColor === 'white' ? `rgba(255,255,255,${fo})`
-                  :                         `rgba(0,0,0,${fo})`;
-  const titleFill = logoColor === 'pink' ? '#ff30ff' : logoColor === 'white' ? '#fff' : '#000';
-
-  const margin = 300;
-  const OX = margin, OY = margin;
-  const BIGW = (SW + margin * 2) * SCALE;
-  const BIGH = (SH + margin * 2) * SCALE;
-  const threshold = (22 - (blobBlur-4)*0.3)*SCALE, cutoff = (-9+(blobBlur-4)*0.1)*SCALE;
-  const vals = `1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 ${threshold.toFixed(1)} ${cutoff.toFixed(1)}`;
-  const blobSVG = blobBlur*SCALE, fsSVG = baseSz*SCALE, swSVG = sw*SCALE;
-  const defSVG = defocus*SCALE;
-  const defocusStep = defSVG>0 ? `<feGaussianBlur in="crisp" stdDeviation="${defSVG}"/>` : '';
-  const motionAmtV = document.getElementById('motionAmt') ? parseInt(document.getElementById('motionAmt').value) : 6;
-
-  function getPos(tVal) {
-    if (motionMode==='none'||!hasMotion) return letterPositions;
-    return basePositions.map((base,i)=>{
-      if(!base) return letterPositions[i];
-      const ph=motionPhases[i]||0; let dx=0,dy=0;
-      if(motionMode==='side') dx=Math.sin(tVal+ph*0.4)*motionAmtV*1.4;
-      if(motionMode==='random'){dx=Math.sin(tVal*1.1+ph*2.3)*motionAmtV*1.3;dy=Math.cos(tVal*0.8+ph*1.7)*motionAmtV*1.3;}
-      return {left:base.left+dx, top:base.top+dy};
-    });
-  }
-
-  function buildHoleSVG(positions) {
-    if (!aHoleVisible) return null;
-    const sz2 = parseInt(document.getElementById('aHoleSize').value)*SCALE;
-    const mc2 = document.getElementById('measure'); mc2.width=300; mc2.height=150;
-    const mc2c = mc2.getContext('2d'); mc2c.font=`900 ${baseSz}px "Trebuchet MS",sans-serif`;
-    const aW = mc2c.measureText('A').width;
-    const aPos2 = positions[2];
-    const ahX = aPos2.left+aW*0.5+aHoleOffsetX, ahY = aPos2.top+baseSz*0.42+aHoleOffsetY;
-    const ahCX=(ahX+panOffsetX+OX)*SCALE, ahCY=(ahY+panOffsetY+OY)*SCALE-sz2*0.35;
-    const w=sz2*0.30,h=sz2*0.55;
-    const d=`M ${ahCX} ${ahCY-h} C ${ahCX+w*0.15} ${ahCY-h}, ${ahCX+w} ${ahCY-h*0.1}, ${ahCX+w} ${ahCY+h*0.15} C ${ahCX+w} ${ahCY+h*0.65}, ${ahCX+w*0.6} ${ahCY+h}, ${ahCX} ${ahCY+h} C ${ahCX-w*0.6} ${ahCY+h}, ${ahCX-w} ${ahCY+h*0.65}, ${ahCX-w} ${ahCY+h*0.15} C ${ahCX-w} ${ahCY-h*0.1}, ${ahCX-w*0.15} ${ahCY-h}, ${ahCX} ${ahCY-h} Z`;
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${BIGW}" height="${BIGH}">
-  <defs><filter id="blob" color-interpolation-filters="sRGB" x="-30%" y="-30%" width="160%" height="160%">
-    <feGaussianBlur in="SourceGraphic" stdDeviation="${blobSVG}" result="blur"/>
-    <feColorMatrix in="blur" mode="matrix" values="${vals}" result="sharp"/>
-    <feComposite in="SourceGraphic" in2="sharp" operator="atop" result="crisp"/>
-  </filter></defs>
-  <path d="${d}" fill="black" filter="url(#blob)"/>
-</svg>`;
-  }
-
-  function buildSVGFrame(positions, word, opacity) {
-    let els='';
-    positions.forEach((pos,i)=>{
-      const x=(pos.left+panOffsetX+OX)*SCALE, y=(pos.top+panOffsetY+OY)*SCALE+fsSVG*0.75;
-      const sa=sw>0?`stroke="${logoFill}" stroke-width="${swSVG}" paint-order="stroke"`:'';
-      els+=`<text x="${x}" y="${y}" font-family="'Trebuchet MS',sans-serif" font-size="${fsSVG}" font-weight="900" fill="${logoFill}" ${sa}>${letters[i]}</text>\n`;
-    });
-    let titleEl='';
-    if(word&&opacity>0.01){
-      const tSz=wordTagStageSz*SCALE;
-      let tx, ty;
-      if(titleLocked) {
-        // Use stored stage coords — title doesn't follow motion
-        tx=(wordTagStageX+panOffsetX+OX)*SCALE;
-        ty=(wordTagStageY+panOffsetY+OY)*SCALE+tSz*0.55;
-      } else {
-        const fEl=document.querySelector('#stage .letter'), tagEl=document.getElementById('wordTag'), fPos0=positions[0];
-        if(fEl&&tagEl&&fPos0){
-          const fR=fEl.getBoundingClientRect(),tR=tagEl.getBoundingClientRect();
-          const dx=(tR.left-fR.left)/zoomScale, dy=(tR.top-fR.top)/zoomScale;
-          tx=(fPos0.left+panOffsetX+dx+OX)*SCALE; ty=(fPos0.top+panOffsetY+dy+OY)*SCALE+tSz*0.55;
-        }
-      }
-      if(tx!=null) titleEl=`<text x="${tx}" y="${ty}" font-family="'Trebuchet MS',sans-serif" font-size="${tSz}" font-weight="700" fill="${titleFill}" opacity="${opacity.toFixed(3)}" letter-spacing="${tSz*0.08}">${word}</text>`;
+function handleUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    uploadedSrc = e.target.result;
+    const tile = $id('lg-upload');
+    if (tile) {
+      tile.classList.add('has-upload');
+      const prev = tile.querySelector('#uploadPreview');
+      if (prev) { prev.src = uploadedSrc; prev.style.display = 'block'; }
     }
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${BIGW}" height="${BIGH}">
-  <defs><filter id="blob" color-interpolation-filters="sRGB" x="-30%" y="-30%" width="160%" height="160%">
-    <feGaussianBlur in="SourceGraphic" stdDeviation="${blobSVG}" result="blur"/>
-    <feColorMatrix in="blur" mode="matrix" values="${vals}" result="sharp"/>
-    <feComposite in="SourceGraphic" in2="sharp" operator="atop" result="crisp"/>
-    ${defocusStep}
-  </filter></defs>
-  <g filter="url(#blob)">${els}</g>${titleEl}</svg>`;
+    selectLogo('upload', tile);
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function selectLogo(logoId, tile) {
+  selLogo = logoId;
+  document.querySelectorAll('.logo-tile').forEach(t => t.classList.remove('selected'));
+  if (tile) tile.classList.add('selected');
+
+  const src = logoId === 'upload'
+    ? (uploadedSrc || '')
+    : logoFilename(logoColor, parseInt(logoId.split('-')[1]));
+  setLogoSrc(src);
+
+  // Only reset transform on first logo pick, not when swapping
+  if (!$id('logoDraggable').style.display || $id('logoDraggable').style.display === 'none') {
+    logoPctX = 26; logoPctY = 70;  // lower-left triad
+    logoScale = 55;
   }
 
-  function svgToCanvasTransparent(svgStr) {
-    return new Promise((resolve,reject)=>{
-      const blob=new Blob([svgStr],{type:'image/svg+xml;charset=utf-8'});
-      const url=URL.createObjectURL(blob);
-      const img=new Image();
-      img.onload=()=>{
-        const tmp=document.createElement('canvas'); tmp.width=BIGW; tmp.height=BIGH;
-        tmp.getContext('2d').drawImage(img,0,0);
-        URL.revokeObjectURL(url); resolve(tmp);
-      };
-      img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('SVG fail'));};
-      img.src=url;
-    });
+  showLogoInPlayArea();
+
+  // Show title chooser and scroll to it — keep section OPEN
+  $id('titleChooser').classList.add('visible');
+  buildTitleGrid();
+  // Small delay so the title chooser is rendered before scrolling
+  // Title chooser is now visible inline - no extra scroll needed
+
+  // Update summary text but do NOT collapse the section
+  const lbl = logoId==='upload' ? 'Uploaded' : 'Variation '+logoId.split('-')[1];
+  $id('summary3').textContent = lbl+' · '+logoColor;
+
+  updateGenBtn();
+}
+
+function setLogoSrc(src) {
+  const img = $id('logoImg');
+  const ph  = $id('logoPlaceholder');
+  if (src) {
+    img.src = src; img.style.display = 'block'; ph.style.display = 'none';
+  } else {
+    img.style.display = 'none'; ph.style.display = 'flex';
+  }
+}
+
+// ─── TITLE CHOOSER ───────────────────────────────────────────────────────────
+function buildTitleGrid() {
+  const grid = $id('titleGrid');
+  grid.innerHTML = '';
+
+  // Sync lang toggle buttons
+  const tglBtns = $id('titleLangTgl').querySelectorAll('.tgl');
+  ['PT','EN','NONE'].forEach((l,i) => {
+    tglBtns[i].className = 'tgl' + (l===titleLang?' on':'');
+  });
+
+  const words = titleLang==='PT' ? TITLES_PT : titleLang==='EN' ? TITLES_EN : [];
+
+  // "None" chip
+  const none = document.createElement('div');
+  none.className = 'title-chip none-chip' + (selTitle===null?' selected':'');
+  none.textContent = 'None';
+  none.onclick = () => { selTitle=null; titleManuallyMoved=false; refreshTitleChips(); hideTitle(); };
+  grid.appendChild(none);
+
+  words.forEach(word => {
+    const chip = document.createElement('div');
+    chip.className = 'title-chip' + (selTitle===word?' selected':'');
+    chip.textContent = word;   // already uppercase in our arrays
+    chip.onclick = () => { selTitle=word; titleManuallyMoved=false; titleTW=0; refreshTitleChips(); applyTitleStyle(true); };
+    grid.appendChild(chip);
+  });
+
+  // If switching to NONE lang, clear title
+  if (titleLang === 'NONE') { selTitle=null; hideTitle(); }
+}
+
+function setTitleLang(lang) {
+  titleLang = lang; selTitle = null;
+  titleManuallyMoved = false; titleTW = 0;  // force reposition on next show
+  buildTitleGrid();
+}
+
+function refreshTitleChips() {
+  $id('titleGrid').querySelectorAll('.title-chip').forEach(c => {
+    const isNone = c.classList.contains('none-chip');
+    c.classList.toggle('selected', isNone ? selTitle===null : c.textContent===selTitle);
+  });
+}
+
+// ─── TITLE INSIDE LOGO DRAGGABLE ─────────────────────────────────────────────
+/*
+  #logoTitle is a child of #logoDraggable, so it moves with the logo automatically.
+  We position it:
+    PT → top-left corner of the logo box  (bottom of text = top of logo)
+    EN → bottom-right corner of the logo box (top of text = bottom of logo)
+
+  Font size scales with the logo's rendered pixel size so it always looks proportional.
+*/
+
+
+function applyTitleStyle(resetPos) {
+  // Bridge: calls the new transform system
+  if (!selTitle) { hideTitle(); return; }
+  const titleEl = $id('logoTitle');
+  if (!titleEl) return;
+  titleEl.textContent = selTitle;
+  showTitleInPlayArea();
+}
+
+
+
+// applyTitlePos removed
+
+function hideTitle() {
+  hideTitleTransform();
+}
+
+// ─── LOGO IN PLAY AREA ───────────────────────────────────────────────────────
+function showLogoInPlayArea() {
+  const ld = $id('logoDraggable');
+  ld.style.display = 'block';
+  $id('playAreaLabel').classList.add('hidden');
+
+  // Set initial transform position if first time
+  const area = $id('playAreaInner');
+  const aW = area.offsetWidth, aH = area.offsetHeight;
+  const img = $id('logoImg');
+
+  function initLogoTransform() {
+    const nat = (img.naturalWidth && img.naturalHeight)
+      ? img.naturalWidth / img.naturalHeight : 1;
+    const initSize = Math.min(aW, aH) * 0.55;  // 55% of min dimension
+    logoTW = initSize; logoTH = initSize / nat;
+    logoTScale = 1.0; logoTRot = 0;
+    logoTX = (logoPctX / 100) * aW;
+    logoTY = (logoPctY / 100) * aH;
+    applyLogoTransform();
   }
 
-  // Measure bounds
-  progress.textContent='Measuring…';
-  let cropBounds=null;
-  const probeTs = hasMotion?[0,0.25,0.5,0.75].map(f=>f*Math.PI*2):[0];
-  // Include title word in probe so its position is included in crop bounds
-  const probeWord = hasTitle ? (WORD_SETS[currentLang]||[])[0] || null : null;
-  for(const tP of probeTs){
-    const c=await svgToCanvasTransparent(buildSVGFrame(getPos(tP), probeWord, 1.0));
-    const ctx=c.getContext('2d'),id=ctx.getImageData(0,0,BIGW,BIGH),d=id.data;
-    const PAD=32*SCALE; let mnX=BIGW,mxX=0,mnY=BIGH,mxY=0;
-    for(let py=0;py<BIGH;py++) for(let px=0;px<BIGW;px++){const i=(py*BIGW+px)*4;if(d[i+3]>20){if(px<mnX)mnX=px;if(px>mxX)mxX=px;if(py<mnY)mnY=py;if(py>mxY)mxY=py;}}
-    const b={minX:Math.max(0,mnX-PAD),minY:Math.max(0,mnY-PAD),maxX:Math.min(BIGW,mxX+PAD),maxY:Math.min(BIGH,mxY+PAD)};
-    if(!cropBounds)cropBounds={...b};
-    else{cropBounds.minX=Math.min(cropBounds.minX,b.minX);cropBounds.minY=Math.min(cropBounds.minY,b.minY);cropBounds.maxX=Math.max(cropBounds.maxX,b.maxX);cropBounds.maxY=Math.max(cropBounds.maxY,b.maxY);}
+  if (img.style.display !== 'none') {
+    if (img.complete && img.naturalWidth) { initLogoTransform(); }
+    else { img.onload = initLogoTransform; }
+  } else {
+    // placeholder — just set box size
+    logoTW = Math.min(aW, aH) * 0.55;
+    logoTH = logoTW;
+    logoTX = (logoPctX / 100) * aW;
+    logoTY = (logoPctY / 100) * aH;
+    logoTScale = 1.0; logoTRot = 0;
+    applyLogoTransform();
   }
+}
 
-  const cw=cropBounds.maxX-cropBounds.minX, ch=cropBounds.maxY-cropBounds.minY;
-  const outW=Math.min(qualSettings.maxW,cw), outH=Math.round(ch*(outW/cw));
+function clearLogoFromPlayArea() {
+  selLogo = null; selTitle = null;
+  $id('logoDraggable').style.display = 'none';
+  $id('playAreaLabel').classList.remove('hidden');
+  $id('scaleStrip').classList.remove('visible');
+  hideTitle();
+}
 
-  const frameBuffers=[], frameDelays=[];
-  const HOLD_F=Math.round(1800/FRAME_MS), FADE_F=Math.round(450/FRAME_MS);
-  const words=hasTitle?WORD_SETS[currentLang]:null;
+function applyLogoPos() {
+  const area = $id('playAreaInner');
+  const aW = area.offsetWidth, aH = area.offsetHeight;
+  if (!aW || !aH) return;
 
-  async function collectFrame(positions,word,opacity){
-    const big=await svgToCanvasTransparent(buildSVGFrame(positions,word,opacity));
-    const fc=document.createElement('canvas'); fc.width=outW; fc.height=outH;
-    const fctx=fc.getContext('2d');
-    fctx.drawImage(big,cropBounds.minX,cropBounds.minY,cw,ch,0,0,outW,outH);
-    // Cut A hole using destination-out on the canvas
-    const holeSVG = buildHoleSVG(positions);
-    if (holeSVG) {
-      await new Promise(res => {
-        const hb=new Blob([holeSVG],{type:'image/svg+xml;charset=utf-8'});
-        const hurl=URL.createObjectURL(hb);
-        const himg=new Image();
-        himg.onload=()=>{
-          fctx.globalCompositeOperation='destination-out';
-          fctx.drawImage(himg,cropBounds.minX,cropBounds.minY,cw,ch,0,0,outW,outH);
-          fctx.globalCompositeOperation='source-over';
-          URL.revokeObjectURL(hurl); res();
-        };
-        himg.onerror=()=>{URL.revokeObjectURL(hurl);res();};
-        himg.src=hurl;
+  const baseSize = Math.min(aW, aH);
+  const px = baseSize * (logoScale / 100);
+
+  const d = $id('logoDraggable');
+  d.style.width  = px + 'px';
+  d.style.height = px + 'px';
+  d.style.left   = ((logoPctX/100)*aW - px/2) + 'px';
+  d.style.top    = ((logoPctY/100)*aH - px/2) + 'px';
+
+  // Title moves with logo: recompute position using same offset
+  // Title position handled by titleDraggable, not here
+}
+
+function updateLogoScale(val) {
+  logoScale = parseInt(val);
+  if (selLogo) applyLogoPos();
+}
+
+function updateTitleScale(val) {
+  titleScale = parseInt(val);
+  // Reapply style without moving position or resetting offset
+  if (selTitle) applyTitleStyle(false);
+}
+
+// Logo drag now handled by unified transform system (initTransforms)
+
+// ─── TITLE DRAG ───────────────────────────────────────────────────────────────
+// Old title drag IIFE removed — title dragging handled by initTransforms
+
+// ─── GENERATE ────────────────────────────────────────────────────────────────
+function updateGenBtn() {
+  const btn     = $id('genBtn');
+  const tooltip = $id('genTooltip');
+  const isBody  = selCat === 'body';
+  const ready   = !!(selCat && selBaseImg && selEl && selLogo) && !isBody;
+
+  btn.disabled = !ready;
+  btn.classList.toggle('ready', ready);
+
+  // Body images: keep button disabled with hover tooltip
+  const wrap = $id('genBtnWrap');
+  if (isBody && selBaseImg) {
+    btn.classList.remove('ready');
+    btn.disabled = true;
+    if (tooltip) tooltip.textContent = "Images containing people can't be remixed";
+    if (wrap) wrap.classList.add('body-locked');
+  } else {
+    if (wrap) wrap.classList.remove('body-locked');
+  }
+}
+function updateExportBtn() {
+  // Show export if we have a generated image OR a composed preview the user can export
+  const hasBg = $id('basePreview') && $id('basePreview').style.display !== 'none';
+  const show  = imgGenerated || (!!selBaseImg);
+  $id('exportBtn').classList.toggle('show', show);
+}
+
+// ─── OPENAI API KEY ─────────────────────────────────────────────────────────
+// Set your OpenAI API key here.
+// For production: load from a backend proxy instead of hardcoding.
+const OPENAI_API_KEY = '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';
+
+// Convert a local image file to base64 data URL
+async function fileToBase64(url) {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve(reader.result.split(',')[1]); // strip data:...;base64,
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+// Progress helpers
+function showProgress(pct, msg) {
+  const el  = $id('genProgress');
+  const bar = $id('genProgressFill');
+  const txt = $id('genProgressText');
+  if (!el) return;
+  el.style.display = 'flex';
+  if (bar) bar.style.width = pct + '%';
+  if (txt) txt.textContent = msg;
+}
+function hideProgress() {
+  const el = $id('genProgress');
+  if (el) el.style.display = 'none';
+}
+
+async function generateImage() {
+  if (!selCat || !selBaseImg || !selEl || !selLogo) return;
+  const btn = $id('genBtn');
+  btn.disabled = true;
+  btn.classList.remove('ready', 'regenerate');
+  btn.classList.add('running');
+  btn.textContent = 'Remixing…';
+  showProgress(5, 'Preparing…');
+
+  try {
+    // Determine file paths
+    const elType   = selEl.startsWith('defocus') ? 'defocus' : 'pinkvec';
+    const elNum    = selEl.split('-')[1];
+    const elPrefix = elType === 'defocus'
+      ? 'Foams-Brand-Graphic-DefocusLight-'
+      : 'Foams-Brand-Graphic-PinkVectors-';
+    const elFile   = elPrefix + String(elNum).padStart(2,'0') + '.png';
+    const baseFile = selBaseFile;
+
+    const size = orientation === 'landscape' ? '1536x1024' : '1024x1536';
+    const prompt = buildPrompt(size);
+
+    // Composite base + element onto canvas (NO logo/title) and send as one image
+    showProgress(15, 'Compositing images…');
+
+    // Helper to load an image into an HTMLImageElement
+    function loadImg(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
       });
     }
-    const imgData = fctx.getImageData(0,0,outW,outH);
-    frameBuffers.push(imgData.data.buffer.slice(0));
-    frameDelays.push(FRAME_MS);
-  }
 
-  if(hasMotion&&!hasTitle){
-    for(let f=0;f<MOTION_FRAMES;f++){
-      if(f%5===0)progress.textContent=`Frame ${f+1}/${MOTION_FRAMES}…`;
-      await collectFrame(getPos(f*T_PER_FRAME),null,0);
+    function b64ToBlob(b64, mimeType) {
+      const bytes = atob(b64);
+      const arr = new Uint8Array(bytes.length);
+      for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+      return new Blob([arr], { type: mimeType });
     }
-  } else if(!hasMotion&&hasTitle){
-    const wList=wordCyclePaused?[document.getElementById('wordTag').textContent]:words;
-    for(let w=0;w<wList.length;w++){
-      progress.textContent=`Word ${w+1}/${wList.length}`;
-      for(let f=0;f<HOLD_F;f++) await collectFrame(letterPositions,wList[w],1.0);
-      if(wList.length===1) continue;
-      const next=wList[(w+1)%wList.length];
-      for(let f=0;f<FADE_F;f++) await collectFrame(letterPositions,wList[w],1-f/FADE_F);
-      for(let f=0;f<FADE_F;f++) await collectFrame(letterPositions,next,f/FADE_F);
+
+    // Determine output canvas size in pixels
+    const isLandscape = orientation === 'landscape';
+    const canvasW = isLandscape ? 1536 : 1024;
+    const canvasH = isLandscape ? 1024 : 1536;
+
+    // Draw the composition on an off-screen canvas
+    const compCanvas = document.createElement('canvas');
+    compCanvas.width  = canvasW;
+    compCanvas.height = canvasH;
+    const ctx = compCanvas.getContext('2d');
+
+    // Draw base image cover-scaled (static, no user transform)
+    const baseImg = await loadImg(baseFile);
+    const area = $id('playAreaInner');
+    const aW = area.offsetWidth, aH = area.offsetHeight;
+    const scX = canvasW / aW, scY = canvasH / aH;
+    {
+      const bs = Math.max(canvasW / baseImg.width, canvasH / baseImg.height);
+      const bw = baseImg.width * bs, bh = baseImg.height * bs;
+      ctx.drawImage(baseImg, (canvasW-bw)/2, (canvasH-bh)/2, bw, bh);
     }
-  } else {
-    const FPWORD=HOLD_F+FADE_F*2, total=(words||[]).length*FPWORD; let tVal=0;
-    for(let f=0;f<total;f++){
-      if(f%5===0)progress.textContent=`Frame ${f+1}/${total}…`;
-      const pos=getPos(tVal), wIdx=Math.floor(f/FPWORD), wf=f%FPWORD;
-      const word=(words||[])[wIdx%((words||[]).length)], next=(words||[])[(wIdx+1)%((words||[]).length)];
-      let op=1.0,dw=word;
-      if(wf<FADE_F){op=wf/FADE_F;dw=word;}
-      else if(wf>=HOLD_F+FADE_F){op=1-(wf-HOLD_F-FADE_F)/FADE_F;dw=word;}
-      await collectFrame(pos,dw,op); tVal+=T_PER_FRAME;
+
+    // Draw graphical element at its current transform, scaled to canvas coords
+    if (elFile && $id('elPreview').style.display !== 'none') {
+
+      const elImg = await loadImg(elFile);
+      const drawW = elW * elScale * scX;
+      const drawH = elH * elScale * scY;
+      const cx    = elX * scX;
+      const cy    = elY * scY;
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      if (elFlipX) ctx.scale(-1, 1);
+      ctx.rotate(elRot * Math.PI / 180);
+      ctx.drawImage(elImg, -drawW/2, -drawH/2, drawW, drawH);
+      ctx.restore();
     }
-  }
 
-  progress.textContent='Encoding APNG…';
-  // Use UPNG to encode animated PNG
-  progress.textContent='Encoding APNG…';
+    // Convert canvas to blob to send to API
+    const compositeBlob = await new Promise(res => compCanvas.toBlob(res, 'image/jpeg', 0.92));
+    const compositeB64  = await new Promise((res, rej) => {
+      const reader = new FileReader();
+      reader.onload  = () => res(reader.result.split(',')[1]);
+      reader.onerror = rej;
+      reader.readAsDataURL(compositeBlob);
+    });
 
-  // Build APNG manually using pako for compression
-  function crc32(buf) {
-    let c = 0xFFFFFFFF;
-    const table = crc32._t || (crc32._t = (() => {
-      const t = new Uint32Array(256);
-      for (let i=0;i<256;i++){let c2=i;for(let j=0;j<8;j++)c2=c2&1?0xEDB88320^(c2>>>1):c2>>>1;t[i]=c2;}
-      return t;
-    })());
-    for (let i=0;i<buf.length;i++) c=table[(c^buf[i])&0xFF]^(c>>>8);
-    return (c^0xFFFFFFFF)>>>0;
-  }
-  function u32(n){const b=new Uint8Array(4);new DataView(b.buffer).setUint32(0,n);return b;}
-  function u16(n){const b=new Uint8Array(2);new DataView(b.buffer).setUint16(0,n);return b;}
-  function chunk(type,data){
-    const tb=new TextEncoder().encode(type);
-    const combined=new Uint8Array(tb.length+data.length);
-    combined.set(tb);combined.set(data,tb.length);
-    const crc=u32(crc32(combined));
-    const out=new Uint8Array(4+4+data.length+4);
-    out.set(u32(data.length),0);out.set(tb,4);out.set(data,8);out.set(crc,8+data.length);
-    return out;
-  }
-  function concat(...arrays){
-    const len=arrays.reduce((s,a)=>s+a.length,0);
-    const out=new Uint8Array(len);let off=0;
-    arrays.forEach(a=>{out.set(a,off);off+=a.length;});
-    return out;
-  }
+    showProgress(35, 'Sending base images…');
 
-  // PNG signature
-  const sig = new Uint8Array([137,80,78,71,13,10,26,10]);
+    // Tick progress while API processes
+    let _fakePct = 35;
+    const _ticker = setInterval(() => {
+      if (_fakePct < 70) {
+        _fakePct += 0.4;
+        const msgs = [
+          [35, 'Composing images…'],
+          [46, 'Blending layers…'],
+          [57, 'Refining details…'],
+          [65, 'Finalising…'],
+        ];
+        const msg = msgs.reduce((a, m) => _fakePct >= m[0] ? m : a, msgs[0]);
+        showProgress(Math.round(_fakePct), msg[1]);
+      }
+    }, 800);
 
-  // IHDR
-  const ihdr = new Uint8Array(13);
-  const dv = new DataView(ihdr.buffer);
-  dv.setUint32(0,outW);dv.setUint32(4,outH);
-  ihdr[8]=8;ihdr[9]=6;ihdr[10]=0;ihdr[11]=0;ihdr[12]=0; // 8bit RGBA
+    // Send composite as single image to /v1/images/edits
+    const formData = new FormData();
+    formData.append('model', 'gpt-image-1');
+    formData.append('prompt', prompt);
+    formData.append('size', size);
+    formData.append('quality', 'medium');
+    formData.append('n', '1');
+    formData.append('image[]', b64ToBlob(compositeB64, 'image/jpeg'), 'composed.jpg');
 
-  // acTL
-  const actl = new Uint8Array(8);
-  new DataView(actl.buffer).setUint32(0,frameBuffers.length);
-  new DataView(actl.buffer).setUint32(4,0); // loop forever
+    const res = await fetch('https://foams-generator.plattformplus.workers.dev/', {
+      method: 'POST',
+      body: formData,
+    });
 
-  let seqNum = 0;
-  const frameChunks = [];
+    clearInterval(_ticker);
+    showProgress(75, 'Processing response…');
+    const rawText = await res.text();
+    console.log('API raw response (first 500):', rawText.substring(0, 500));
 
-  for (let fi=0;fi<frameBuffers.length;fi++){
-    const delay = frameDelays[fi];
-    // fcTL
-    const fctl = new Uint8Array(26);
-    const fdv = new DataView(fctl.buffer);
-    fdv.setUint32(0,seqNum++);
-    fdv.setUint32(4,outW);fdv.setUint32(8,outH);
-    fdv.setUint32(12,0);fdv.setUint32(16,0); // x,y offset
-    fdv.setUint16(20,delay);fdv.setUint16(22,1000); // delay num/den
-    fctl[24]=1;fctl[25]=0; // dispose=1(clear), blend=0(source)
-    frameChunks.push(chunk('fcTL',fctl));
+    let data;
+    try { data = JSON.parse(rawText); }
+    catch(e) { throw new Error('Invalid JSON from API: ' + rawText.substring(0, 300)); }
 
-    // Compress frame RGBA
-    const raw = new Uint8Array(frameBuffers[fi]);
-    // Add filter byte (0=None) before each row
-    const filtered = new Uint8Array(outH*(outW*4+1));
-    for(let r=0;r<outH;r++){
-      filtered[r*(outW*4+1)]=0; // None filter
-      filtered.set(raw.subarray(r*outW*4,(r+1)*outW*4), r*(outW*4+1)+1);
+    if (!res.ok) {
+      throw new Error(data?.error?.message || `API error ${res.status}`);
     }
-    const compressed = pako.deflate(filtered, {level: qualSettings.compress});
 
-    if(fi===0){
-      frameChunks.push(chunk('IDAT',compressed));
-    } else {
-      // fdAT: seqNum + compressed data
-      const fdat = new Uint8Array(4+compressed.length);
-      new DataView(fdat.buffer).setUint32(0,seqNum++);
-      fdat.set(compressed,4);
-      frameChunks.push(chunk('fdAT',fdat));
+    // /v1/images/edits returns data[0].b64_json
+    let imageUrl = null;
+    if (data.data?.[0]?.b64_json) {
+      imageUrl = `data:image/png;base64,${data.data[0].b64_json}`;
+    } else if (data.data?.[0]?.url) {
+      imageUrl = data.data[0].url;
     }
+
+    showProgress(95, 'Almost done…');
+    if (!imageUrl) {
+      console.error('Full API response:', JSON.stringify(data).substring(0, 1000));
+      throw new Error('No image in API response — check console');
+    }
+
+    // Display generated image as a moveable <img>
+    const bg = $id('bgImage');
+    generatedImageUrl = imageUrl;
+    bg.src = imageUrl;
+    bg.style.display = 'block';
+    bg.style.cursor = 'grab';
+    // Initialize transform: cover-fit the play area
+    bg.onload = () => {
+      const area3 = $id('playAreaInner');
+      const aW3 = area3.offsetWidth, aH3 = area3.offsetHeight;
+      const sc = Math.max(aW3 / bg.naturalWidth, aH3 / bg.naturalHeight);
+      genW = bg.naturalWidth; genH = bg.naturalHeight;
+      genScale = sc; genRot = 0;
+      genX = aW3 / 2; genY = aH3 / 2;
+      genSelected = false;
+      applyGenTransform();
+    };
+
+    // Hide composition layers — generated image takes over
+    const _bp2 = $id('basePreview'); if (_bp2) _bp2.style.display = 'none';
+    const _ep2 = $id('elPreview');   if (_ep2) _ep2.style.display = 'none';
+    const _eh2 = $id('elHandles');   if (_eh2) _eh2.style.display = 'none';
+    const _bh2 = $id('bgHandles');   if (_bh2) _bh2.style.display = 'none';
+
+    showProgress(100, 'Done!');
+    setTimeout(hideProgress, 600);
+    imgGenerated = true;
+    updateExportBtn();
+    btn.innerHTML = '↺ Remix';
+    btn.classList.remove('running', 'ready');
+    btn.classList.add('regenerate');
+    btn.disabled = false;
+
+  } catch(err) {
+    try { clearInterval(_ticker); } catch(e) {}
+    hideProgress();
+    console.error('Generation error:', err);
+    btn.innerHTML = '↺ Remix';
+    btn.classList.remove('running');
+    btn.classList.add('regenerate');
+    btn.disabled = false;
+    // Show error message briefly
+    setTimeout(() => {
+      if (btn.classList.contains('regenerate')) {
+        btn.innerHTML = '↺ Remix';
+      }
+    }, 3000);
   }
-
-  const apngBytes = concat(
-    sig,
-    chunk('IHDR',ihdr),
-    chunk('acTL',actl),
-    ...frameChunks,
-    chunk('IEND',new Uint8Array(0))
-  );
-
-  const blob2 = new Blob([apngBytes],{type:'image/png'});
-  const a2=document.createElement('a');
-  a2.download=`foams-animated-${logoColor}-transparent.png`;
-  a2.href=URL.createObjectURL(blob2);
-  a2.click();
-  progress.style.display='none';
 }
 
+function buildPrompt(size) {
+  const bodyRule = selCat === 'body'
+    ? '\nIMPORTANT: Do not alter the people in the image in any way — their faces, bodies and expressions must remain exactly as in the original.'
+    : '';
+  return `Make an image highly inspired by the attached image
+Use both image and graphical element in your composition
+Feel free to use blend modes if it looks nice, but not mandatory
+Take full creative freedom to distort the elements, but keep the overall vibe exactly the same
+Do not use text or UI elements, no UI no text elements
+Keep the vibe elegant, modern and a bit mysterious${bodyRule}`;
+}
 
+// ─── EXPORT ──────────────────────────────────────────────────────────────────
+async function exportImage() {
+  // Can export at any stage: generated result, or composed preview, or even blank
+  const isLandscape = orientation === 'landscape';
+  const outW = isLandscape ? 1920 : 1080;
+  const outH = isLandscape ? 1080 : 1920;
+  const filename = `foams-image-${orientation}-${Date.now()}.png`;
+
+  const canvas = document.createElement('canvas');
+  canvas.width  = outW;
+  canvas.height = outH;
+  const ctx = canvas.getContext('2d');
+
+  function loadImg(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload  = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+  }
+
+  const area  = $id('playAreaInner');
+  const aW    = area.offsetWidth, aH = area.offsetHeight;
+  const scX   = outW / aW, scY = outH / aH;
+
+  try {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, outW, outH);
+
+    // 1a. If we have a generated (remixed) result, draw that first
+    if (generatedImageUrl) {
+      const bgImg = await loadImg(generatedImageUrl);
+      // If user repositioned the generated image, use that transform
+      if (genW > 0) {
+        const gDrawW = genW * genScale * scX;
+        const gDrawH = genH * genScale * scY;
+        const gcx = genX * scX, gcy = genY * scY;
+        ctx.save();
+        ctx.translate(gcx, gcy);
+        ctx.rotate(genRot * Math.PI / 180);
+        ctx.drawImage(bgImg, -gDrawW/2, -gDrawH/2, gDrawW, gDrawH);
+        ctx.restore();
+      } else {
+        const scale = Math.max(outW / bgImg.width, outH / bgImg.height);
+        const dw = bgImg.width * scale, dh = bgImg.height * scale;
+        ctx.drawImage(bgImg, (outW-dw)/2, (outH-dh)/2, dw, dh);
+      }
+    }
+
+    // 1b. Otherwise draw the composed preview (base + element at their transforms)
+    else {
+      const bp = $id('basePreview');
+      if (bp && bp.style.display !== 'none' && bp.src) {
+        const baseImg = await loadImg(bp.src);
+        const bs = Math.max(outW / baseImg.width, outH / baseImg.height);
+        const bw = baseImg.width * bs, bh = baseImg.height * bs;
+        ctx.drawImage(baseImg, (outW-bw)/2, (outH-bh)/2, bw, bh);
+      }
+      const ep = $id('elPreview');
+      if (ep && ep.style.display !== 'none' && ep.src) {
+        const elImg = await loadImg(ep.src);
+        const drawW = elW * elScale * scX;
+        const drawH = elH * elScale * scY;
+        const cx = elX * scX, cy = elY * scY;
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(elRot * Math.PI / 180);
+        if (elFlipX) ctx.scale(-1, 1);
+        ctx.drawImage(elImg, -drawW/2, -drawH/2, drawW, drawH);
+        ctx.restore();
+      }
+    }
+
+    // 2. Draw the logo + title if present
+    if (selLogo) {
+      // Get play-area dimensions to compute scaling ratio
+      const area  = $id('playAreaInner');
+      const aW    = area.offsetWidth;
+      const aH    = area.offsetHeight;
+      const scaleX = outW / aW;
+      const scaleY = outH / aH;
+
+      // Logo: logoPctX/Y is center as % of play area; logoScale is % of min(aW,aH)
+      const baseSize   = Math.min(aW, aH);
+      const logoPxW    = baseSize * (logoScale / 100);  // logo size in play-area px
+      const logoCX_pa  = (logoPctX / 100) * aW;         // center x in play-area px
+      const logoCY_pa  = (logoPctY / 100) * aH;         // center y in play-area px
+
+      // Scale to output canvas coords
+      const logoOutSize = Math.min(outW, outH) * (logoScale / 100);
+      const logoOutX    = logoCX_pa * scaleX - logoOutSize / 2;
+      const logoOutY    = logoCY_pa * scaleY - logoOutSize / 2;
+
+      // Draw logo image — preserve natural aspect ratio (logo PNG is wide, not square)
+      const logoSrc = $id('logoImg')?.src;
+      if (logoSrc && $id('logoImg').style.display !== 'none') {
+        const logoImg = await loadImg(logoSrc);
+        // object-fit:contain behaviour: fit within the square box, centered
+        const nat    = logoImg.naturalWidth / logoImg.naturalHeight;
+        let   lw, lh;
+        if (nat >= 1) {
+          // wider than tall — width fills the box
+          lw = logoOutSize;
+          lh = logoOutSize / nat;
+        } else {
+          // taller than wide — height fills the box
+          lh = logoOutSize;
+          lw = logoOutSize * nat;
+        }
+        // Center within the draggable box position
+        const lx = logoOutX + (logoOutSize - lw) / 2;
+        const ly = logoOutY + (logoOutSize - lh) / 2;
+        ctx.drawImage(logoImg, lx, ly, lw, lh);
+      }
+
+      // 3. Draw title text if present
+      if (selTitle) {
+        const titleEl = $id('logoTitle');
+        if (titleEl && titleEl.style.display !== 'none') {
+          // Get title position in play-area coords
+          const tRect   = titleEl.getBoundingClientRect();
+          const aRect   = area.getBoundingClientRect();
+          const tLeft_pa = tRect.left - aRect.left;  // in play-area px
+          const tTop_pa  = tRect.top  - aRect.top;
+
+          // Scale to canvas
+          const tLeft_out = tLeft_pa * scaleX;
+          const tTop_out  = tTop_pa  * scaleY;
+
+          // Font size: same proportion as in play-area but scaled up
+          const logoPxInPlayArea = Math.min(aW, aH) * (logoScale / 100);
+          const fontSizePlay = Math.max(5, Math.round(logoPxInPlayArea * 0.08));
+          const fontSizeOut  = Math.round(fontSizePlay * scaleX);
+
+          ctx.save();
+          ctx.font = `700 ${fontSizeOut}px 'Trebuchet MS', Trebuchet, sans-serif`;
+          ctx.textBaseline = 'top';
+          const colorMap = { white:'#ffffff', black:'#000000', pink:'#ff30ff' };
+          ctx.fillStyle = colorMap[logoColor] || '#ffffff';
+          ctx.fillText(selTitle, tLeft_out, tTop_out);
+          ctx.restore();
+        }
+      }
+    }
+
+    // 4. Download
+    canvas.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }, 'image/png');
+
+  } catch(err) {
+    console.error('Export failed:', err);
+    // Fallback: just download the generated image without compositing
+    const a = document.createElement('a');
+    a.href = generatedImageUrl;
+    a.download = filename;
+    a.click();
+  }
+}
+
+// ─── RESIZE ──────────────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  if (selLogo) applyLogoPos();
+  sendHeight();
+});
+
+// ─── IFRAME HEIGHT REPORTER ──────────────────────────────────────────────────
+// Wrapped in rAF to break the ResizeObserver loop: reading scrollHeight
+// after a layout change would otherwise re-trigger the observer.
+let _heightRafId = null;
+function sendHeight() {
+  if (_heightRafId) return;          // already queued
+  _heightRafId = requestAnimationFrame(() => {
+    _heightRafId = null;
+    const h = document.documentElement.scrollHeight;
+    window.parent.postMessage({ type: 'foams-height', height: h }, '*');
+  });
+}
+sendHeight();
+const _ro = new ResizeObserver(sendHeight);
+_ro.observe(document.body);
+
+// ─── FIXED PLAY AREA ─────────────────────────────────────────────────────────
+// position:sticky fails inside iframes when the parent page owns the scroll.
+// We switch to position:fixed and compensate with paddingTop on body.
+// The ResizeObserver callback is deferred via rAF to prevent the
+// "ResizeObserver loop completed with undelivered notifications" error.
+(function initFixedPlayArea() {
+  const stickyEl  = document.querySelector('.sticky-top');
+  if (!stickyEl) return;
+
+  const bodyStyle = getComputedStyle(document.body);
+  const padL = parseFloat(bodyStyle.paddingLeft)  || 0;
+  const padR = parseFloat(bodyStyle.paddingRight) || 0;
+
+  let _rafId = null;
+  function scheduleApply() {
+    if (_rafId) return;
+    _rafId = requestAnimationFrame(() => {
+      _rafId = null;
+      stickyEl.style.position   = 'fixed';
+      stickyEl.style.top        = '0';
+      stickyEl.style.left       = padL + 'px';
+      stickyEl.style.right      = padR + 'px';
+      stickyEl.style.width      = 'auto';
+      stickyEl.style.zIndex     = '999';
+      stickyEl.style.background = '#111';
+      document.body.style.paddingTop = stickyEl.offsetHeight + 'px';
+    });
+  }
+
+  scheduleApply();
+  new ResizeObserver(scheduleApply).observe(stickyEl);
+  window.addEventListener('load', scheduleApply);
+})();
 </script>
 </body>
 </html>
