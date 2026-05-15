@@ -613,7 +613,7 @@
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
-  <div class="version" id="versionTag">FOAMS Brand Image Generator · v10.5</div>
+  <div class="version" id="versionTag">FOAMS Brand Image Generator · v10.6</div>
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
 
@@ -2703,15 +2703,13 @@ async function generateImage() {
 }
 
 function buildPrompt(size) {
-  const bodyRule = selCat === 'body'
-    ? '\nIMPORTANT: Do not alter the people in the image in any way — their faces, bodies and expressions must remain exactly as in the original.'
-    : '';
   return `Make an image highly inspired by the attached image
 Use both image and graphical element in your composition
 Feel free to use blend modes if it looks nice, but not mandatory
 Take full creative freedom to distort the elements, but keep the overall vibe exactly the same
 Do not use text or UI elements, no UI no text elements
-Keep the vibe elegant, modern and a bit mysterious${bodyRule}`;
+Keep the vibe elegant, modern and a bit mysterious
+STRICT RULE — NO PEOPLE: Do not generate, add, imply or suggest any human faces, bodies, people, portraits, silhouettes or any human figure whatsoever. This is absolutely forbidden. If the source image contains people, remove them completely from the output.`;
 }
 
 // ─── EXPORT ──────────────────────────────────────────────────────────────────
