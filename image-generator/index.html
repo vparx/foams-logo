@@ -62,6 +62,22 @@
     .el-handle { background: #fff; }
     .logo-handle { background: #ff64b4; }
     .gen-handle { background: #64dcff; }
+    /* Layer add buttons in step sections */
+    .add-layer-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; font-family: 'Trebuchet MS', sans-serif;
+      color: #555; border: 1px dashed #333; background: #161616;
+      border-radius: 6px; padding: 5px 10px; cursor: pointer;
+      transition: all 0.15s; margin-top: 6px; width: 100%;
+      justify-content: center;
+    }
+    .add-layer-btn:hover { color: #aaa; border-color: #666; }
+    .layer-note {
+      font-size: 9px; color: #3a3a3a; font-style: italic;
+      text-align: center; margin-top: 5px; letter-spacing: 0.05em;
+      font-family: 'Trebuchet MS', sans-serif;
+    }
 
     /* Blend mode dropdown */
     .blend-wrap { position: absolute; bottom: -24px; right: 0; pointer-events: all; }
@@ -558,7 +574,7 @@
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
-  <div class="version" id="versionTag">FOAMS Brand Image Generator · v8.9</div>
+  <div class="version" id="versionTag">FOAMS Brand Image Generator · v9.0</div>
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
 
@@ -576,60 +592,7 @@
         <div class="t-handle gen-handle" data-corner="br" style="bottom:-5px;right:-5px"></div>
       </div>
 
-      <!-- Base image — static, fills play area -->
-      <img id="basePreview" src="" alt=""
-        style="display:none;position:absolute;width:100%;height:100%;object-fit:cover;"
-        draggable="false">
-
-
-
-      <!-- Graphical element — draggable/scalable/rotatable img element -->
-      <img id="elPreview" src="" alt=""
-        style="display:none;position:absolute;transform-origin:center center;
-        cursor:grab;user-select:none;touch-action:none;max-width:none;max-height:none;"
-        draggable="false">
-
-      <!-- Graphical element transform handles (white) -->
-      <div id="elHandles" style="display:none;position:absolute;pointer-events:none;
-        border:1.5px dashed rgba(255,255,255,0.6);box-sizing:border-box;">
-        <div class="t-handle el-handle" data-corner="tl" style="top:-5px;left:-5px"></div>
-        <div class="t-handle el-handle" data-corner="tr" style="top:-5px;right:-5px"></div>
-        <div class="t-handle el-handle" data-corner="bl" style="bottom:-5px;left:-5px"></div>
-        <div class="t-handle el-handle" data-corner="br" style="bottom:-5px;right:-5px"></div>
-        <div id="rotHandle" style="position:absolute;top:-26px;left:50%;transform:translateX(-50%);
-          width:10px;height:10px;background:#fff;border-radius:50%;cursor:crosshair;
-          pointer-events:all;box-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>
-        <div style="position:absolute;top:-20px;left:50%;width:1px;height:14px;
-          background:rgba(255,255,255,0.4);transform:translateX(-50%);"></div>
-        <!-- Mirror button: bottom-left of handles -->
-        <button id="mirrorBtn" onclick="toggleMirror()" style="position:absolute;bottom:-24px;left:0;
-          background:rgba(0,0,0,0.6);color:rgba(255,255,255,0.8);border:1px solid rgba(255,255,255,0.3);
-          border-radius:4px;font-size:9px;font-weight:700;letter-spacing:0.08em;
-          padding:2px 7px;cursor:pointer;pointer-events:all;
-          font-family:'Trebuchet MS',sans-serif;white-space:nowrap;">
-          ⇄ Mirror
-        </button>
-        <!-- Blend mode button: bottom-right of handles -->
-        <div class="blend-wrap">
-          <button class="blend-btn" id="blendBtn" onclick="toggleBlendDropdown(event)">⊕ Blend</button>
-          <div class="blend-dropdown" id="blendDropdown">
-            <button class="blend-opt selected" onclick="setBlend('normal',this)">Normal</button>
-            <button class="blend-opt" onclick="setBlend('multiply',this)">Multiply</button>
-            <button class="blend-opt" onclick="setBlend('screen',this)">Screen</button>
-            <button class="blend-opt" onclick="setBlend('overlay',this)">Overlay</button>
-            <button class="blend-opt" onclick="setBlend('soft-light',this)">Soft Light</button>
-            <button class="blend-opt" onclick="setBlend('hard-light',this)">Hard Light</button>
-            <button class="blend-opt" onclick="setBlend('color-dodge',this)">Color Dodge</button>
-            <button class="blend-opt" onclick="setBlend('color-burn',this)">Color Burn</button>
-            <button class="blend-opt" onclick="setBlend('difference',this)">Difference</button>
-            <button class="blend-opt" onclick="setBlend('exclusion',this)">Exclusion</button>
-            <button class="blend-opt" onclick="setBlend('hue',this)">Hue</button>
-            <button class="blend-opt" onclick="setBlend('saturation',this)">Saturation</button>
-            <button class="blend-opt" onclick="setBlend('color',this)">Color</button>
-            <button class="blend-opt" onclick="setBlend('luminosity',this)">Luminosity</button>
-          </div>
-        </div>
-      </div>
+      <!-- Layers rendered dynamically by createLayer() -->
 
       <div id="logoLayer">
         <div id="logoDraggable">
@@ -854,25 +817,26 @@ let genDragging = false, genDragOffX = 0, genDragOffY = 0;
 let genScaling  = false, genScaleStartDist = 0, genScaleStart = 1.0;
 let genSelected = false;
 
-// Graphical element transform state (all relative to play-area)
-let elX = 0, elY = 0;       // center position in play-area px
-let elW = 0, elH = 0;       // natural size in play-area px (set on load)
-let elScale = 1.0;           // scale multiplier
-let elRot = 0;               // rotation in degrees
-let elFile = '';             // current element filename
-let elFlipX   = false;  // mirror state for graphical element
-let elBlendMode = 'normal';  // CSS mix-blend-mode for graphical element
+// ─── LAYER SYSTEM ────────────────────────────────────────────────────────────
+// layers[] holds all base images and graphical elements in z-order (bottom first)
+// Each layer: { id, type, file, img, handles, rotHandle, mirrorBtn, blendBtn,
+//   blendDropdown, x, y, w, h, scale, rot, flipX, blendMode, selected,
+//   dragging, dragOffX, dragOffY, rotating, rotStartAngle, rotStartRot,
+//   scaling, scaleStartDist, scaleStart }
+let layers = [];
+let activeLayer = null;   // currently selected layer object
+let _layerIdCounter = 0;
+
+// Legacy single-el compat vars (used by old code paths — bridged to layers)
+let elFlipX   = false;
+let elBlendMode = 'normal';
+let elSelected = false;
 let elDragging = false, elDragOffX = 0, elDragOffY = 0;
 let elRotating = false, elRotStartAngle = 0, elRotStartRot = 0;
-let elScaling = false, elScaleCorner = '', elScaleStartDist = 0, elScaleStart = 1.0;
-let elSelected = false;  // whether el transform handles are shown
-
-// Base image transform state
-let bgX = 0, bgY = 0, bgW = 0, bgH = 0, bgScale = 1.0, bgRot = 0;
-let bgDragging = false, bgDragOffX = 0, bgDragOffY = 0;
-let bgRotating = false, bgRotStartAngle = 0, bgRotStartRot = 0;
-let bgScaling  = false, bgScaleStartDist = 0, bgScaleStart = 1.0;
-let bgSelected = false;  // whether bg transform handles are shown
+let elScaling = false, elScaleStartDist = 0, elScaleStart = 1.0;
+let elScaleCorner = '';
+// Legacy bg compat (for deselect/reset)
+let bgSelected = false;
 
 let logoPctX = 26, logoPctY = 70;  // center of logo as % of play-area
 let logoScale = 55;                 // % of min(aW,aH) — kept for export math
@@ -904,6 +868,205 @@ let titleDragging = false, tOffX = 0, tOffY = 0;
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 function $id(id) { return document.getElementById(id); }
+
+// ─── LAYER FACTORY ───────────────────────────────────────────────────────────
+function createLayer(type, file) {
+  const area = $id('playAreaInner');
+  const id   = ++_layerIdCounter;
+  const isBg = type === 'bg';
+  const color = isBg ? 'rgba(255,200,100,0.7)' : 'rgba(255,255,255,0.6)';
+  const handleColor = isBg ? '#ffc864' : '#fff';
+
+  // Create img
+  const img = document.createElement('img');
+  img.draggable = false;
+  img.style.cssText = 'display:none;position:absolute;transform-origin:center center;'+
+    'cursor:grab;user-select:none;touch-action:none;max-width:none;max-height:none;';
+  img.dataset.layerId = id;
+  area.appendChild(img);
+
+  // Create handles
+  const handles = document.createElement('div');
+  handles.style.cssText = 'display:none;position:absolute;pointer-events:none;'+
+    `border:1.5px dashed ${color};box-sizing:border-box;`;
+  handles.dataset.layerId = id;
+  ['tl','tr','bl','br'].forEach(corner => {
+    const h = document.createElement('div');
+    h.className = 't-handle layer-handle';
+    h.dataset.corner = corner;
+    h.dataset.layerId = id;
+    h.style.cssText = `position:absolute;${corner.includes('t')?'top:-5px':'bottom:-5px'};`+
+      `${corner.includes('l')?'left:-5px':'right:-5px'};background:${handleColor};`;
+    handles.appendChild(h);
+  });
+
+  // Rotation handle
+  const rotH = document.createElement('div');
+  rotH.className = 'layer-rot-handle';
+  rotH.dataset.layerId = id;
+  rotH.style.cssText = 'position:absolute;top:-26px;left:50%;transform:translateX(-50%);'+
+    `width:10px;height:10px;background:${handleColor};border-radius:50%;cursor:crosshair;`+
+    'pointer-events:all;box-shadow:0 1px 4px rgba(0,0,0,0.5);';
+  const rotLine = document.createElement('div');
+  rotLine.style.cssText = 'position:absolute;top:-20px;left:50%;width:1px;height:14px;'+
+    `background:${color.replace('0.7','0.4')};transform:translateX(-50%);`;
+  handles.appendChild(rotLine);
+  handles.appendChild(rotH);
+
+  // Bottom controls (mirror + blend for el, blend only for bg)
+  let mirrorBtn = null;
+  if (!isBg) {
+    mirrorBtn = document.createElement('button');
+    mirrorBtn.dataset.layerId = id;
+    mirrorBtn.style.cssText = 'position:absolute;bottom:-24px;left:0;pointer-events:all;'+
+      'background:rgba(0,0,0,0.6);color:rgba(255,255,255,0.8);border:1px solid rgba(255,255,255,0.3);'+
+      'border-radius:4px;font-size:9px;font-weight:700;letter-spacing:0.08em;'+
+      "padding:2px 7px;cursor:pointer;font-family:'Trebuchet MS',sans-serif;white-space:nowrap;";
+    mirrorBtn.textContent = '⇄ Mirror';
+    mirrorBtn.onclick = (e) => { e.stopPropagation(); layerToggleMirror(id); };
+    handles.appendChild(mirrorBtn);
+  }
+
+  // Blend dropdown
+  const blendWrap = document.createElement('div');
+  blendWrap.style.cssText = 'position:absolute;bottom:-24px;right:0;pointer-events:all;';
+  const blendBtn = document.createElement('button');
+  blendBtn.className = 'blend-btn';
+  blendBtn.dataset.layerId = id;
+  blendBtn.textContent = '⊕ Blend';
+  const blendDD = document.createElement('div');
+  blendDD.className = 'blend-dropdown';
+  blendDD.dataset.layerId = id;
+  const blendModes = ['normal','multiply','screen','overlay','soft-light','hard-light',
+    'color-dodge','color-burn','difference','exclusion','hue','saturation','color','luminosity'];
+  blendModes.forEach(mode => {
+    const opt = document.createElement('button');
+    opt.className = 'blend-opt' + (mode==='normal'?' selected':'');
+    opt.textContent = mode.charAt(0).toUpperCase() + mode.slice(1).replace('-',' ');
+    opt.onclick = (e) => { e.stopPropagation(); layerSetBlend(id, mode, opt); };
+    blendDD.appendChild(opt);
+  });
+  blendBtn.onclick = (e) => { e.stopPropagation(); blendDD.classList.toggle('open'); };
+  blendWrap.appendChild(blendBtn);
+  blendWrap.appendChild(blendDD);
+  handles.appendChild(blendWrap);
+
+  // Delete button (top-right of handles)
+  const delBtn = document.createElement('button');
+  delBtn.style.cssText = 'position:absolute;top:-24px;right:0;pointer-events:all;'+
+    'background:rgba(180,30,30,0.7);color:#fff;border:none;border-radius:4px;'+
+    'font-size:9px;font-weight:700;padding:2px 6px;cursor:pointer;'+
+    "font-family:'Trebuchet MS',sans-serif;";
+  delBtn.textContent = '✕ Remove';
+  delBtn.onclick = (e) => { e.stopPropagation(); removeLayer(id); };
+  handles.appendChild(delBtn);
+
+  area.appendChild(handles);
+
+  const layer = {
+    id, type, file,
+    img, handles, rotHandle: rotH, mirrorBtn, blendBtn, blendDropdown: blendDD,
+    x: 0, y: 0, w: 0, h: 0, scale: 1, rot: 0, flipX: false, blendMode: 'normal',
+    selected: false,
+    dragging: false, dragOffX: 0, dragOffY: 0,
+    rotating: false, rotStartAngle: 0, rotStartRot: 0,
+    scaling: false, scaleStartDist: 0, scaleStart: 1,
+  };
+
+  img.onload = () => {
+    const aW = area.offsetWidth, aH = area.offsetHeight;
+    const nat = img.naturalWidth / img.naturalHeight;
+    const maxSide = Math.min(aW, aH) * (isBg ? 1.0 : 0.42);
+    if (nat >= 1) { layer.w = maxSide; layer.h = maxSide / nat; }
+    else          { layer.h = maxSide; layer.w = maxSide * nat; }
+    // For bg: cover the area
+    if (isBg) {
+      layer.scale = Math.max(aW / layer.w, aH / layer.h);
+    }
+    layer.x = aW / 2; layer.y = aH / 2;
+    img.style.display = 'block';
+    applyLayerTransform(layer);
+  };
+
+  img.src = file;
+  layers.push(layer);
+  return layer;
+}
+
+function removeLayer(id) {
+  const idx = layers.findIndex(l => l.id === id);
+  if (idx < 0) return;
+  const layer = layers[idx];
+  layer.img.remove();
+  layer.handles.remove();
+  layers.splice(idx, 1);
+  if (activeLayer?.id === id) activeLayer = null;
+}
+
+function applyLayerTransform(layer) {
+  const w = layer.w * layer.scale;
+  const h = layer.h * layer.scale;
+  const img = layer.img;
+  const handles = layer.handles;
+  img.style.width  = w + 'px'; img.style.height = h + 'px';
+  img.style.left   = (layer.x - w/2) + 'px'; img.style.top = (layer.y - h/2) + 'px';
+  const flipStr = layer.flipX ? 'scaleX(-1) ' : '';
+  img.style.transform = `rotate(${layer.rot}deg) ${flipStr}`;
+  img.style.mixBlendMode = layer.blendMode;
+  if (handles && layer.selected) {
+    handles.style.width  = w + 'px'; handles.style.height  = h + 'px';
+    handles.style.left   = (layer.x - w/2) + 'px'; handles.style.top = (layer.y - h/2) + 'px';
+    handles.style.transform = `rotate(${layer.rot}deg)`;
+  }
+}
+
+function selectLayer(layer) {
+  // Deselect all
+  layers.forEach(l => {
+    l.selected = false;
+    if (l.handles) l.handles.style.display = 'none';
+  });
+  activeLayer = layer;
+  layer.selected = true;
+  layer.handles.style.display = 'block';
+  applyLayerTransform(layer);
+  // Deselect logo/title/gen
+  elSelected=false; bgSelected=false; logoSelected=false; genSelected=false;
+  const lh=$id('logoHandles'); if(lh) lh.style.display='none';
+  const gh=$id('genHandles');  if(gh) gh.style.display='none';
+}
+
+function deselectAllLayers() {
+  layers.forEach(l => { l.selected=false; if(l.handles) l.handles.style.display='none'; });
+  activeLayer = null;
+}
+
+function layerToggleMirror(id) {
+  const layer = layers.find(l => l.id === id);
+  if (!layer) return;
+  layer.flipX = !layer.flipX;
+  if (layer.mirrorBtn) layer.mirrorBtn.style.color = layer.flipX ? '#7af' : 'rgba(255,255,255,0.8)';
+  applyLayerTransform(layer);
+}
+
+function layerSetBlend(id, mode, optEl) {
+  const layer = layers.find(l => l.id === id);
+  if (!layer) return;
+  layer.blendMode = mode;
+  layer.blendDropdown?.querySelectorAll('.blend-opt').forEach(b => b.classList.remove('selected'));
+  if (optEl) optEl.classList.add('selected');
+  if (layer.blendBtn) {
+    layer.blendBtn.textContent = mode === 'normal' ? '⊕ Blend' : '⊕ ' + (optEl?.textContent || mode);
+    layer.blendBtn.classList.toggle('active', mode !== 'normal');
+  }
+  layer.blendDropdown?.classList.remove('open');
+  applyLayerTransform(layer);
+}
+
+function clearAllLayers() {
+  [...layers].forEach(l => removeLayer(l.id));
+  layers = []; activeLayer = null;
+}
 
 // ─── GENERATED IMAGE TRANSFORM ───────────────────────────────────────────────
 function applyGenTransform() {
@@ -1071,40 +1234,9 @@ function applyLogoTransform() {
   // Title position handled by titleDraggable, not here
 }
 
-function toggleMirror() {
-  elFlipX = !elFlipX;
-  const btn = $id('mirrorBtn');
-  if (btn) btn.style.color = elFlipX ? '#7af' : 'rgba(255,255,255,0.8)';
-  applyElTransform();
-}
-
-function toggleBlendDropdown(e) {
-  e.stopPropagation();
-  const dd = $id('blendDropdown');
-  if (dd) dd.classList.toggle('open');
-}
-
-function setBlend(mode, el) {
-  elBlendMode = mode;
-  // Mark selected
-  document.querySelectorAll('.blend-opt').forEach(b => b.classList.remove('selected'));
-  if (el) el.classList.add('selected');
-  // Update button label
-  const btn = $id('blendBtn');
-  if (btn) {
-    btn.textContent = mode === 'normal' ? '⊕ Blend' : '⊕ ' + el.textContent;
-    btn.classList.toggle('active', mode !== 'normal');
-  }
-  // Close dropdown
-  const dd = $id('blendDropdown');
-  if (dd) dd.classList.remove('open');
-  applyElTransform();
-}
-
-// Close blend dropdown on outside click
+// Close any open blend dropdowns on outside click
 document.addEventListener('click', () => {
-  const dd = $id('blendDropdown');
-  if (dd) dd.classList.remove('open');
+  document.querySelectorAll('.blend-dropdown.open').forEach(dd => dd.classList.remove('open'));
 });
 
 // ─── BASE IMAGE TRANSFORM ─────────────────────────────────────────────────────
@@ -1189,8 +1321,8 @@ function applyElTransform() {
   document.addEventListener('touchstart', onDown, {passive:false});
 
   function onDown(e) {
-    const ep = $id('elPreview');
-    const bp = $id('basePreview');
+    const ep = null; // legacy — layers now handle elements
+    const bp = null; // legacy — layers now handle base images
     const p  = xy(e);
     const ld = $id('logoDraggable');
     const gi = $id('bgImage');
@@ -1207,7 +1339,7 @@ function applyElTransform() {
     const isLogoHandle  = e.target.classList.contains('logo-handle');
     const isLogoRot     = e.target.id === 'logoRotHandle';
     const isEl          = ep && ep.style.display !== 'none' && e.target === ep;
-    const isBg          = false;  // base image is now static, no transform
+    const isBg          = false;
     const titleEl_      = $id('logoTitle');
     const isTitle       = titleEl_ && e.target === titleEl_;
     const isDragSurface = e.target.id === 'logoDragSurface';
@@ -1383,6 +1515,7 @@ function applyElTransform() {
     const area = $id('playAreaInner');
     if (area && area.contains(e.target) && e.target.tagName !== 'BUTTON') {
       deselect();
+      deselectAllLayers();
       genSelected = false;
       const gh2 = $id('genHandles'); if(gh2) gh2.style.display='none';
       titleSelected = false;
@@ -1394,6 +1527,28 @@ function applyElTransform() {
   document.addEventListener('touchmove', onMove, {passive:false});
 
   function onMove(e) {
+    // Layer move
+    const activeL = layers.find(l => l.dragging || l.rotating || l.scaling);
+    if (activeL) {
+      e.preventDefault();
+      const p2 = xy(e);
+      const ar2 = $id('playAreaInner').getBoundingClientRect();
+      if (activeL.dragging) {
+        activeL.x = p2.x - ar2.left - activeL.dragOffX;
+        activeL.y = p2.y - ar2.top  - activeL.dragOffY;
+      } else if (activeL.rotating) {
+        const r = activeL.img.getBoundingClientRect();
+        const cx = r.left+r.width/2, cy = r.top+r.height/2;
+        const angle = Math.atan2(p2.y-cy, p2.x-cx)*180/Math.PI;
+        activeL.rot = activeL.rotStartRot + (angle - activeL.rotStartAngle);
+      } else if (activeL.scaling) {
+        const r = activeL.img.getBoundingClientRect();
+        const cx = r.left+r.width/2, cy = r.top+r.height/2;
+        activeL.scale = Math.max(0.05, activeL.scaleStart*(Math.hypot(p2.x-cx,p2.y-cy)/activeL.scaleStartDist));
+      }
+      applyLayerTransform(activeL);
+      return;
+    }
     const anyActive = elDragging || elRotating || elScaling || bgDragging || bgRotating || bgScaling || logoDragging2 || logoRotating2 || logoScaling2 || genDragging || genScaling || titleDragging2 || titleRotating2 || titleScaling2;
     if (!anyActive) return;
     e.preventDefault();
@@ -1494,6 +1649,7 @@ function applyElTransform() {
   document.addEventListener('mouseup',  onUp);
   document.addEventListener('touchend', onUp);
   function onUp() {
+    layers.forEach(l=>{l.dragging=false;l.rotating=false;l.scaling=false;});
     elDragging=false; elRotating=false; elScaling=false;
     bgDragging=false; bgRotating=false; bgScaling=false;
     logoDragging2=false; logoRotating2=false; logoScaling2=false;
@@ -1599,12 +1755,7 @@ function selectCat(cat) {
   const _bg = $id('bgImage');
   if (_bg) { _bg.classList.remove('visible'); _bg.style.background = ''; _bg.style.backgroundImage = ''; }
   const _bp = $id('basePreview'); if (_bp) { _bp.style.display='none'; _bp.src=''; }
-  const _ep = $id('elPreview'); if (_ep) { _ep.style.display='none'; _ep.src=''; }
-  const _bp3 = $id('basePreview'); if (_bp3) { _bp3.style.display='none'; _bp3.src=''; }
-  const _eh = $id('elHandles'); if (_eh) _eh.style.display='none';
-  const _bh = $id('bgHandles'); if (_bh) _bh.style.display='none';
-  elX=0; elY=0; elScale=1; elRot=0; elFile='';
-  bgX=0; bgY=0; bgScale=1; bgRot=0; elSelected=false; bgSelected=false;
+  clearAllLayers();
   imgGenerated = false;
   updateGenBtn(); updateExportBtn();
 
@@ -1678,25 +1829,24 @@ function selectBaseImg(n) {
   const _gi = $id('bgImage'); if (_gi) { _gi.style.display='none'; _gi.src=''; }
   const _gh = $id('genHandles'); if (_gh) _gh.style.display='none';
   genX=0; genY=0; genW=0; genH=0; genScale=1; genRot=0; genSelected=false;
+  clearAllLayers();  // clear existing layers when picking a new base image
   updateExportBtn();
 
   markDone('step1Section',1, catLabel+' · Image '+n);
 
-  // Show base image — static, CSS cover handles sizing
-  const bp = $id('basePreview');
-  if (bp) {
-    bp.src = selBaseFile;
-    bp.style.display = 'block';
-    bp.onload = () => { updateExportBtn(); };
-  }
-  // Reset element
-  const ep0 = $id('elPreview'); if (ep0) { ep0.style.display='none'; ep0.src=''; }
-  const eh0 = $id('elHandles'); if (eh0) eh0.style.display='none';
-  const bh0 = $id('bgHandles'); if (bh0) bh0.style.display='none';
-  elSelected=false; bgSelected=false;
-  elX=0; elY=0; elScale=1; elRot=0; elFile='';
+  // Create base image as a layer
+  createLayer('bg', selBaseFile);
+  updateExportBtn();
 
   buildStep2(selCat);
+  // Add layer note to step 2 body if not already there
+  if (!$id('elLayerNote')) {
+    const note = document.createElement('p');
+    note.id = 'elLayerNote';
+    note.className = 'layer-note';
+    note.textContent = 'Tip: one or two graphic elements is ideal — avoid overcrowding the composition.';
+    $id('step2Body').appendChild(note);
+  }
   activateSection('step2Section',2);
   window.scrollTo({top: 0, behavior: 'smooth'});
 }
@@ -1751,31 +1901,12 @@ function selectEl(type, n, tile) {
   selEl = type+'-'+n;
   markDone('step2Section',2,(type==='defocus'?'Light Defocus':'Pink Vectors')+' #'+n);
 
-  // Load element as transformable <img>
-  const filePrefix = type === 'defocus'
+    // Create new layer for this element (allow multiple)
+  const filePrefix2 = type === 'defocus'
     ? 'Foams-Brand-Graphic-DefocusLight-'
     : 'Foams-Brand-Graphic-PinkVectors-';
-  elFile = filePrefix + String(n).padStart(2,'0') + '.png';
-  const ep = $id('elPreview');
-  if (ep) {
-    ep.src = elFile;
-    ep.style.display = 'block';
-    ep.onload = () => {
-      const area = $id('playAreaInner');
-      const aW = area.offsetWidth, aH = area.offsetHeight;
-      const nat = ep.naturalWidth / ep.naturalHeight;
-      // Size element so it fits comfortably with room for handles
-      // Max side = 42% of the shorter play-area dimension
-      const maxSide = Math.min(aW, aH) * 0.42;
-      if (nat >= 1) { elW = maxSide; elH = maxSide / nat; }
-      else          { elH = maxSide; elW = maxSide * nat; }
-      elScale = 1.0; elRot = 0;
-      elX = aW / 2; elY = aH / 2;
-      applyElTransform();
-      $id('elHandles').style.display = 'block';
-    };
-  }
-
+  const elFileNew = filePrefix2 + String(n).padStart(2,'0') + '.png';
+  createLayer('el', elFileNew);
   buildStep3();
   activateSection('step3Section',3);
   window.scrollTo({top: 0, behavior: 'smooth'});
@@ -2106,9 +2237,8 @@ function updateGenBtn() {
 }
 function updateExportBtn() {
   // Show export if we have a generated image OR a composed preview the user can export
-  const hasBg = $id('basePreview') && $id('basePreview').style.display !== 'none';
-  const show  = imgGenerated || (!!selBaseImg);
-  $id('exportBtn').classList.toggle('show', show);
+  const show = imgGenerated || layers.length > 0 || selBaseImg;
+  $id('exportBtn').classList.toggle('show', !!show);
 }
 
 // ─── OPENAI API KEY ─────────────────────────────────────────────────────────
@@ -2197,36 +2327,22 @@ async function generateImage() {
     compCanvas.height = canvasH;
     const ctx = compCanvas.getContext('2d');
 
-    // Draw base image cover-scaled (static, no user transform)
-    const baseImg = await loadImg(baseFile);
-    const area = $id('playAreaInner');
+        const area = $id('playAreaInner');
     const aW = area.offsetWidth, aH = area.offsetHeight;
     const scX = canvasW / aW, scY = canvasH / aH;
-    {
-      const bs = Math.max(canvasW / baseImg.width, canvasH / baseImg.height);
-      const bw = baseImg.width * bs, bh = baseImg.height * bs;
-      ctx.drawImage(baseImg, (canvasW-bw)/2, (canvasH-bh)/2, bw, bh);
-    }
-
-    // Draw graphical element at its current transform, scaled to canvas coords
-    if (elFile && $id('elPreview').style.display !== 'none') {
-
-      const elImg = await loadImg(elFile);
-      const drawW = elW * elScale * scX;
-      const drawH = elH * elScale * scY;
-      const cx    = elX * scX;
-      const cy    = elY * scY;
-
+    // Draw all layers in order (bg first, then el)
+    for (const layer of [...layers.filter(l=>l.type==='bg'), ...layers.filter(l=>l.type==='el')]) {
+      const lImg = await loadImg(layer.file);
+      const dw = layer.w * layer.scale * scX, dh = layer.h * layer.scale * scY;
+      const cx = layer.x * scX, cy = layer.y * scY;
       ctx.save();
-      ctx.globalCompositeOperation = elBlendMode === 'normal' ? 'source-over' : elBlendMode;
-      ctx.translate(cx, cy);
-      if (elFlipX) ctx.scale(-1, 1);
-      ctx.rotate(elRot * Math.PI / 180);
-      ctx.drawImage(elImg, -drawW/2, -drawH/2, drawW, drawH);
-      ctx.restore();
-      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalCompositeOperation = layer.blendMode === 'normal' ? 'source-over' : layer.blendMode;
+      ctx.translate(cx, cy); ctx.rotate(layer.rot * Math.PI / 180);
+      if (layer.flipX) ctx.scale(-1, 1);
+      ctx.drawImage(lImg, -dw/2, -dh/2, dw, dh);
+      ctx.restore(); ctx.globalCompositeOperation = 'source-over';
     }
-
+    
     // Convert canvas to blob to send to API
     const compositeBlob = await new Promise(res => compCanvas.toBlob(res, 'image/jpeg', 0.92));
     const compositeB64  = await new Promise((res, rej) => {
@@ -2410,25 +2526,20 @@ async function exportImage() {
 
     // 1b. Otherwise draw the composed preview (base + element at their transforms)
     else {
-      const bp = $id('basePreview');
-      if (bp && bp.style.display !== 'none' && bp.src) {
-        const baseImg = await loadImg(bp.src);
-        const bs = Math.max(outW / baseImg.width, outH / baseImg.height);
-        const bw = baseImg.width * bs, bh = baseImg.height * bs;
-        ctx.drawImage(baseImg, (outW-bw)/2, (outH-bh)/2, bw, bh);
-      }
-      const ep = $id('elPreview');
-      if (ep && ep.style.display !== 'none' && ep.src) {
-        const elImg = await loadImg(ep.src);
-        const drawW = elW * elScale * scX;
-        const drawH = elH * elScale * scY;
-        const cx = elX * scX, cy = elY * scY;
+      // Draw all layers
+      const bgLs = layers.filter(l => l.type === 'bg');
+      const elLs = layers.filter(l => l.type === 'el');
+      for (const layer of [...bgLs, ...elLs]) {
+        const lImg = await loadImg(layer.file);
+        const dw = layer.w * layer.scale * scX;
+        const dh = layer.h * layer.scale * scY;
+        const cx = layer.x * scX, cy = layer.y * scY;
         ctx.save();
-        ctx.globalCompositeOperation = elBlendMode === 'normal' ? 'source-over' : elBlendMode;
+        ctx.globalCompositeOperation = layer.blendMode === 'normal' ? 'source-over' : layer.blendMode;
         ctx.translate(cx, cy);
-        ctx.rotate(elRot * Math.PI / 180);
-        if (elFlipX) ctx.scale(-1, 1);
-        ctx.drawImage(elImg, -drawW/2, -drawH/2, drawW, drawH);
+        ctx.rotate(layer.rot * Math.PI / 180);
+        if (layer.flipX) ctx.scale(-1, 1);
+        ctx.drawImage(lImg, -dw/2, -dh/2, dw, dh);
         ctx.restore();
         ctx.globalCompositeOperation = 'source-over';
       }
