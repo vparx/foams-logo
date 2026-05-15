@@ -613,7 +613,7 @@
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
-  <div class="version" id="versionTag">FOAMS Brand Image Generator · v10.3</div>
+  <div class="version" id="versionTag">FOAMS Brand Image Generator · v10.5</div>
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
 
@@ -806,7 +806,7 @@
 <!-- ══════════════════════════════════════════
      STEP 3
 ═══════════════════════════════════════════ -->
-<div class="section locked" id="step3Section">
+<div class="section" id="step3Section">
   <div class="section-header" onclick="toggleSection('step3Section')">
     <span class="step-badge" id="badge3">STEP 3</span>
     <span class="section-title" id="title3">Choose a Logo</span>
@@ -1963,7 +1963,7 @@ function lockSection(id, n) {
 function selectCat(cat) {
   selCat = cat; selBaseImg = null; selEl = null;
   imgGenerated = false;
-  lockSection('step2Section',2); lockSection('step3Section',3);
+  lockSection('step2Section',2);  // step3 always accessible
   // Do NOT clear logo — user keeps their logo/title when switching base image
   // Reset play area completely when starting over
   const _bg = $id('bgImage');
@@ -2390,6 +2390,9 @@ function clearLogoFromPlayArea() {
   $id('logoDraggable').style.display = 'none';
   $id('playAreaLabel').classList.remove('hidden');
   $id('scaleStrip').classList.remove('visible');
+  // Hide logo handles
+  const lh = $id('logoHandles'); if (lh) lh.style.display = 'none';
+  logoSelected = false;
   hideTitle();
 }
 
@@ -2491,7 +2494,7 @@ function hideProgress() {
 }
 
 async function generateImage() {
-  if (!selCat || !selBaseImg || !selEl || !selLogo) return;
+  // No prerequisites — Remix available at any time (body check done in updateGenBtn)
   const btn = $id('genBtn');
   btn.disabled = true;
   btn.classList.remove('ready', 'regenerate');
@@ -2878,6 +2881,7 @@ function sendHeight() {
 }
 updateExportBtn();  // always show export
 updateGenBtn();     // set initial remix state
+buildStep3();        // step 3 always visible from start
 sendHeight();
 const _ro = new ResizeObserver(sendHeight);
 _ro.observe(document.body);
