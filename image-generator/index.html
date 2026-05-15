@@ -100,6 +100,11 @@
       text-align: center; margin-top: 5px; letter-spacing: 0.05em;
       font-family: 'Trebuchet MS', sans-serif;
     }
+    .section-tip {
+      font-size: 9px; color: #3a3a3a; font-style: italic;
+      letter-spacing: 0.04em; margin-left: auto; text-align: right;
+      font-family: 'Trebuchet MS', sans-serif; max-width: 220px;
+    }
 
     /* Blend mode dropdown */
     .blend-wrap { position: absolute; bottom: -24px; right: 0; pointer-events: all; }
@@ -596,7 +601,7 @@
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
-  <div class="version" id="versionTag">FOAMS Brand Image Generator · v9.7</div>
+  <div class="version" id="versionTag">FOAMS Brand Image Generator · v9.8</div>
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
 
@@ -717,6 +722,7 @@
     <span class="step-badge active" id="badge1">STEP 1</span>
     <span class="section-title active" id="title1">Choose the Base Image</span>
     <span class="section-summary" id="summary1"></span>
+    <span class="section-tip">Tip: mix base images carefully — avoid overcrowding.</span>
     <span class="collapse-arrow"><svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
   </div>
   <div class="section-body">
@@ -755,6 +761,7 @@
     <span class="step-badge" id="badge2">STEP 2</span>
     <span class="section-title" id="title2">Choose a Graphical Element</span>
     <span class="section-summary" id="summary2"></span>
+    <span class="section-tip">Tip: one or two elements max.</span>
     <span class="collapse-arrow"><svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
   </div>
   <div class="section-body" id="step2Body"></div>
@@ -1787,6 +1794,29 @@ function toggleOrientation() {
       titleTY = _titlePctY * aH2;
       applyTitleTransform(false);
     }
+
+    // Reposition all layers proportionally to new play area (keeps them centered)
+    layers.forEach(layer => {
+      const pctX = aW0 > 0 ? layer.x / aW0 : 0.5;
+      const pctY = aH0 > 0 ? layer.y / aH0 : 0.5;
+      layer.x = pctX * aW2;
+      layer.y = pctY * aH2;
+      // Also rescale so content fills the new crop frame proportionally
+      const cf0 = $id('cropFrame');
+      if (cf0) {
+        const cW0 = cf0.offsetWidth * (aW0 / aW2 || 1);
+        const cW2 = cf0.offsetWidth;
+        const cH2 = cf0.offsetHeight;
+        if (layer.type === 'bg') {
+          // Refit bg to new frame
+          const nat = layer.w / layer.h;
+          if (nat >= cW2/cH2) { layer.h = cH2; layer.w = cH2 * nat; }
+          else                  { layer.w = cW2; layer.h = cW2 / nat; }
+          layer.scale = 1.0;
+        }
+      }
+      applyLayerTransform(layer);
+    });
 
     // In landscape: always reset generated image to cover-fill (no repositioning needed)
     // In portrait: keep whatever position the user set
