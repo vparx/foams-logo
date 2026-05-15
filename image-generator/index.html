@@ -1321,9 +1321,46 @@ function applyElTransform() {
   document.addEventListener('touchstart', onDown, {passive:false});
 
   function onDown(e) {
-    const ep = null; // legacy — layers now handle elements
-    const bp = null; // legacy — layers now handle base images
     const p  = xy(e);
+    const area_ = $id('playAreaInner');
+    const ar_   = area_ ? area_.getBoundingClientRect() : null;
+
+    // ── LAYER SYSTEM: check all dynamic layers first ──────────────────
+    const isLayerHandle  = e.target.classList.contains('layer-handle');
+    const isLayerRot     = e.target.classList.contains('layer-rot-handle');
+    const isLayerImg     = !!e.target.dataset?.layerId && !isLayerHandle && !isLayerRot &&
+                           !e.target.classList.contains('blend-opt') &&
+                           e.target.tagName !== 'BUTTON';
+    // Find which layer was hit
+    let hitLayer = null;
+    if (isLayerHandle || isLayerRot || isLayerImg) {
+      const lid = parseInt(e.target.dataset.layerId);
+      hitLayer = layers.find(l => l.id === lid);
+    }
+    if (hitLayer) {
+      e.preventDefault(); e.stopPropagation();
+      selectLayer(hitLayer);
+      if (isLayerRot) {
+        hitLayer.rotating = true;
+        const r = hitLayer.img.getBoundingClientRect();
+        const cx = r.left + r.width/2, cy = r.top + r.height/2;
+        hitLayer.rotStartAngle = Math.atan2(p.y-cy, p.x-cx)*180/Math.PI;
+        hitLayer.rotStartRot   = hitLayer.rot;
+      } else if (isLayerHandle) {
+        hitLayer.scaling = true;
+        const r = hitLayer.img.getBoundingClientRect();
+        const cx = r.left+r.width/2, cy = r.top+r.height/2;
+        hitLayer.scaleStartDist = Math.hypot(p.x-cx, p.y-cy);
+        hitLayer.scaleStart = hitLayer.scale;
+      } else {
+        hitLayer.dragging = true;
+        hitLayer.dragOffX = ar_ ? (p.x - ar_.left) - hitLayer.x : 0;
+        hitLayer.dragOffY = ar_ ? (p.y - ar_.top)  - hitLayer.y : 0;
+      }
+      return;
+    }
+    // ─────────────────────────────────────────────────────────────────
+
     const ld = $id('logoDraggable');
     const gi = $id('bgImage');
     const isGenHandle   = e.target.classList.contains('gen-handle');
@@ -1332,14 +1369,12 @@ function applyElTransform() {
     const isTitleHandle = e.target.classList.contains('title-handle');
     const isTitleRot    = e.target.id === 'titleRotHandle';
     const isTitleDrag   = !!(td && td.style.display !== 'none' && td.contains(e.target) && !isTitleHandle && !isTitleRot);
-    const isElHandle    = e.target.classList.contains('el-handle');
-    const isElRot       = e.target.id === 'rotHandle';
-    const isBgHandle    = false;  // no bg handles
-    const isBgRot       = false;  // no bg rotation
+    const isBgHandle    = false;
+    const isBgRot       = false;
     const isLogoHandle  = e.target.classList.contains('logo-handle');
     const isLogoRot     = e.target.id === 'logoRotHandle';
-    const isEl          = ep && ep.style.display !== 'none' && e.target === ep;
-    const isBg          = false;
+    const isEl          = false;  // legacy — handled by layer system
+    const isBg          = false;  // legacy — handled by layer system
     const titleEl_      = $id('logoTitle');
     const isTitle       = titleEl_ && e.target === titleEl_;
     const isDragSurface = e.target.id === 'logoDragSurface';
