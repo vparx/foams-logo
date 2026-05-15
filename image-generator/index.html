@@ -560,6 +560,56 @@
     /* Keep old action-area for any leftover references but hide it */
     .action-area { display: none; }
 
+    /* Export consent modal */
+    .export-modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center;
+    }
+    .export-modal-overlay.open { display: flex; }
+    .export-modal {
+      background: #141414; border: 1px solid #2a2a2a; border-radius: 12px;
+      padding: 28px 28px 24px; max-width: 400px; width: 90%; position: relative;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    }
+    .export-modal-close {
+      position: absolute; top: 12px; right: 14px;
+      background: none; border: none; color: #555; font-size: 18px;
+      cursor: pointer; line-height: 1; padding: 4px;
+      font-family: 'Trebuchet MS', sans-serif;
+      transition: color 0.15s;
+    }
+    .export-modal-close:hover { color: #aaa; }
+    .export-modal h3 {
+      font-size: 11px; font-weight: 800; letter-spacing: 0.18em;
+      text-transform: uppercase; color: #ff6060; margin-bottom: 16px;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+    }
+    .export-modal p {
+      font-size: 12px; color: #888; line-height: 1.65;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+      margin-bottom: 12px;
+    }
+    .export-modal p strong { color: #aaa; }
+    .export-modal-actions {
+      display: flex; gap: 10px; margin-top: 20px;
+    }
+    .export-consent-btn {
+      flex: 1; font-size: 12px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; padding: 10px 16px; border-radius: 20px;
+      border: 1px solid #333; background: #1e1e1e; color: #666;
+      cursor: pointer; transition: all 0.18s;
+      font-family: 'Trebuchet MS', Trebuchet, sans-serif;
+    }
+    .export-consent-btn:hover { border-color: #666; color: #ccc; }
+    .export-consent-btn.confirmed {
+      background: #fff; color: #111; border-color: #fff;
+      font-weight: 800;
+    }
+    .export-consent-btn.confirmed:hover {
+      background: #f0f0f0; transform: translateY(-1px);
+    }
+
     @media (max-width:560px) {
       body { padding: 0 0.5rem 4rem; }
 
@@ -613,7 +663,7 @@
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
-  <div class="version" id="versionTag">FOAMS Brand Image Generator · v10.6</div>
+  <div class="version" id="versionTag">FOAMS Brand Image Generator · v10.7</div>
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
 
@@ -855,6 +905,22 @@
 </div>
 
 </div><!-- /content-pad -->
+
+<!-- Export consent modal (shown only when remixed image exists) -->
+<div class="export-modal-overlay" id="exportModal">
+  <div class="export-modal">
+    <button class="export-modal-close" onclick="closeExportModal()">✕</button>
+    <h3>⚠ Important Note</h3>
+    <p>In case the remixed image rendered a <strong>human face or body</strong> — <strong>DO NOT use the image.</strong></p>
+    <p>In case the remixed image shows very clear signs of AI — like <strong>distorted details, weird lights or artifacts</strong> — <strong>DO NOT use the image.</strong></p>
+    <p style="color:#555;font-size:11px;">Use the Remix feature with discretion.</p>
+    <div class="export-modal-actions">
+      <button class="export-consent-btn" id="exportConsentBtn" onclick="consentAndExport()">
+        I Understand
+      </button>
+    </div>
+  </div>
+</div>
 
 
 <script>
@@ -2712,8 +2778,44 @@ Keep the vibe elegant, modern and a bit mysterious
 STRICT RULE — NO PEOPLE: Do not generate, add, imply or suggest any human faces, bodies, people, portraits, silhouettes or any human figure whatsoever. This is absolutely forbidden. If the source image contains people, remove them completely from the output.`;
 }
 
+// ─── EXPORT CONSENT MODAL ────────────────────────────────────────────────────
+function exportImage() {
+  // If there's a remixed image, show consent modal first
+  const hasRemix = layers.some(l => l.type === 'remix');
+  if (hasRemix) {
+    // Reset button to "I Understand" state
+    const btn = $id('exportConsentBtn');
+    if (btn) {
+      btn.textContent = 'I Understand';
+      btn.classList.remove('confirmed');
+      btn.onclick = consentAndExport;
+    }
+    $id('exportModal').classList.add('open');
+    return;
+  }
+  // No remix — export directly
+  doExport();
+}
+
+function closeExportModal() {
+  $id('exportModal').classList.remove('open');
+}
+
+function consentAndExport() {
+  const btn = $id('exportConsentBtn');
+  if (btn && !btn.classList.contains('confirmed')) {
+    // First click: show Export button
+    btn.textContent = '↓ Export Image';
+    btn.classList.add('confirmed');
+    btn.onclick = () => { closeExportModal(); doExport(); };
+  } else {
+    closeExportModal();
+    doExport();
+  }
+}
+
 // ─── EXPORT ──────────────────────────────────────────────────────────────────
-async function exportImage() {
+async function doExport() {
   // Can export at any stage: generated result, or composed preview, or even blank
   const isLandscape = orientation === 'landscape';
   const outW = isLandscape ? 1920 : 1080;
