@@ -564,7 +564,8 @@
     .export-modal-overlay {
       display: none; position: fixed; inset: 0; z-index: 9999;
       background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
-      align-items: center; justify-content: center;
+      align-items: flex-start; justify-content: center;
+      padding-top: 80px;  /* near top of page, below sticky header */
     }
     .export-modal-overlay.open { display: flex; }
     .export-modal {
@@ -663,7 +664,7 @@
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
-  <div class="version" id="versionTag">FOAMS Brand Image Generator · v10.7</div>
+  <div class="version" id="versionTag">FOAMS Brand Image Generator · v10.8</div>
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
 
@@ -2560,7 +2561,7 @@ function hideProgress() {
 }
 
 async function generateImage() {
-  // No prerequisites — Remix available at any time (body check done in updateGenBtn)
+  // Remix available at any time — no prerequisites required
   const btn = $id('genBtn');
   btn.disabled = true;
   btn.classList.remove('ready', 'regenerate');
@@ -2569,15 +2570,6 @@ async function generateImage() {
   showProgress(5, 'Preparing…');
 
   try {
-    // Determine file paths
-    const elType   = selEl.startsWith('defocus') ? 'defocus' : 'pinkvec';
-    const elNum    = selEl.split('-')[1];
-    const elPrefix = elType === 'defocus'
-      ? 'Foams-Brand-Graphic-DefocusLight-'
-      : 'Foams-Brand-Graphic-PinkVectors-';
-    const elFile   = elPrefix + String(elNum).padStart(2,'0') + '.png';
-    const baseFile = selBaseFile;
-
     const size = orientation === 'landscape' ? '1536x1024' : '1024x1536';
     const prompt = buildPrompt(size);
 
