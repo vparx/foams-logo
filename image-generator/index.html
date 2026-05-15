@@ -596,7 +596,7 @@
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
-  <div class="version" id="versionTag">FOAMS Brand Image Generator · v9.6</div>
+  <div class="version" id="versionTag">FOAMS Brand Image Generator · v9.7</div>
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
 
@@ -2643,73 +2643,75 @@ async function exportImage() {
       }
     }
 
-    // 2. Draw the logo + title if present
+    // 2. Draw the logo + title — use getBoundingClientRect for pixel-perfect positioning
     if (selLogo) {
-      // Get play-area dimensions to compute scaling ratio
-      const area  = $id('playAreaInner');
-      const aW    = area.offsetWidth;
-      const aH    = area.offsetHeight;
-      const scaleX = outW / aW;
-      const scaleY = outH / aH;
+      const area   = $id('playAreaInner');
+      const frame4 = $id('cropFrame');
+      const aRect  = area.getBoundingClientRect();
+      // Crop frame rect in screen coords
+      const fRect  = frame4 ? frame4.getBoundingClientRect() : aRect;
+      const fW4 = fRect.width, fH4 = fRect.height;
+      // Scale: crop frame screen px → output canvas px
+      const scX4 = outW / fW4, scY4 = outH / fH4;
 
-      // Logo: logoPctX/Y is center as % of play area; logoScale is % of min(aW,aH)
-      const baseSize   = Math.min(aW, aH);
-      const logoPxW    = baseSize * (logoScale / 100);  // logo size in play-area px
-      const logoCX_pa  = (logoPctX / 100) * aW;         // center x in play-area px
-      const logoCY_pa  = (logoPctY / 100) * aH;         // center y in play-area px
+      // Logo: use logoDraggable's screen rect — exactly what the user sees
+      const ld = $id('logoDraggable');
+      if (ld && ld.style.display !== 'none') {
+        const ldRect = ld.getBoundingClientRect();
+        // Logo center in screen coords, relative to crop frame top-left
+        const ldCX = ldRect.left + ldRect.width/2  - fRect.left;
+        const ldCY = ldRect.top  + ldRect.height/2 - fRect.top;
+        // Logo rendered size (getBoundingClientRect accounts for CSS transform:scale)
+        const ldW  = ldRect.width, ldH = ldRect.height;
 
-      // Scale to output canvas coords
-      const logoOutSize = Math.min(outW, outH) * (logoScale / 100);
-      const logoOutX    = logoCX_pa * scaleX - logoOutSize / 2;
-      const logoOutY    = logoCY_pa * scaleY - logoOutSize / 2;
-
-      // Draw logo image — preserve natural aspect ratio (logo PNG is wide, not square)
-      const logoSrc = $id('logoImg')?.src;
-      if (logoSrc && $id('logoImg').style.display !== 'none') {
-        const logoImg = await loadImg(logoSrc);
-        // object-fit:contain behaviour: fit within the square box, centered
-        const nat    = logoImg.naturalWidth / logoImg.naturalHeight;
-        let   lw, lh;
-        if (nat >= 1) {
-          // wider than tall — width fills the box
-          lw = logoOutSize;
-          lh = logoOutSize / nat;
-        } else {
-          // taller than wide — height fills the box
-          lh = logoOutSize;
-          lw = logoOutSize * nat;
+        const logoSrc = $id('logoImg')?.src;
+        if (logoSrc && $id('logoImg').style.display !== 'none') {
+          const logoImg = await loadImg(logoSrc);
+          const nat = logoImg.naturalWidth / logoImg.naturalHeight;
+          // object-fit:contain within rendered box
+          let lw, lh;
+          if (nat >= 1) { lw = ldW; lh = ldW / nat; }
+          else          { lh = ldH; lw = ldH * nat; }
+          const lx = (ldCX - ldW/2 + (ldW - lw)/2) * scX4;
+          const ly = (ldCY - ldH/2 + (ldH - lh)/2) * scY4;
+          ctx.save();
+          ctx.rotate(logoTRot * Math.PI / 180);  // Note: rotation not applied here for simplicity
+          ctx.restore();
+          // Apply rotation around center
+          const outCX = ldCX * scX4, outCY = ldCY * scY4;
+          ctx.save();
+          ctx.translate(outCX, outCY);
+          ctx.rotate(logoTRot * Math.PI / 180);
+          ctx.drawImage(logoImg, -lw*scX4/2, -lh*scY4/2, lw*scX4, lh*scY4);
+          ctx.restore();
         }
-        // Center within the draggable box position
-        const lx = logoOutX + (logoOutSize - lw) / 2;
-        const ly = logoOutY + (logoOutSize - lh) / 2;
-        ctx.drawImage(logoImg, lx, ly, lw, lh);
       }
 
-      // 3. Draw title text if present
+      // 3. Draw title text — use titleDraggable's screen rect
       if (selTitle) {
+        const td = $id('titleDraggable');
         const titleEl = $id('logoTitle');
-        if (titleEl && titleEl.style.display !== 'none') {
-          // Get title position in play-area coords
-          const tRect   = titleEl.getBoundingClientRect();
-          const aRect   = area.getBoundingClientRect();
-          const tLeft_pa = tRect.left - aRect.left;  // in play-area px
-          const tTop_pa  = tRect.top  - aRect.top;
-
-          // Scale to canvas
-          const tLeft_out = tLeft_pa * scaleX;
-          const tTop_out  = tTop_pa  * scaleY;
-
-          // Font size: same proportion as in play-area but scaled up
-          const logoPxInPlayArea = Math.min(aW, aH) * (logoScale / 100);
-          const fontSizePlay = Math.max(5, Math.round(logoPxInPlayArea * 0.08));
-          const fontSizeOut  = Math.round(fontSizePlay * scaleX);
-
+        if (td && td.style.display !== 'none' && titleEl) {
+          const tdRect  = td.getBoundingClientRect();
+          const telRect = titleEl.getBoundingClientRect();
+          // Title top-left relative to crop frame
+          const tLeft = (telRect.left - fRect.left) * scX4;
+          const tTop  = (telRect.top  - fRect.top)  * scY4;
+          // Font size: scale the rendered font size up to canvas
+          const fsScreen = parseFloat(titleEl.style.fontSize) || 14;
+          const fsOut    = Math.round(fsScreen * scX4);
           ctx.save();
-          ctx.font = `700 ${fontSizeOut}px 'Trebuchet MS', Trebuchet, sans-serif`;
+          // Apply title rotation around its center
+          const tCX = (telRect.left + telRect.width/2  - fRect.left) * scX4;
+          const tCY = (telRect.top  + telRect.height/2 - fRect.top)  * scY4;
+          ctx.translate(tCX, tCY);
+          ctx.rotate(titleTRot * Math.PI / 180);
+          ctx.translate(-tCX, -tCY);
+          ctx.font = `700 ${fsOut}px 'Trebuchet MS', Trebuchet, sans-serif`;
           ctx.textBaseline = 'top';
           const colorMap = { white:'#ffffff', black:'#000000', pink:'#ff30ff' };
           ctx.fillStyle = colorMap[logoColor] || '#ffffff';
-          ctx.fillText(selTitle, tLeft_out, tTop_out);
+          ctx.fillText(selTitle, tLeft, tTop);
           ctx.restore();
         }
       }
