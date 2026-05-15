@@ -29,23 +29,39 @@
     }
 
     /* ════════════ PLAY AREA ════════════ */
+    /* Outer = staging area (larger than crop frame, dark bg) */
     .play-area-outer {
-      border-radius: 8px;
-      background: #000; position: relative;
+      background: #0a0a0a; position: relative;
       transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
+      overflow: hidden;  /* hard clip — layers can't go outside staging area */
     }
-    .play-area-outer.landscape { width: 100%; aspect-ratio: 1920 / 1080; }
-    .play-area-outer.portrait  { aspect-ratio: 1080 / 1920; width: 260px; margin: 0 auto; }
+    /* Add padding so layers have room outside the crop frame */
+    .play-area-outer.landscape {
+      width: 100%;
+      aspect-ratio: 1920 / 1080;
+      padding: 0;  /* outer IS the canvas — crop frame is inset */
+    }
+    .play-area-outer.portrait {
+      aspect-ratio: 1080 / 1920; width: 260px; margin: 0 auto;
+    }
 
+    /* inner wraps the crop frame */
     .play-area-inner {
       width: 100%; height: 100%; position: relative;
       display: flex; align-items: center; justify-content: center;
-      overflow: visible;  /* allow layers to extend beyond canvas edge */
-      border-radius: 8px;
+      overflow: visible;
     }
-    /* Visual canvas area clips the image display only */
-    #bgImage, #basePreview {
-      border-radius: 8px;
+
+    /* ── CROP FRAME ── The actual image export boundary */
+    #cropFrame {
+      position: absolute;
+      /* 80% of the outer dims so there's ~10% overflow space on each side */
+      width: 80%; height: 80%;
+      box-shadow: 0 0 0 9999px rgba(0,0,0,0.45);  /* dim outside */
+      border: 1.5px dashed rgba(255,255,255,0.25);
+      border-radius: 4px;
+      pointer-events: none;  /* frame is visual only */
+      z-index: 50;  /* above layers, below logo/title */
     }
 
     #bgImage {
@@ -113,7 +129,7 @@
     #titleDraggable, #titleHandles, #titleRotHandle, .title-handle { pointer-events: all !important; }
     #elPreview:active, #basePreview:active { cursor: grabbing; }
 
-    #logoLayer { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+    #logoLayer { position: absolute; inset: 0; pointer-events: none; z-index: 55; }
     #logoDraggable, #logoHandles, #logoRotHandle, .logo-handle { pointer-events: all !important; }
 
     #logoDraggable {
@@ -578,9 +594,12 @@
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
-  <div class="version" id="versionTag">FOAMS Brand Image Generator · v9.1</div>
+  <div class="version" id="versionTag">FOAMS Brand Image Generator · v9.4</div>
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
+
+      <!-- Crop frame: visual export boundary -->
+      <div id="cropFrame"></div>
 
       <!-- Generated (remixed) result — draggable/scalable/rotatable after generation -->
       <img id="bgImage" src="" alt=""
@@ -608,7 +627,7 @@
 
         <!-- Title text — independent element with own transform handles -->
         <div id="titleDraggable" style="display:none;position:absolute;cursor:grab;
-          user-select:none;touch-action:none;transform-origin:center center;">
+          user-select:none;touch-action:none;transform-origin:center center;z-index:56;">
           <span id="logoTitle" style="display:block;position:relative;top:0;left:0;"></span>
         </div>
 
@@ -841,6 +860,11 @@ let elScaling = false, elScaleStartDist = 0, elScaleStart = 1.0;
 let elScaleCorner = '';
 // Legacy bg compat (for deselect/reset)
 let bgSelected = false;
+// Legacy bg drag vars (kept for compat — old onMove code references them)
+let bgX = 0, bgY = 0, bgW = 0, bgH = 0, bgScale = 1.0, bgRot = 0;
+let bgDragging = false, bgDragOffX = 0, bgDragOffY = 0;
+let bgRotating = false, bgRotStartAngle = 0, bgRotStartRot = 0;
+let bgScaling  = false, bgScaleStartDist = 0, bgScaleStart = 1.0;
 
 let logoPctX = 26, logoPctY = 70;  // center of logo as % of play-area
 let logoScale = 55;                 // % of min(aW,aH) — kept for export math
@@ -978,15 +1002,23 @@ function createLayer(type, file) {
   };
 
   img.onload = () => {
-    const aW = area.offsetWidth, aH = area.offsetHeight;
+    const frame = $id('cropFrame') || area;
+    const fW = frame.offsetWidth  || area.offsetWidth;
+    const fH = frame.offsetHeight || area.offsetHeight;
     const nat = img.naturalWidth / img.naturalHeight;
-    const maxSide = Math.min(aW, aH) * (isBg ? 1.0 : 0.42);
-    if (nat >= 1) { layer.w = maxSide; layer.h = maxSide / nat; }
-    else          { layer.h = maxSide; layer.w = maxSide * nat; }
-    // For bg: fit within area (contain) so handles are visible
     if (isBg) {
-      layer.scale = Math.min(aW / layer.w, aH / layer.h) * 0.9;
+      // Fit bg to fill the crop frame
+      if (nat >= fW/fH) { layer.h = fH; layer.w = fH * nat; }
+      else               { layer.w = fW; layer.h = fW / nat; }
+      layer.scale = 1.0;
+    } else {
+      const maxSide = Math.min(fW, fH) * 0.42;
+      if (nat >= 1) { layer.w = maxSide; layer.h = maxSide / nat; }
+      else          { layer.h = maxSide; layer.w = maxSide * nat; }
+      layer.scale = 1.0;
     }
+    // Center on crop frame — offset into playAreaInner coords
+    const aW = area.offsetWidth, aH = area.offsetHeight;
     layer.x = aW / 2; layer.y = aH / 2;
     img.style.display = 'block';
     applyLayerTransform(layer);
@@ -1379,6 +1411,9 @@ function applyElTransform() {
     const isLogoRot     = e.target.id === 'logoRotHandle';
     const isEl          = false;  // legacy — handled by layer system
     const isBg          = false;  // legacy — handled by layer system
+    const isElHandle    = false;  // legacy — handled by layer system
+    const isElRot       = false;  // legacy — handled by layer system
+    const isElScaling   = false;  // legacy — handled by layer system
     const titleEl_      = $id('logoTitle');
     const isTitle       = titleEl_ && e.target === titleEl_;
     const isDragSurface = e.target.id === 'logoDragSurface';
@@ -1552,7 +1587,13 @@ function applyElTransform() {
     // ── Click on play area background → deselect ──
     // Don't deselect if clicking on the mirror button or any button inside handles
     const area = $id('playAreaInner');
-    if (area && area.contains(e.target) && e.target.tagName !== 'BUTTON') {
+    // Only deselect when clicking truly empty canvas space
+    // Don't deselect if clicking logo, title, or any known interactive element
+    const ld2 = $id('logoDraggable');
+    const td2 = $id('titleDraggable');
+    const isLogoArea  = ld2 && ld2.style.display !== 'none' && ld2.contains(e.target);
+    const isTitleArea = td2 && td2.style.display !== 'none' && td2.contains(e.target);
+    if (area && area.contains(e.target) && e.target.tagName !== 'BUTTON' && !isLogoArea && !isTitleArea) {
       deselect();
       deselectAllLayers();
       genSelected = false;
@@ -2365,14 +2406,22 @@ async function generateImage() {
     compCanvas.height = canvasH;
     const ctx = compCanvas.getContext('2d');
 
-        const area = $id('playAreaInner');
+        const area  = $id('playAreaInner');
+    const frame = $id('cropFrame') || area;
     const aW = area.offsetWidth, aH = area.offsetHeight;
-    const scX = canvasW / aW, scY = canvasH / aH;
-    // Draw all layers in order (bg first, then el)
+    const fW = frame.offsetWidth  || aW;
+    const fH = frame.offsetHeight || aH;
+    // Crop frame offset within playAreaInner (centered)
+    const fOX = (aW - fW) / 2;  // left offset of crop frame
+    const fOY = (aH - fH) / 2;  // top offset of crop frame
+    // Scale from crop frame px to canvas px
+    const scX = canvasW / fW, scY = canvasH / fH;
+    // Draw all layers — translate so crop frame origin = canvas origin
     for (const layer of [...layers.filter(l=>l.type==='bg'), ...layers.filter(l=>l.type==='el')]) {
       const lImg = await loadImg(layer.file);
       const dw = layer.w * layer.scale * scX, dh = layer.h * layer.scale * scY;
-      const cx = layer.x * scX, cy = layer.y * scY;
+      // layer.x/y are in playAreaInner coords; subtract frame offset
+      const cx = (layer.x - fOX) * scX, cy = (layer.y - fOY) * scY;
       ctx.save();
       ctx.globalCompositeOperation = layer.blendMode === 'normal' ? 'source-over' : layer.blendMode;
       ctx.translate(cx, cy); ctx.rotate(layer.rot * Math.PI / 180);
@@ -2564,22 +2613,23 @@ async function exportImage() {
 
     // 1b. Otherwise draw the composed preview (base + element at their transforms)
     else {
-      // Draw all layers
-      const bgLs = layers.filter(l => l.type === 'bg');
-      const elLs = layers.filter(l => l.type === 'el');
-      for (const layer of [...bgLs, ...elLs]) {
+      // Draw all layers (cropped to frame)
+      const frame2 = $id('cropFrame') || $id('playAreaInner');
+      const fW2 = frame2.offsetWidth  || outW;
+      const fH2 = frame2.offsetHeight || outH;
+      const fOX2 = (area.offsetWidth  - fW2) / 2;
+      const fOY2 = (area.offsetHeight - fH2) / 2;
+      const scX2 = outW / fW2, scY2 = outH / fH2;
+      for (const layer of [...layers.filter(l=>l.type==='bg'), ...layers.filter(l=>l.type==='el')]) {
         const lImg = await loadImg(layer.file);
-        const dw = layer.w * layer.scale * scX;
-        const dh = layer.h * layer.scale * scY;
-        const cx = layer.x * scX, cy = layer.y * scY;
+        const dw = layer.w * layer.scale * scX2, dh = layer.h * layer.scale * scY2;
+        const cx = (layer.x - fOX2) * scX2, cy = (layer.y - fOY2) * scY2;
         ctx.save();
         ctx.globalCompositeOperation = layer.blendMode === 'normal' ? 'source-over' : layer.blendMode;
-        ctx.translate(cx, cy);
-        ctx.rotate(layer.rot * Math.PI / 180);
+        ctx.translate(cx, cy); ctx.rotate(layer.rot * Math.PI / 180);
         if (layer.flipX) ctx.scale(-1, 1);
         ctx.drawImage(lImg, -dw/2, -dh/2, dw, dh);
-        ctx.restore();
-        ctx.globalCompositeOperation = 'source-over';
+        ctx.restore(); ctx.globalCompositeOperation = 'source-over';
       }
     }
 
