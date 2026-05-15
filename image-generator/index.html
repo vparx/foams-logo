@@ -52,16 +52,14 @@
       overflow: visible;
     }
 
-    /* ── CROP FRAME ── The actual image export boundary */
+    /* ── CROP FRAME ── Visual border showing the export boundary = full play area */
     #cropFrame {
       position: absolute;
-      /* 80% of the outer dims so there's ~10% overflow space on each side */
-      width: 80%; height: 80%;
-      box-shadow: 0 0 0 9999px rgba(0,0,0,0.45);  /* dim outside */
-      border: 1.5px dashed rgba(255,255,255,0.25);
-      border-radius: 4px;
-      pointer-events: none;  /* frame is visual only */
-      z-index: 50;  /* above layers, below logo/title */
+      inset: 0;  /* covers full play area — export = full play area */
+      border: 1.5px dashed rgba(255,255,255,0.18);
+      border-radius: 8px;
+      pointer-events: none;
+      z-index: 50;
     }
 
     #bgImage {
@@ -594,7 +592,7 @@
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
-  <div class="version" id="versionTag">FOAMS Brand Image Generator · v9.4</div>
+  <div class="version" id="versionTag">FOAMS Brand Image Generator · v9.5</div>
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
 
@@ -1002,17 +1000,15 @@ function createLayer(type, file) {
   };
 
   img.onload = () => {
-    const frame = $id('cropFrame') || area;
-    const fW = frame.offsetWidth  || area.offsetWidth;
-    const fH = frame.offsetHeight || area.offsetHeight;
+    const aW2 = area.offsetWidth, aH2 = area.offsetHeight;
     const nat = img.naturalWidth / img.naturalHeight;
     if (isBg) {
-      // Fit bg to fill the crop frame
-      if (nat >= fW/fH) { layer.h = fH; layer.w = fH * nat; }
-      else               { layer.w = fW; layer.h = fW / nat; }
+      // Fit bg to fill the full play area
+      if (nat >= aW2/aH2) { layer.h = aH2; layer.w = aH2 * nat; }
+      else                  { layer.w = aW2; layer.h = aW2 / nat; }
       layer.scale = 1.0;
     } else {
-      const maxSide = Math.min(fW, fH) * 0.42;
+      const maxSide = Math.min(aW2, aH2) * 0.42;
       if (nat >= 1) { layer.w = maxSide; layer.h = maxSide / nat; }
       else          { layer.h = maxSide; layer.w = maxSide * nat; }
       layer.scale = 1.0;
@@ -2406,22 +2402,15 @@ async function generateImage() {
     compCanvas.height = canvasH;
     const ctx = compCanvas.getContext('2d');
 
-        const area  = $id('playAreaInner');
-    const frame = $id('cropFrame') || area;
+        const area = $id('playAreaInner');
     const aW = area.offsetWidth, aH = area.offsetHeight;
-    const fW = frame.offsetWidth  || aW;
-    const fH = frame.offsetHeight || aH;
-    // Crop frame offset within playAreaInner (centered)
-    const fOX = (aW - fW) / 2;  // left offset of crop frame
-    const fOY = (aH - fH) / 2;  // top offset of crop frame
-    // Scale from crop frame px to canvas px
-    const scX = canvasW / fW, scY = canvasH / fH;
-    // Draw all layers — translate so crop frame origin = canvas origin
+    // Map directly from playAreaInner coords → canvas (no crop frame offset)
+    // The crop frame is visual only; export uses the full play area coordinate space
+    const scX = canvasW / aW, scY = canvasH / aH;
     for (const layer of [...layers.filter(l=>l.type==='bg'), ...layers.filter(l=>l.type==='el')]) {
       const lImg = await loadImg(layer.file);
       const dw = layer.w * layer.scale * scX, dh = layer.h * layer.scale * scY;
-      // layer.x/y are in playAreaInner coords; subtract frame offset
-      const cx = (layer.x - fOX) * scX, cy = (layer.y - fOY) * scY;
+      const cx = layer.x * scX, cy = layer.y * scY;
       ctx.save();
       ctx.globalCompositeOperation = layer.blendMode === 'normal' ? 'source-over' : layer.blendMode;
       ctx.translate(cx, cy); ctx.rotate(layer.rot * Math.PI / 180);
@@ -2613,17 +2602,12 @@ async function exportImage() {
 
     // 1b. Otherwise draw the composed preview (base + element at their transforms)
     else {
-      // Draw all layers (cropped to frame)
-      const frame2 = $id('cropFrame') || $id('playAreaInner');
-      const fW2 = frame2.offsetWidth  || outW;
-      const fH2 = frame2.offsetHeight || outH;
-      const fOX2 = (area.offsetWidth  - fW2) / 2;
-      const fOY2 = (area.offsetHeight - fH2) / 2;
-      const scX2 = outW / fW2, scY2 = outH / fH2;
+      // Draw all layers — same coordinate space as playAreaInner
+      const scX2 = outW / area.offsetWidth, scY2 = outH / area.offsetHeight;
       for (const layer of [...layers.filter(l=>l.type==='bg'), ...layers.filter(l=>l.type==='el')]) {
         const lImg = await loadImg(layer.file);
         const dw = layer.w * layer.scale * scX2, dh = layer.h * layer.scale * scY2;
-        const cx = (layer.x - fOX2) * scX2, cy = (layer.y - fOY2) * scY2;
+        const cx = layer.x * scX2, cy = layer.y * scY2;
         ctx.save();
         ctx.globalCompositeOperation = layer.blendMode === 'normal' ? 'source-over' : layer.blendMode;
         ctx.translate(cx, cy); ctx.rotate(layer.rot * Math.PI / 180);
