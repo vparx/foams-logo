@@ -42,7 +42,11 @@
       padding: 0;  /* outer IS the canvas — crop frame is inset */
     }
     .play-area-outer.portrait {
-      aspect-ratio: 1080 / 1920; width: 260px; margin: 0 auto;
+      aspect-ratio: 1080 / 1920;
+      /* Fill viewport height, derive width from aspect ratio */
+      height: min(72vh, 520px);
+      width: auto;
+      margin: 0 auto;
     }
 
     /* inner wraps the crop frame */
@@ -81,6 +85,19 @@
       box-shadow: 0 1px 4px rgba(0,0,0,0.4);
     }
     .t-handle[data-corner="tr"], .t-handle[data-corner="bl"] { cursor: nesw-resize; }
+    /* Edge handles */
+    .t-handle[data-edge="tm"], .t-handle[data-edge="bm"] {
+      width: 18px; height: 6px; border-radius: 3px; cursor: ns-resize;
+      left: 50%; transform: translateX(-50%);
+    }
+    .t-handle[data-edge="tm"] { top: -4px; }
+    .t-handle[data-edge="bm"] { bottom: -4px; }
+    .t-handle[data-edge="ml"], .t-handle[data-edge="mr"] {
+      width: 6px; height: 18px; border-radius: 3px; cursor: ew-resize;
+      top: 50%; transform: translateY(-50%);
+    }
+    .t-handle[data-edge="ml"] { left: -4px; }
+    .t-handle[data-edge="mr"] { right: -4px; }
     .el-handle { background: #fff; }
     .logo-handle { background: #ff64b4; }
     .gen-handle { background: #64dcff; }
@@ -462,6 +479,36 @@
       display: flex; align-items: center; gap: 8px;
     }
 
+    /* Preview mode */
+    .play-area-outer.preview-mode .play-area-inner {
+      overflow: hidden !important;
+    }
+    /* In preview mode, dim/hide the staging area outside crop frame */
+    .play-area-outer.preview-mode #cropFrame {
+      box-shadow: none;
+      border-color: transparent;
+    }
+    /* Hide all handles and buttons in preview */
+    .play-area-outer.preview-mode .layer-zorder-btns,
+    .play-area-outer.preview-mode .blend-wrap,
+    .play-area-outer.preview-mode #logoHandles,
+    .play-area-outer.preview-mode #titleHandles,
+    .play-area-outer.preview-mode #genHandles { display: none !important; }
+
+    /* Preview button */
+    .preview-btn {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px; color: rgba(255,255,255,0.3); cursor: pointer;
+      font-size: 15px; width: 30px; height: 30px; display: flex;
+      align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .preview-btn:hover, .preview-btn.active {
+      background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.85);
+      border-color: rgba(255,255,255,0.3);
+    }
+    .preview-btn.active { color: #7af; border-color: rgba(100,170,255,0.4); }
+
     /* Undo/Redo buttons */
     .undoredo-btns {
       display: flex; gap: 4px; align-items: center;
@@ -632,7 +679,7 @@
       body { padding: 0 0.5rem 4rem; }
 
       /* Play area: portrait narrower on small screens */
-      .play-area-outer.portrait { width: 160px; }
+      .play-area-outer.portrait { height: min(55vh, 360px); width: auto; }
 
       /* Controls bar: wrap to two lines gracefully */
       .play-controls-bar { flex-wrap: wrap; gap: 5px; }
@@ -681,7 +728,7 @@
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
-  <div class="version" id="versionTag">FOAMS Brand Image Generator · v11.0</div>
+  <div class="version" id="versionTag">FOAMS Brand Image Generator · v11.1</div>
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
 
@@ -799,10 +846,11 @@
   </div>
 
   <div class="play-controls-bar">
-    <!-- Undo / Redo -->
+    <!-- Undo / Redo / Preview -->
     <div class="undoredo-btns">
       <button class="undoredo-btn" id="undoBtn" title="Undo" disabled onclick="historyUndo()">↩</button>
       <button class="undoredo-btn" id="redoBtn" title="Redo" disabled onclick="historyRedo()">↪</button>
+      <button class="preview-btn" id="previewBtn" title="Preview (hides staging area)" onclick="togglePreview()">👁</button>
     </div>
     <button class="orient-btn" onclick="toggleOrientation()">
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -1132,6 +1180,38 @@ function historyRedo() {
   historyRestore(next);
 }
 
+// ─── PREVIEW MODE ────────────────────────────────────────────────────────────
+let _previewMode = false;
+
+function togglePreview() {
+  _previewMode = !_previewMode;
+  const outer = $id('playAreaOuter');
+  const btn   = $id('previewBtn');
+  if (_previewMode) {
+    outer.classList.add('preview-mode');
+    btn.classList.add('active');
+    // Clip play area inner to crop frame visually
+    const frame = $id('cropFrame');
+    const inner = $id('playAreaInner');
+    if (frame && inner) {
+      const fOX = frame.offsetLeft, fOY = frame.offsetTop;
+      const fW = frame.offsetWidth, fH = frame.offsetHeight;
+      inner.style.clipPath = `inset(${fOY}px ${inner.offsetWidth - fOX - fW}px ${inner.offsetHeight - fOY - fH}px ${fOX}px)`;
+    }
+    // Hide all layer handles
+    document.querySelectorAll('.t-handle, .layer-rot-handle, .blend-wrap, .layer-zorder-btns').forEach(el => {
+      el.style.visibility = 'hidden';
+    });
+  } else {
+    outer.classList.remove('preview-mode');
+    btn.classList.remove('active');
+    $id('playAreaInner').style.clipPath = '';
+    document.querySelectorAll('.t-handle, .layer-rot-handle, .blend-wrap, .layer-zorder-btns').forEach(el => {
+      el.style.visibility = '';
+    });
+  }
+}
+
 // ─── LAYER FACTORY ───────────────────────────────────────────────────────────
 function createLayer(type, file) {
   const area = $id('playAreaInner');
@@ -1160,6 +1240,15 @@ function createLayer(type, file) {
     h.dataset.layerId = id;
     h.style.cssText = `position:absolute;${corner.includes('t')?'top:-5px':'bottom:-5px'};`+
       `${corner.includes('l')?'left:-5px':'right:-5px'};background:${handleColor};`;
+    handles.appendChild(h);
+  });
+  // Edge handles (top, bottom, left, right midpoints)
+  ['tm','bm','ml','mr'].forEach(edge => {
+    const h = document.createElement('div');
+    h.className = 't-handle layer-handle';
+    h.dataset.edge = edge;
+    h.dataset.layerId = id;
+    h.style.cssText = `position:absolute;background:${handleColor};pointer-events:all;`;
     handles.appendChild(h);
   });
 
@@ -1248,7 +1337,7 @@ function createLayer(type, file) {
     selected: false,
     dragging: false, dragOffX: 0, dragOffY: 0,
     rotating: false, rotStartAngle: 0, rotStartRot: 0,
-    scaling: false, scaleStartDist: 0, scaleStart: 1,
+    scaling: false, scaleStartDist: 0, scaleStart: 1, scaleEdge: '',
   };
 
   img.onload = () => {
@@ -1707,9 +1796,17 @@ function applyElTransform() {
         hitLayer.rotStartRot   = hitLayer.rot;
       } else if (isLayerHandle) {
         hitLayer.scaling = true;
+        hitLayer.scaleEdge = e.target.dataset.edge || '';  // '' for corner handles
         const r = hitLayer.img.getBoundingClientRect();
         const cx = r.left+r.width/2, cy = r.top+r.height/2;
-        hitLayer.scaleStartDist = Math.hypot(p.x-cx, p.y-cy);
+        const edge = hitLayer.scaleEdge;
+        if (edge === 'tm' || edge === 'bm') {
+          hitLayer.scaleStartDist = Math.abs(p.y - cy) || 1;
+        } else if (edge === 'ml' || edge === 'mr') {
+          hitLayer.scaleStartDist = Math.abs(p.x - cx) || 1;
+        } else {
+          hitLayer.scaleStartDist = Math.hypot(p.x-cx, p.y-cy) || 1;
+        }
         hitLayer.scaleStart = hitLayer.scale;
       } else {
         hitLayer.dragging = true;
@@ -1947,7 +2044,21 @@ function applyElTransform() {
       } else if (activeL.scaling) {
         const r = activeL.img.getBoundingClientRect();
         const cx = r.left+r.width/2, cy = r.top+r.height/2;
-        activeL.scale = Math.max(0.05, activeL.scaleStart*(Math.hypot(p2.x-cx,p2.y-cy)/activeL.scaleStartDist));
+        const edge = activeL.scaleEdge;
+        if (edge === 'tm' || edge === 'bm') {
+          // Vertical-only: scale by Y distance from center
+          const dy = Math.abs(p2.y - cy);
+          const dy0 = activeL.scaleStartDist;
+          activeL.scale = Math.max(0.05, activeL.scaleStart * (dy / dy0));
+        } else if (edge === 'ml' || edge === 'mr') {
+          // Horizontal-only: scale by X distance from center
+          const dx = Math.abs(p2.x - cx);
+          const dx0 = activeL.scaleStartDist;
+          activeL.scale = Math.max(0.05, activeL.scaleStart * (dx / dx0));
+        } else {
+          // Corner: uniform scale by distance
+          activeL.scale = Math.max(0.05, activeL.scaleStart*(Math.hypot(p2.x-cx,p2.y-cy)/activeL.scaleStartDist));
+        }
       }
       applyLayerTransform(activeL);
       return;
