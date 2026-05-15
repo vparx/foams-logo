@@ -613,7 +613,7 @@
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
-  <div class="version" id="versionTag">FOAMS Brand Image Generator · v10.1</div>
+  <div class="version" id="versionTag">FOAMS Brand Image Generator · v10.2</div>
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
 
@@ -1101,6 +1101,8 @@ function removeLayer(id) {
   layer.handles.remove();
   layers.splice(idx, 1);
   if (activeLayer?.id === id) activeLayer = null;
+  // Re-check Remix availability after layer removed
+  updateGenBtn();
 }
 
 function applyLayerTransform(layer) {
@@ -2427,30 +2429,30 @@ function updateGenBtn() {
   const btn     = $id('genBtn');
   const tooltip = $id('genTooltip');
   // Body check: if ANY bg layer is a Body image, disable Remix
+  // Body check: only disable if a body layer is currently present
   const hasBodyLayer = layers.some(l => l.type === 'bg' && l.file && l.file.includes('Body'));
-  const isBody  = hasBodyLayer || selCat === 'body';
-  const hasBgLayer = layers.some(l => l.type === 'bg');
-  const hasElLayer = layers.some(l => l.type === 'el');
-  const ready   = !!((hasBgLayer || selBaseImg) && (hasElLayer || selEl) && selLogo) && !isBody;
+  const isBody = hasBodyLayer;  // only check layers, not selCat (cat alone doesn't block)
+
+  // Remix is always available UNLESS a body image is present
+  const ready = !isBody;
 
   btn.disabled = !ready;
   btn.classList.toggle('ready', ready);
 
-  // Body images: keep button disabled with hover tooltip
+  // Body images: tooltip explains why it's disabled
   const wrap = $id('genBtnWrap');
-  if (isBody && selBaseImg) {
+  if (isBody) {
     btn.classList.remove('ready');
     btn.disabled = true;
-    if (tooltip) tooltip.textContent = hasBodyLayer ? "Remove body images to remix — faces can't be altered" : "Images containing people can't be remixed";
+    if (tooltip) tooltip.textContent = "Remove body images to remix — faces can't be altered";
     if (wrap) wrap.classList.add('body-locked');
   } else {
     if (wrap) wrap.classList.remove('body-locked');
   }
 }
 function updateExportBtn() {
-  // Show export if we have a generated image OR a composed preview the user can export
-  const show = imgGenerated || layers.length > 0 || selBaseImg;
-  $id('exportBtn').classList.toggle('show', !!show);
+  // Export always available
+  $id('exportBtn').classList.add('show');
 }
 
 // ─── OPENAI API KEY ─────────────────────────────────────────────────────────
@@ -2871,6 +2873,8 @@ function sendHeight() {
     window.parent.postMessage({ type: 'foams-height', height: h }, '*');
   });
 }
+updateExportBtn();  // always show export
+updateGenBtn();     // set initial remix state
 sendHeight();
 const _ro = new ResizeObserver(sendHeight);
 _ro.observe(document.body);
