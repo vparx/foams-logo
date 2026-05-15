@@ -681,7 +681,7 @@
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
-  <div class="version" id="versionTag">FOAMS Brand Image Generator · v10.9</div>
+  <div class="version" id="versionTag">FOAMS Brand Image Generator · v11.0</div>
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
 
@@ -1061,45 +1061,63 @@ function updateUndoRedoBtns() {
   if (r) r.disabled = _redoStack.length === 0;
 }
 
-async function historyRestore(snapshot) {
+function historyRestore(snapshot) {
   _historyPaused = true;
+
   // Remove layers not in snapshot
   const snapIds = new Set(snapshot.map(s => s.id));
   [...layers].forEach(l => { if (!snapIds.has(l.id)) removeLayer(l.id); });
 
+  const area = $id('playAreaInner');
+
   for (const s of snapshot) {
     let layer = layers.find(l => l.id === s.id);
+
     if (!layer) {
-      // Re-create layer (file must still be accessible)
+      // Re-create the layer
       layer = createLayer(s.type, s.file);
-      // Override the auto-assigned id to match snapshot
+
+      // CRITICAL: cancel the auto-size onload so it doesn't overwrite our values
+      layer.img.onload = null;
+
+      // Re-assign the original id so hit-testing works
+      const oldId = layer.id;
       layer.id = s.id;
       layer.img.dataset.layerId = s.id;
       layer.handles.dataset.layerId = s.id;
+      layer.handles.querySelectorAll('[data-layer-id]').forEach(el => {
+        el.dataset.layerId = s.id;
+      });
+      const idx2 = layers.findIndex(l => l.id === oldId);
+      if (idx2 >= 0) layers[idx2] = layer;
     }
-    layer.x = s.x; layer.y = s.y; layer.w = s.w; layer.h = s.h;
-    layer.scale = s.scale; layer.rot = s.rot;
-    layer.flipX = s.flipX; layer.blendMode = s.blendMode;
+
+    // Restore exact snapshot values
+    layer.x = s.x;   layer.y = s.y;
+    layer.w = s.w;   layer.h = s.h;
+    layer.scale = s.scale;
+    layer.rot   = s.rot;
+    layer.flipX = s.flipX;
+    layer.blendMode = s.blendMode;
     layer.img.style.display = 'block';
     applyLayerTransform(layer);
   }
 
-  // Restore z-order to match snapshot order
-  const area = $id('playAreaInner');
-  const cf   = $id('cropFrame');
-  const ref  = cf ? cf.nextSibling : null;
+  // Restore DOM z-order
   snapshot.forEach(s => {
     const layer = layers.find(l => l.id === s.id);
     if (layer) { area.appendChild(layer.img); area.appendChild(layer.handles); }
   });
-  // Re-sort layers array to match snapshot order
-  layers.sort((a, b) => snapshot.findIndex(s=>s.id===a.id) - snapshot.findIndex(s=>s.id===b.id));
+
+  // Sync layers[] order
+  layers.sort((a, b) =>
+    snapshot.findIndex(s => s.id === a.id) - snapshot.findIndex(s => s.id === b.id)
+  );
 
   _historyPaused = false;
   updateUndoRedoBtns();
   updateGenBtn();
 }
-
 function historyUndo() {
   if (_historyStack.length === 0) return;
   _redoStack.push(historySnapshot());
