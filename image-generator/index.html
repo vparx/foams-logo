@@ -101,7 +101,7 @@
       font-family: 'Trebuchet MS', sans-serif;
     }
     .section-tip {
-      font-size: 9px; color: #3a3a3a; font-style: italic;
+      font-size: 9px; color: #666; font-style: italic;
       letter-spacing: 0.04em; margin-left: auto; text-align: right;
       font-family: 'Trebuchet MS', sans-serif; max-width: 220px;
     }
@@ -601,7 +601,7 @@
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
-  <div class="version" id="versionTag">FOAMS Brand Image Generator · v9.8</div>
+  <div class="version" id="versionTag">FOAMS Brand Image Generator · v9.9</div>
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
 
@@ -1870,7 +1870,7 @@ function selectCat(cat) {
   const _bg = $id('bgImage');
   if (_bg) { _bg.classList.remove('visible'); _bg.style.background = ''; _bg.style.backgroundImage = ''; }
   const _bp = $id('basePreview'); if (_bp) { _bp.style.display='none'; _bp.src=''; }
-  clearAllLayers();
+  // Keep existing layers — allow mixing base images across categories
   imgGenerated = false;
   updateGenBtn(); updateExportBtn();
 
@@ -2332,8 +2332,11 @@ function updateTitleScale(val) {
 function updateGenBtn() {
   const btn     = $id('genBtn');
   const tooltip = $id('genTooltip');
-  const isBody  = selCat === 'body';
-  const ready   = !!(selCat && selBaseImg && selEl && selLogo) && !isBody;
+  const isBody  = selCat === 'body' && !layers.some(l => l.type === 'bg' && l.file && !l.file.includes('Body'));
+  const hasBgLayer = layers.some(l => l.type === 'bg');
+  const hasElLayer = layers.some(l => l.type === 'el');
+  // Ready if we have at least one base image, one element, and a logo (or just layers + logo)
+  const ready   = !!((hasBgLayer || selBaseImg) && (hasElLayer || selEl) && selLogo) && !isBody;
 
   btn.disabled = !ready;
   btn.classList.toggle('ready', ready);
