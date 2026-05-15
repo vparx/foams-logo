@@ -85,6 +85,18 @@
     .logo-handle { background: #ff64b4; }
     .gen-handle { background: #64dcff; }
     /* Layer add buttons in step sections */
+    .layer-zorder-btns {
+      position: absolute; top: -24px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 3px; pointer-events: all;
+    }
+    .layer-zorder-btn {
+      background: rgba(0,0,0,0.65); color: rgba(255,255,255,0.75);
+      border: 1px solid rgba(255,255,255,0.25); border-radius: 3px;
+      font-size: 8px; font-weight: 700; letter-spacing: 0.06em;
+      padding: 2px 6px; cursor: pointer;
+      font-family: 'Trebuchet MS', sans-serif; white-space: nowrap;
+    }
+    .layer-zorder-btn:hover { background: rgba(50,50,50,0.85); color: #fff; }
     .add-layer-btn {
       display: inline-flex; align-items: center; gap: 5px;
       font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
@@ -601,7 +613,7 @@
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
-  <div class="version" id="versionTag">FOAMS Brand Image Generator · v9.9</div>
+  <div class="version" id="versionTag">FOAMS Brand Image Generator · v10.0</div>
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
 
@@ -910,9 +922,9 @@ function $id(id) { return document.getElementById(id); }
 function createLayer(type, file) {
   const area = $id('playAreaInner');
   const id   = ++_layerIdCounter;
-  const isBg = type === 'bg';
-  const color = isBg ? 'rgba(255,200,100,0.7)' : 'rgba(255,255,255,0.6)';
-  const handleColor = isBg ? '#ffc864' : '#fff';
+  const isBg = type === 'bg'; const isRemix = type === 'remix';
+  const color = isBg ? 'rgba(255,200,100,0.7)' : isRemix ? 'rgba(100,220,255,0.7)' : 'rgba(255,255,255,0.6)';
+  const handleColor = isBg ? '#ffc864' : isRemix ? '#64dcff' : '#fff';
 
   // Create img
   const img = document.createElement('img');
@@ -952,7 +964,7 @@ function createLayer(type, file) {
 
   // Bottom controls (mirror + blend for el, blend only for bg)
   let mirrorBtn = null;
-  if (!isBg) {
+  if (!isBg && !isRemix) {
     mirrorBtn = document.createElement('button');
     mirrorBtn.dataset.layerId = id;
     mirrorBtn.style.cssText = 'position:absolute;bottom:-24px;left:0;pointer-events:all;'+
@@ -998,6 +1010,21 @@ function createLayer(type, file) {
   delBtn.onclick = (e) => { e.stopPropagation(); removeLayer(id); };
   handles.appendChild(delBtn);
 
+  // Z-order buttons (top-center of handles)
+  const zWrap = document.createElement('div');
+  zWrap.className = 'layer-zorder-btns';
+  const bfBtn = document.createElement('button');
+  bfBtn.className = 'layer-zorder-btn';
+  bfBtn.textContent = '↑ Front';
+  bfBtn.onclick = (e) => { e.stopPropagation(); layerBringToFront(id); };
+  const sbBtn = document.createElement('button');
+  sbBtn.className = 'layer-zorder-btn';
+  sbBtn.textContent = '↓ Back';
+  sbBtn.onclick = (e) => { e.stopPropagation(); layerSendToBack(id); };
+  zWrap.appendChild(bfBtn);
+  zWrap.appendChild(sbBtn);
+  handles.appendChild(zWrap);
+
   area.appendChild(handles);
 
   const layer = {
@@ -1011,6 +1038,7 @@ function createLayer(type, file) {
   };
 
   img.onload = () => {
+    if (isRemix) { return; }  // remix layers set their own transform in generateImage
     const aW2 = area.offsetWidth, aH2 = area.offsetHeight;
     const cf2 = $id('cropFrame');
     const cW = cf2 ? cf2.offsetWidth  : aW2;
@@ -1088,6 +1116,30 @@ function selectLayer(layer) {
 function deselectAllLayers() {
   layers.forEach(l => { l.selected=false; if(l.handles) l.handles.style.display='none'; });
   activeLayer = null;
+}
+
+function layerBringToFront(id) {
+  const idx = layers.findIndex(l => l.id === id);
+  if (idx < 0 || idx === layers.length - 1) return;
+  const [layer] = layers.splice(idx, 1);
+  layers.push(layer);
+  // Re-append img to DOM so it renders on top
+  const area = $id('playAreaInner');
+  area.appendChild(layer.img);
+  area.appendChild(layer.handles);
+}
+
+function layerSendToBack(id) {
+  const idx = layers.findIndex(l => l.id === id);
+  if (idx <= 0) return;
+  const [layer] = layers.splice(idx, 1);
+  layers.unshift(layer);
+  // Re-insert img at the beginning of playAreaInner (after cropFrame)
+  const area = $id('playAreaInner');
+  const cropFrame = $id('cropFrame');
+  const ref = cropFrame ? cropFrame.nextSibling : area.firstChild;
+  area.insertBefore(layer.img, ref);
+  area.insertBefore(layer.handles, ref);
 }
 
 function layerToggleMirror(id) {
@@ -2541,29 +2593,37 @@ async function generateImage() {
       throw new Error('No image in API response — check console');
     }
 
-    // Display generated image as a moveable <img>
-    const bg = $id('bgImage');
+    // Add generated image as a regular layer on top of everything
     generatedImageUrl = imageUrl;
-    bg.src = imageUrl;
-    bg.style.display = 'block';
-    bg.style.cursor = 'grab';
-    // Initialize transform: cover-fit the play area
-    bg.onload = () => {
-      const area3 = $id('playAreaInner');
-      const aW3 = area3.offsetWidth, aH3 = area3.offsetHeight;
-      const sc = Math.max(aW3 / bg.naturalWidth, aH3 / bg.naturalHeight);
-      genW = bg.naturalWidth; genH = bg.naturalHeight;
-      genScale = sc; genRot = 0;
-      genX = aW3 / 2; genY = aH3 / 2;
-      genSelected = false;
-      applyGenTransform();
-    };
 
-    // Hide composition layers — generated image takes over
-    const _bp2 = $id('basePreview'); if (_bp2) _bp2.style.display = 'none';
-    const _ep2 = $id('elPreview');   if (_ep2) _ep2.style.display = 'none';
-    const _eh2 = $id('elHandles');   if (_eh2) _eh2.style.display = 'none';
-    const _bh2 = $id('bgHandles');   if (_bh2) _bh2.style.display = 'none';
+    // Create a special 'remix' layer — same as any other layer
+    const remixLayer = createLayer('remix', imageUrl);
+    // Override img.onload to position it exactly over the crop frame
+    remixLayer.img.onload = null;  // cancel default onload
+    const remixImg = new Image();
+    remixImg.onload = () => {
+      const area3  = $id('playAreaInner');
+      const frame5 = $id('cropFrame');
+      const aW3 = area3.offsetWidth, aH3 = area3.offsetHeight;
+      const fW5 = frame5 ? frame5.offsetWidth  : aW3;
+      const fH5 = frame5 ? frame5.offsetHeight : aH3;
+      const fOX5 = frame5 ? frame5.offsetLeft : 0;
+      const fOY5 = frame5 ? frame5.offsetTop  : 0;
+      remixLayer.w = remixImg.naturalWidth;
+      remixLayer.h = remixImg.naturalHeight;
+      // Scale to exactly cover the crop frame
+      remixLayer.scale = Math.max(fW5 / remixLayer.w, fH5 / remixLayer.h);
+      // Center on crop frame center (in playAreaInner coords)
+      remixLayer.x = fOX5 + fW5 / 2;
+      remixLayer.y = fOY5 + fH5 / 2;
+      remixLayer.rot = 0;
+      remixLayer.img.style.display = 'block';
+      applyLayerTransform(remixLayer);
+      // Bring remix layer to front
+      layerBringToFront(remixLayer.id);
+    };
+    remixImg.src = imageUrl;
+    remixLayer.img.src = imageUrl;
 
     showProgress(100, 'Done!');
     setTimeout(hideProgress, 600);
@@ -2634,28 +2694,8 @@ async function exportImage() {
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, outW, outH);
 
-    // 1a. If we have a generated (remixed) result, draw that first
-    if (generatedImageUrl) {
-      const bgImg = await loadImg(generatedImageUrl);
-      // If user repositioned the generated image, use that transform
-      if (genW > 0) {
-        const gDrawW = genW * genScale * scX;
-        const gDrawH = genH * genScale * scY;
-        const gcx = genX * scX, gcy = genY * scY;
-        ctx.save();
-        ctx.translate(gcx, gcy);
-        ctx.rotate(genRot * Math.PI / 180);
-        ctx.drawImage(bgImg, -gDrawW/2, -gDrawH/2, gDrawW, gDrawH);
-        ctx.restore();
-      } else {
-        const scale = Math.max(outW / bgImg.width, outH / bgImg.height);
-        const dw = bgImg.width * scale, dh = bgImg.height * scale;
-        ctx.drawImage(bgImg, (outW-dw)/2, (outH-dh)/2, dw, dh);
-      }
-    }
-
-    // 1b. Otherwise draw the composed preview (base + element at their transforms)
-    else {
+    // Draw all layers in z-order (bg, el, remix all treated equally)
+    {
       // Draw all layers clipped to crop frame
       const frame3 = $id('cropFrame');
       const fOX3 = frame3 ? frame3.offsetLeft  : 0;
@@ -2663,7 +2703,7 @@ async function exportImage() {
       const fW3  = frame3 ? frame3.offsetWidth  : area.offsetWidth;
       const fH3  = frame3 ? frame3.offsetHeight : area.offsetHeight;
       const scX3 = outW / fW3, scY3 = outH / fH3;
-      for (const layer of [...layers.filter(l=>l.type==='bg'), ...layers.filter(l=>l.type==='el')]) {
+      for (const layer of layers) {
         const lImg = await loadImg(layer.file);
         const dw = layer.w * layer.scale * scX3, dh = layer.h * layer.scale * scY3;
         const cx = (layer.x - fOX3) * scX3, cy = (layer.y - fOY3) * scY3;
