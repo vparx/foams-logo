@@ -507,16 +507,16 @@
     }
     .gen-btn:disabled { cursor: not-allowed; }
 
-    /* Remix: violet/purple pill */
+    /* Remix: solid purple pill */
     .gen-btn.ready {
-      background: linear-gradient(135deg, rgba(140,80,255,0.92), rgba(100,40,220,0.96));
-      color: #fff; border-color: rgba(180,120,255,0.4);
-      box-shadow: 0 3px 20px rgba(120,60,220,0.5);
+      background: linear-gradient(135deg, #8c50ff, #6428dc);
+      color: #fff; border-color: rgba(180,120,255,0.5);
+      box-shadow: 0 4px 22px rgba(120,60,220,0.6);
     }
     .gen-btn.ready:hover {
-      background: linear-gradient(135deg, rgba(155,95,255,0.98), rgba(115,55,235,1));
+      background: linear-gradient(135deg, #9b5fff, #7337eb);
       transform: translateY(-1px);
-      box-shadow: 0 5px 28px rgba(120,60,220,0.65);
+      box-shadow: 0 6px 28px rgba(120,60,220,0.75);
     }
 
     /* ↺ Remix after generation: faded violet */
@@ -537,19 +537,19 @@
     }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.45} }
 
-    /* Export Image: solid white, clearly actionable */
+    /* Export Image: solid bright white */
     .export-btn {
-      font-size: 13px; font-weight: 700;
+      font-size: 13px; font-weight: 800;
       letter-spacing: 0.1em; text-transform: uppercase;
-      padding: 9px 20px; border-radius: 24px;
+      padding: 9px 22px; border-radius: 24px;
       border: 2px solid #fff;
       cursor: pointer; transition: all 0.18s;
       background: #fff;
-      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
       color: #111;
       font-family: 'Trebuchet MS', Trebuchet, sans-serif;
       display: none; white-space: nowrap;
-      box-shadow: 0 3px 18px rgba(0,0,0,0.45);
+      box-shadow: 0 4px 22px rgba(255,255,255,0.25), 0 2px 8px rgba(0,0,0,0.4);
+    }
     }
     .export-btn.show { display: block; }
     .export-btn.show:hover {
@@ -613,7 +613,7 @@
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
-  <div class="version" id="versionTag">FOAMS Brand Image Generator · v10.0</div>
+  <div class="version" id="versionTag">FOAMS Brand Image Generator · v10.1</div>
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
 
@@ -662,6 +662,11 @@
             pointer-events:all;box-shadow:0 1px 4px rgba(0,0,0,0.5);z-index:7;"></div>
           <div style="position:absolute;top:-20px;left:50%;width:1px;height:14px;
             background:rgba(255,220,60,0.4);transform:translateX(-50%);"></div>
+          <!-- Remove button -->
+          <button onclick="hideTitle()" style="position:absolute;top:-24px;right:0;
+            pointer-events:all;background:rgba(180,30,30,0.7);color:#fff;border:none;
+            border-radius:4px;font-size:9px;font-weight:700;padding:2px 6px;cursor:pointer;
+            font-family:'Trebuchet MS',sans-serif;">✕ Remove</button>
         </div>
 
         <!-- Logo transform handles (pink) — shown when logo selected -->
@@ -676,6 +681,25 @@
             pointer-events:all;box-shadow:0 1px 4px rgba(0,0,0,0.5);z-index:6;"></div>
           <div style="position:absolute;top:-20px;left:50%;width:1px;height:14px;
             background:rgba(255,100,180,0.4);transform:translateX(-50%);"></div>
+          <!-- Remove button -->
+          <button onclick="clearLogoFromPlayArea()" style="position:absolute;top:-24px;right:0;
+            pointer-events:all;background:rgba(180,30,30,0.7);color:#fff;border:none;
+            border-radius:4px;font-size:9px;font-weight:700;padding:2px 6px;cursor:pointer;
+            font-family:'Trebuchet MS',sans-serif;">✕ Remove</button>
+          <!-- Blend mode -->
+          <div class="blend-wrap" style="position:absolute;bottom:-24px;right:0;pointer-events:all;">
+            <button class="blend-btn" id="logoBlendBtn" onclick="toggleLogoBlend(event)">⊕ Blend</button>
+            <div class="blend-dropdown" id="logoBlendDD">
+              <button class="blend-opt selected" onclick="setLogoBlend('normal',this)">Normal</button>
+              <button class="blend-opt" onclick="setLogoBlend('multiply',this)">Multiply</button>
+              <button class="blend-opt" onclick="setLogoBlend('screen',this)">Screen</button>
+              <button class="blend-opt" onclick="setLogoBlend('overlay',this)">Overlay</button>
+              <button class="blend-opt" onclick="setLogoBlend('soft-light',this)">Soft Light</button>
+              <button class="blend-opt" onclick="setLogoBlend('hard-light',this)">Hard Light</button>
+              <button class="blend-opt" onclick="setLogoBlend('difference',this)">Difference</button>
+              <button class="blend-opt" onclick="setLogoBlend('exclusion',this)">Exclusion</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1333,6 +1357,24 @@ function applyLogoTransform() {
   }
 
   // Title position handled by titleDraggable, not here
+}
+
+// Logo blend mode
+let logoBlendMode = 'normal';
+function toggleLogoBlend(e) {
+  e.stopPropagation();
+  $id('logoBlendDD').classList.toggle('open');
+}
+function setLogoBlend(mode, el) {
+  logoBlendMode = mode;
+  document.querySelectorAll('#logoBlendDD .blend-opt').forEach(b => b.classList.remove('selected'));
+  if (el) el.classList.add('selected');
+  const btn = $id('logoBlendBtn');
+  if (btn) { btn.textContent = mode === 'normal' ? '⊕ Blend' : '⊕ ' + (el?.textContent||mode); btn.classList.toggle('active', mode !== 'normal'); }
+  $id('logoBlendDD').classList.remove('open');
+  // Apply to logo img
+  const logoImg = $id('logoImg');
+  if (logoImg) logoImg.style.mixBlendMode = mode;
 }
 
 // Close any open blend dropdowns on outside click
@@ -2384,10 +2426,11 @@ function updateTitleScale(val) {
 function updateGenBtn() {
   const btn     = $id('genBtn');
   const tooltip = $id('genTooltip');
-  const isBody  = selCat === 'body' && !layers.some(l => l.type === 'bg' && l.file && !l.file.includes('Body'));
+  // Body check: if ANY bg layer is a Body image, disable Remix
+  const hasBodyLayer = layers.some(l => l.type === 'bg' && l.file && l.file.includes('Body'));
+  const isBody  = hasBodyLayer || selCat === 'body';
   const hasBgLayer = layers.some(l => l.type === 'bg');
   const hasElLayer = layers.some(l => l.type === 'el');
-  // Ready if we have at least one base image, one element, and a logo (or just layers + logo)
   const ready   = !!((hasBgLayer || selBaseImg) && (hasElLayer || selEl) && selLogo) && !isBody;
 
   btn.disabled = !ready;
@@ -2398,7 +2441,7 @@ function updateGenBtn() {
   if (isBody && selBaseImg) {
     btn.classList.remove('ready');
     btn.disabled = true;
-    if (tooltip) tooltip.textContent = "Images containing people can't be remixed";
+    if (tooltip) tooltip.textContent = hasBodyLayer ? "Remove body images to remix — faces can't be altered" : "Images containing people can't be remixed";
     if (wrap) wrap.classList.add('body-locked');
   } else {
     if (wrap) wrap.classList.remove('body-locked');
