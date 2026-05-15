@@ -62,6 +62,33 @@
     .el-handle { background: #fff; }
     .logo-handle { background: #ff64b4; }
     .gen-handle { background: #64dcff; }
+
+    /* Blend mode dropdown */
+    .blend-wrap { position: absolute; bottom: -24px; right: 0; pointer-events: all; }
+    .blend-btn {
+      background: rgba(0,0,0,0.6); color: rgba(255,255,255,0.8);
+      border: 1px solid rgba(255,255,255,0.3); border-radius: 4px;
+      font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
+      padding: 2px 7px; cursor: pointer; pointer-events: all;
+      font-family: 'Trebuchet MS', sans-serif; white-space: nowrap;
+    }
+    .blend-btn.active { color: #7af; border-color: rgba(100,170,255,0.6); }
+    .blend-dropdown {
+      display: none; position: absolute; bottom: calc(100% + 4px); right: 0;
+      background: rgba(10,10,10,0.95); border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 6px; overflow: hidden; min-width: 120px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.6); z-index: 100;
+    }
+    .blend-dropdown.open { display: block; }
+    .blend-opt {
+      display: block; width: 100%; padding: 5px 10px; text-align: left;
+      background: none; border: none; color: rgba(255,255,255,0.65);
+      font-size: 10px; font-weight: 600; letter-spacing: 0.06em;
+      font-family: 'Trebuchet MS', sans-serif; cursor: pointer;
+      transition: background 0.1s;
+    }
+    .blend-opt:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .blend-opt.selected { color: #7af; }
     .title-handle { background: #ffdc3c; }
     #titleDraggable, #titleHandles, #titleRotHandle, .title-handle { pointer-events: all !important; }
     #elPreview:active, #basePreview:active { cursor: grabbing; }
@@ -531,7 +558,7 @@
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
-  <div class="version" id="versionTag">FOAMS Brand Image Generator · v8.8</div>
+  <div class="version" id="versionTag">FOAMS Brand Image Generator · v8.9</div>
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
 
@@ -582,6 +609,26 @@
           font-family:'Trebuchet MS',sans-serif;white-space:nowrap;">
           ⇄ Mirror
         </button>
+        <!-- Blend mode button: bottom-right of handles -->
+        <div class="blend-wrap">
+          <button class="blend-btn" id="blendBtn" onclick="toggleBlendDropdown(event)">⊕ Blend</button>
+          <div class="blend-dropdown" id="blendDropdown">
+            <button class="blend-opt selected" onclick="setBlend('normal',this)">Normal</button>
+            <button class="blend-opt" onclick="setBlend('multiply',this)">Multiply</button>
+            <button class="blend-opt" onclick="setBlend('screen',this)">Screen</button>
+            <button class="blend-opt" onclick="setBlend('overlay',this)">Overlay</button>
+            <button class="blend-opt" onclick="setBlend('soft-light',this)">Soft Light</button>
+            <button class="blend-opt" onclick="setBlend('hard-light',this)">Hard Light</button>
+            <button class="blend-opt" onclick="setBlend('color-dodge',this)">Color Dodge</button>
+            <button class="blend-opt" onclick="setBlend('color-burn',this)">Color Burn</button>
+            <button class="blend-opt" onclick="setBlend('difference',this)">Difference</button>
+            <button class="blend-opt" onclick="setBlend('exclusion',this)">Exclusion</button>
+            <button class="blend-opt" onclick="setBlend('hue',this)">Hue</button>
+            <button class="blend-opt" onclick="setBlend('saturation',this)">Saturation</button>
+            <button class="blend-opt" onclick="setBlend('color',this)">Color</button>
+            <button class="blend-opt" onclick="setBlend('luminosity',this)">Luminosity</button>
+          </div>
+        </div>
       </div>
 
       <div id="logoLayer">
@@ -813,7 +860,8 @@ let elW = 0, elH = 0;       // natural size in play-area px (set on load)
 let elScale = 1.0;           // scale multiplier
 let elRot = 0;               // rotation in degrees
 let elFile = '';             // current element filename
-let elFlipX = false;  // mirror state for graphical element
+let elFlipX   = false;  // mirror state for graphical element
+let elBlendMode = 'normal';  // CSS mix-blend-mode for graphical element
 let elDragging = false, elDragOffX = 0, elDragOffY = 0;
 let elRotating = false, elRotStartAngle = 0, elRotStartRot = 0;
 let elScaling = false, elScaleCorner = '', elScaleStartDist = 0, elScaleStart = 1.0;
@@ -1030,6 +1078,35 @@ function toggleMirror() {
   applyElTransform();
 }
 
+function toggleBlendDropdown(e) {
+  e.stopPropagation();
+  const dd = $id('blendDropdown');
+  if (dd) dd.classList.toggle('open');
+}
+
+function setBlend(mode, el) {
+  elBlendMode = mode;
+  // Mark selected
+  document.querySelectorAll('.blend-opt').forEach(b => b.classList.remove('selected'));
+  if (el) el.classList.add('selected');
+  // Update button label
+  const btn = $id('blendBtn');
+  if (btn) {
+    btn.textContent = mode === 'normal' ? '⊕ Blend' : '⊕ ' + el.textContent;
+    btn.classList.toggle('active', mode !== 'normal');
+  }
+  // Close dropdown
+  const dd = $id('blendDropdown');
+  if (dd) dd.classList.remove('open');
+  applyElTransform();
+}
+
+// Close blend dropdown on outside click
+document.addEventListener('click', () => {
+  const dd = $id('blendDropdown');
+  if (dd) dd.classList.remove('open');
+});
+
 // ─── BASE IMAGE TRANSFORM ─────────────────────────────────────────────────────
 function applyBgTransform() {
   const bp = $id('basePreview');
@@ -1064,6 +1141,7 @@ function applyElTransform() {
   ep.style.top    = (elY - h/2) + 'px';
   // Rotate first, then flip — keeps rotation direction consistent with handles
   ep.style.transform = elFlipX ? `rotate(${elRot}deg) scaleX(-1)` : `rotate(${elRot}deg)`;
+  ep.style.mixBlendMode = elBlendMode;
 
   // Sync the dashed handles box
   if (eh) {
@@ -1686,8 +1764,11 @@ function selectEl(type, n, tile) {
       const area = $id('playAreaInner');
       const aW = area.offsetWidth, aH = area.offsetHeight;
       const nat = ep.naturalWidth / ep.naturalHeight;
-      elW = aW * 0.5;
-      elH = elW / nat;
+      // Size element so it fits comfortably with room for handles
+      // Max side = 42% of the shorter play-area dimension
+      const maxSide = Math.min(aW, aH) * 0.42;
+      if (nat >= 1) { elW = maxSide; elH = maxSide / nat; }
+      else          { elH = maxSide; elW = maxSide * nat; }
       elScale = 1.0; elRot = 0;
       elX = aW / 2; elY = aH / 2;
       applyElTransform();
@@ -2137,11 +2218,13 @@ async function generateImage() {
       const cy    = elY * scY;
 
       ctx.save();
+      ctx.globalCompositeOperation = elBlendMode === 'normal' ? 'source-over' : elBlendMode;
       ctx.translate(cx, cy);
       if (elFlipX) ctx.scale(-1, 1);
       ctx.rotate(elRot * Math.PI / 180);
       ctx.drawImage(elImg, -drawW/2, -drawH/2, drawW, drawH);
       ctx.restore();
+      ctx.globalCompositeOperation = 'source-over';
     }
 
     // Convert canvas to blob to send to API
@@ -2341,11 +2424,13 @@ async function exportImage() {
         const drawH = elH * elScale * scY;
         const cx = elX * scX, cy = elY * scY;
         ctx.save();
+        ctx.globalCompositeOperation = elBlendMode === 'normal' ? 'source-over' : elBlendMode;
         ctx.translate(cx, cy);
         ctx.rotate(elRot * Math.PI / 180);
         if (elFlipX) ctx.scale(-1, 1);
         ctx.drawImage(elImg, -drawW/2, -drawH/2, drawW, drawH);
         ctx.restore();
+        ctx.globalCompositeOperation = 'source-over';
       }
     }
 
