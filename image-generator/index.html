@@ -40,8 +40,12 @@
     .play-area-inner {
       width: 100%; height: 100%; position: relative;
       display: flex; align-items: center; justify-content: center;
-      overflow: hidden;
-      border-radius: 8px; /* clip bg/logo to the rounded canvas */
+      overflow: visible;  /* allow layers to extend beyond canvas edge */
+      border-radius: 8px;
+    }
+    /* Visual canvas area clips the image display only */
+    #bgImage, #basePreview {
+      border-radius: 8px;
     }
 
     #bgImage {
@@ -574,7 +578,7 @@
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
-  <div class="version" id="versionTag">FOAMS Brand Image Generator · v9.0</div>
+  <div class="version" id="versionTag">FOAMS Brand Image Generator · v9.1</div>
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
 
@@ -979,9 +983,9 @@ function createLayer(type, file) {
     const maxSide = Math.min(aW, aH) * (isBg ? 1.0 : 0.42);
     if (nat >= 1) { layer.w = maxSide; layer.h = maxSide / nat; }
     else          { layer.h = maxSide; layer.w = maxSide * nat; }
-    // For bg: cover the area
+    // For bg: fit within area (contain) so handles are visible
     if (isBg) {
-      layer.scale = Math.max(aW / layer.w, aH / layer.h);
+      layer.scale = Math.min(aW / layer.w, aH / layer.h) * 0.9;
     }
     layer.x = aW / 2; layer.y = aH / 2;
     img.style.display = 'block';
@@ -1021,18 +1025,19 @@ function applyLayerTransform(layer) {
 }
 
 function selectLayer(layer) {
-  // Deselect all
+  // Deselect all other layers
   layers.forEach(l => {
-    l.selected = false;
-    if (l.handles) l.handles.style.display = 'none';
+    if (l.id !== layer.id) {
+      l.selected = false;
+      if (l.handles) l.handles.style.display = 'none';
+    }
   });
   activeLayer = layer;
   layer.selected = true;
   layer.handles.style.display = 'block';
   applyLayerTransform(layer);
-  // Deselect logo/title/gen
-  elSelected=false; bgSelected=false; logoSelected=false; genSelected=false;
-  const lh=$id('logoHandles'); if(lh) lh.style.display='none';
+  // Deselect gen (but NOT logo/title — they have their own independent state)
+  genSelected=false;
   const gh=$id('genHandles');  if(gh) gh.style.display='none';
 }
 
@@ -1328,9 +1333,8 @@ function applyElTransform() {
     // ── LAYER SYSTEM: check all dynamic layers first ──────────────────
     const isLayerHandle  = e.target.classList.contains('layer-handle');
     const isLayerRot     = e.target.classList.contains('layer-rot-handle');
-    const isLayerImg     = !!e.target.dataset?.layerId && !isLayerHandle && !isLayerRot &&
-                           !e.target.classList.contains('blend-opt') &&
-                           e.target.tagName !== 'BUTTON';
+    // Only match direct layer img elements (tagName IMG with dataset.layerId)
+    const isLayerImg     = e.target.tagName === 'IMG' && !!e.target.dataset?.layerId;
     // Find which layer was hit
     let hitLayer = null;
     if (isLayerHandle || isLayerRot || isLayerImg) {
@@ -1864,12 +1868,11 @@ function selectBaseImg(n) {
   const _gi = $id('bgImage'); if (_gi) { _gi.style.display='none'; _gi.src=''; }
   const _gh = $id('genHandles'); if (_gh) _gh.style.display='none';
   genX=0; genY=0; genW=0; genH=0; genScale=1; genRot=0; genSelected=false;
-  clearAllLayers();  // clear existing layers when picking a new base image
   updateExportBtn();
 
   markDone('step1Section',1, catLabel+' · Image '+n);
 
-  // Create base image as a layer
+  // Add new base image layer (keep existing layers)
   createLayer('bg', selBaseFile);
   updateExportBtn();
 
