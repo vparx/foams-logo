@@ -462,6 +462,23 @@
       display: flex; align-items: center; gap: 8px;
     }
 
+    /* Undo/Redo buttons */
+    .undoredo-btns {
+      display: flex; gap: 4px; align-items: center;
+    }
+    .undoredo-btn {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px; color: rgba(255,255,255,0.3); cursor: pointer;
+      font-size: 14px; width: 30px; height: 30px; display: flex;
+      align-items: center; justify-content: center;
+      transition: all 0.15s; font-family: monospace;
+    }
+    .undoredo-btn:not(:disabled):hover {
+      background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8);
+      border-color: rgba(255,255,255,0.25);
+    }
+    .undoredo-btn:disabled { opacity: 0.2; cursor: not-allowed; }
+
     /* Tooltip wrapper for gen button */
     .gen-btn-wrap {
       position: relative; display: inline-flex;
@@ -664,7 +681,7 @@
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
-  <div class="version" id="versionTag">FOAMS Brand Image Generator · v10.8</div>
+  <div class="version" id="versionTag">FOAMS Brand Image Generator · v10.9</div>
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
 
@@ -782,6 +799,11 @@
   </div>
 
   <div class="play-controls-bar">
+    <!-- Undo / Redo -->
+    <div class="undoredo-btns">
+      <button class="undoredo-btn" id="undoBtn" title="Undo" disabled onclick="historyUndo()">↩</button>
+      <button class="undoredo-btn" id="redoBtn" title="Redo" disabled onclick="historyRedo()">↪</button>
+    </div>
     <button class="orient-btn" onclick="toggleOrientation()">
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
         <rect x="0.5" y="2.5" width="7" height="9" rx="1" stroke="#777" stroke-width="1.1"/>
@@ -1009,6 +1031,89 @@ let titleDragging = false, tOffX = 0, tOffY = 0;
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 function $id(id) { return document.getElementById(id); }
 
+
+// ─── UNDO / REDO HISTORY ─────────────────────────────────────────────────────
+const _historyStack = [];   // past states
+const _redoStack    = [];   // future states (after undo)
+let   _historyPaused = false;  // prevent recording while restoring
+
+// Snapshot the current layer state (serialisable — no DOM refs)
+function historySnapshot() {
+  return layers.map(l => ({
+    id: l.id, type: l.type, file: l.file,
+    x: l.x, y: l.y, w: l.w, h: l.h,
+    scale: l.scale, rot: l.rot, flipX: l.flipX, blendMode: l.blendMode,
+  }));
+}
+
+// Call this before any operation that should be undoable
+function historySave() {
+  if (_historyPaused) return;
+  _historyStack.push(historySnapshot());
+  if (_historyStack.length > 50) _historyStack.shift();  // cap at 50 states
+  _redoStack.length = 0;  // new action clears redo
+  updateUndoRedoBtns();
+}
+
+function updateUndoRedoBtns() {
+  const u = $id('undoBtn'), r = $id('redoBtn');
+  if (u) u.disabled = _historyStack.length === 0;
+  if (r) r.disabled = _redoStack.length === 0;
+}
+
+async function historyRestore(snapshot) {
+  _historyPaused = true;
+  // Remove layers not in snapshot
+  const snapIds = new Set(snapshot.map(s => s.id));
+  [...layers].forEach(l => { if (!snapIds.has(l.id)) removeLayer(l.id); });
+
+  for (const s of snapshot) {
+    let layer = layers.find(l => l.id === s.id);
+    if (!layer) {
+      // Re-create layer (file must still be accessible)
+      layer = createLayer(s.type, s.file);
+      // Override the auto-assigned id to match snapshot
+      layer.id = s.id;
+      layer.img.dataset.layerId = s.id;
+      layer.handles.dataset.layerId = s.id;
+    }
+    layer.x = s.x; layer.y = s.y; layer.w = s.w; layer.h = s.h;
+    layer.scale = s.scale; layer.rot = s.rot;
+    layer.flipX = s.flipX; layer.blendMode = s.blendMode;
+    layer.img.style.display = 'block';
+    applyLayerTransform(layer);
+  }
+
+  // Restore z-order to match snapshot order
+  const area = $id('playAreaInner');
+  const cf   = $id('cropFrame');
+  const ref  = cf ? cf.nextSibling : null;
+  snapshot.forEach(s => {
+    const layer = layers.find(l => l.id === s.id);
+    if (layer) { area.appendChild(layer.img); area.appendChild(layer.handles); }
+  });
+  // Re-sort layers array to match snapshot order
+  layers.sort((a, b) => snapshot.findIndex(s=>s.id===a.id) - snapshot.findIndex(s=>s.id===b.id));
+
+  _historyPaused = false;
+  updateUndoRedoBtns();
+  updateGenBtn();
+}
+
+function historyUndo() {
+  if (_historyStack.length === 0) return;
+  _redoStack.push(historySnapshot());
+  const prev = _historyStack.pop();
+  historyRestore(prev);
+}
+
+function historyRedo() {
+  if (_redoStack.length === 0) return;
+  _historyStack.push(historySnapshot());
+  const next = _redoStack.pop();
+  historyRestore(next);
+}
+
 // ─── LAYER FACTORY ───────────────────────────────────────────────────────────
 function createLayer(type, file) {
   const area = $id('playAreaInner');
@@ -1156,6 +1261,7 @@ function createLayer(type, file) {
   };
 
   img.src = file;
+  historySave();  // snapshot before adding layer
   layers.push(layer);
   // Update remix/export button state whenever a layer is added
   if (typeof updateGenBtn === "function") updateGenBtn();
@@ -1164,6 +1270,7 @@ function createLayer(type, file) {
 }
 
 function removeLayer(id) {
+  historySave();  // snapshot before removing
   const idx = layers.findIndex(l => l.id === id);
   if (idx < 0) return;
   const layer = layers[idx];
@@ -1215,6 +1322,7 @@ function deselectAllLayers() {
 }
 
 function layerBringToFront(id) {
+  historySave();
   const idx = layers.findIndex(l => l.id === id);
   if (idx < 0 || idx === layers.length - 1) return;
   const [layer] = layers.splice(idx, 1);
@@ -1226,6 +1334,7 @@ function layerBringToFront(id) {
 }
 
 function layerSendToBack(id) {
+  historySave();
   const idx = layers.findIndex(l => l.id === id);
   if (idx <= 0) return;
   const [layer] = layers.splice(idx, 1);
@@ -1448,6 +1557,24 @@ function setLogoBlend(mode, el) {
   const logoImg = $id('logoImg');
   if (logoImg) logoImg.style.mixBlendMode = mode;
 }
+
+// Keyboard shortcuts: Ctrl+Z = undo, Ctrl+Shift+Z or Ctrl+Y = redo
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+    e.preventDefault(); historyUndo();
+  } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+    e.preventDefault(); historyRedo();
+  }
+});
+
+// Keyboard shortcuts: Ctrl+Z = undo, Ctrl+Shift+Z or Ctrl+Y = redo
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 'z') {
+    e.preventDefault(); historyUndo();
+  } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'z'))) {
+    e.preventDefault(); historyRedo();
+  }
+});
 
 // Close any open blend dropdowns on outside click
 document.addEventListener('click', () => {
@@ -1907,7 +2034,10 @@ function applyElTransform() {
   document.addEventListener('mouseup',  onUp);
   document.addEventListener('touchend', onUp);
   function onUp() {
+    // Save history after any layer transform interaction
+    const wasActive = layers.some(l => l.dragging || l.rotating || l.scaling);
     layers.forEach(l=>{l.dragging=false;l.rotating=false;l.scaling=false;});
+    if (wasActive) historySave();
     elDragging=false; elRotating=false; elScaling=false;
     bgDragging=false; bgRotating=false; bgScaling=false;
     logoDragging2=false; logoRotating2=false; logoScaling2=false;
@@ -2973,6 +3103,7 @@ function sendHeight() {
 }
 updateExportBtn();  // always show export
 updateGenBtn();     // set initial remix state
+updateUndoRedoBtns(); // initial undo/redo state
 buildStep3();        // step 3 always visible from start
 sendHeight();
 const _ro = new ResizeObserver(sendHeight);
