@@ -161,6 +161,51 @@
     }
     .blend-opt:hover { background: rgba(255,255,255,0.08); color: #fff; }
     .blend-opt.selected { color: #7af; }
+
+    /* Tint controls */
+    .tint-btn {
+      background: rgba(0,0,0,0.6); color: rgba(255,255,255,0.8);
+      border: 1px solid rgba(255,255,255,0.3); border-radius: 4px;
+      font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
+      padding: 2px 7px; cursor: pointer; pointer-events: all;
+      font-family: 'Trebuchet MS', sans-serif; white-space: nowrap;
+    }
+    .tint-btn.active { color: #f7a; border-color: rgba(255,120,200,0.6); }
+    .tint-panel {
+      display: none; position: absolute; bottom: calc(100% + 4px); right: 0;
+      background: rgba(10,10,10,0.97); border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px; padding: 10px 12px; width: 160px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.6); z-index: 100;
+    }
+    .tint-panel.open { display: block; }
+    .tint-row { margin-bottom: 8px; }
+    .tint-row:last-child { margin-bottom: 0; }
+    .tint-row label {
+      display: flex; justify-content: space-between;
+      font-size: 9px; color: rgba(255,255,255,0.55); margin-bottom: 4px;
+      font-family: 'Trebuchet MS', sans-serif; letter-spacing: 0.04em;
+    }
+    .tint-row input[type="range"] {
+      width: 100%; height: 4px; -webkit-appearance: none; appearance: none;
+      background: linear-gradient(90deg, red, yellow, lime, cyan, blue, magenta, red);
+      border-radius: 2px; cursor: pointer;
+    }
+    .tint-row.sat-row input[type="range"] {
+      background: linear-gradient(90deg, #888, #fff);
+    }
+    .tint-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%;
+      background: #fff; border: 1.5px solid rgba(0,0,0,0.4); cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+    .tint-reset {
+      width: 100%; margin-top: 6px; background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15); border-radius: 4px;
+      color: rgba(255,255,255,0.5); font-size: 9px; font-weight: 700;
+      letter-spacing: 0.06em; padding: 4px; cursor: pointer;
+      font-family: 'Trebuchet MS', sans-serif;
+    }
+    .tint-reset:hover { color: rgba(255,255,255,0.85); border-color: rgba(255,255,255,0.3); }
     .title-handle { background: #ffdc3c; }
     #titleDraggable, #titleHandles, #titleRotHandle, .title-handle { pointer-events: all !important; }
     #elPreview:active, #basePreview:active { cursor: grabbing; }
@@ -728,7 +773,7 @@
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
-  <div class="version" id="versionTag">FOAMS Brand Image Generator · v11.1</div>
+  <div class="version" id="versionTag">FOAMS Brand Image Generator · v11.2</div>
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
 
@@ -1091,6 +1136,7 @@ function historySnapshot() {
     id: l.id, type: l.type, file: l.file,
     x: l.x, y: l.y, w: l.w, h: l.h,
     scale: l.scale, rot: l.rot, flipX: l.flipX, blendMode: l.blendMode,
+    hue: l.hue, sat: l.sat,
   }));
 }
 
@@ -1147,6 +1193,8 @@ function historyRestore(snapshot) {
     layer.rot   = s.rot;
     layer.flipX = s.flipX;
     layer.blendMode = s.blendMode;
+    layer.hue = s.hue || 0;
+    layer.sat = s.sat !== undefined ? s.sat : 100;
     layer.img.style.display = 'block';
     applyLayerTransform(layer);
   }
@@ -1279,9 +1327,58 @@ function createLayer(type, file) {
     handles.appendChild(mirrorBtn);
   }
 
+  // Bottom-right control row: Tint + Blend side by side
+  const bottomRightWrap = document.createElement('div');
+  bottomRightWrap.style.cssText = 'position:absolute;bottom:-24px;right:0;'+
+    'display:flex;gap:4px;pointer-events:all;';
+
+  // Tint controls (hue rotate + saturation)
+  const tintWrap = document.createElement('div');
+  tintWrap.style.cssText = 'position:relative;pointer-events:all;';
+  const tintBtn = document.createElement('button');
+  tintBtn.className = 'tint-btn';
+  tintBtn.dataset.layerId = id;
+  tintBtn.textContent = '🎨 Tint';
+  const tintPanel = document.createElement('div');
+  tintPanel.className = 'tint-panel';
+  tintPanel.dataset.layerId = id;
+  tintPanel.innerHTML = `
+    <div class="tint-row">
+      <label><span>Hue</span><span class="tint-hue-val">0°</span></label>
+      <input type="range" class="tint-hue-slider" min="0" max="360" value="0" step="1">
+    </div>
+    <div class="tint-row sat-row">
+      <label><span>Saturation</span><span class="tint-sat-val">100%</span></label>
+      <input type="range" class="tint-sat-slider" min="0" max="200" value="100" step="1">
+    </div>
+    <button class="tint-reset">Reset</button>
+  `;
+  const hueSlider = tintPanel.querySelector('.tint-hue-slider');
+  const satSlider = tintPanel.querySelector('.tint-sat-slider');
+  const hueVal    = tintPanel.querySelector('.tint-hue-val');
+  const satVal    = tintPanel.querySelector('.tint-sat-val');
+  hueSlider.addEventListener('input', () => {
+    hueVal.textContent = hueSlider.value + '°';
+    layerSetTint(id, parseInt(hueSlider.value), parseInt(satSlider.value));
+  });
+  satSlider.addEventListener('input', () => {
+    satVal.textContent = satSlider.value + '%';
+    layerSetTint(id, parseInt(hueSlider.value), parseInt(satSlider.value));
+  });
+  tintPanel.querySelector('.tint-reset').onclick = (e) => {
+    e.stopPropagation();
+    hueSlider.value = 0; satSlider.value = 100;
+    hueVal.textContent = '0°'; satVal.textContent = '100%';
+    layerSetTint(id, 0, 100);
+  };
+  tintBtn.onclick = (e) => { e.stopPropagation(); tintPanel.classList.toggle('open'); };
+  tintWrap.appendChild(tintBtn);
+  tintWrap.appendChild(tintPanel);
+  bottomRightWrap.appendChild(tintWrap);
+
   // Blend dropdown
   const blendWrap = document.createElement('div');
-  blendWrap.style.cssText = 'position:absolute;bottom:-24px;right:0;pointer-events:all;';
+  blendWrap.style.cssText = 'position:relative;pointer-events:all;';
   const blendBtn = document.createElement('button');
   blendBtn.className = 'blend-btn';
   blendBtn.dataset.layerId = id;
@@ -1301,7 +1398,9 @@ function createLayer(type, file) {
   blendBtn.onclick = (e) => { e.stopPropagation(); blendDD.classList.toggle('open'); };
   blendWrap.appendChild(blendBtn);
   blendWrap.appendChild(blendDD);
-  handles.appendChild(blendWrap);
+  bottomRightWrap.appendChild(blendWrap);
+
+  handles.appendChild(bottomRightWrap);
 
   // Delete button (top-right of handles)
   const delBtn = document.createElement('button');
@@ -1333,7 +1432,9 @@ function createLayer(type, file) {
   const layer = {
     id, type, file,
     img, handles, rotHandle: rotH, mirrorBtn, blendBtn, blendDropdown: blendDD,
+    tintBtn, tintPanel,
     x: 0, y: 0, w: 0, h: 0, scale: 1, rot: 0, flipX: false, blendMode: 'normal',
+    hue: 0, sat: 100,
     selected: false,
     dragging: false, dragOffX: 0, dragOffY: 0,
     rotating: false, rotStartAngle: 0, rotStartRot: 0,
@@ -1399,6 +1500,7 @@ function applyLayerTransform(layer) {
   const flipStr = layer.flipX ? 'scaleX(-1) ' : '';
   img.style.transform = `rotate(${layer.rot}deg) ${flipStr}`;
   img.style.mixBlendMode = layer.blendMode;
+  img.style.filter = (layer.hue || layer.sat !== 100) ? `hue-rotate(${layer.hue}deg) saturate(${layer.sat}%)` : '';
   if (handles && layer.selected) {
     handles.style.width  = w + 'px'; handles.style.height  = h + 'px';
     handles.style.left   = (layer.x - w/2) + 'px'; handles.style.top = (layer.y - h/2) + 'px';
@@ -1459,6 +1561,14 @@ function layerToggleMirror(id) {
   if (!layer) return;
   layer.flipX = !layer.flipX;
   if (layer.mirrorBtn) layer.mirrorBtn.style.color = layer.flipX ? '#7af' : 'rgba(255,255,255,0.8)';
+  applyLayerTransform(layer);
+}
+
+function layerSetTint(id, hue, sat) {
+  const layer = layers.find(l => l.id === id);
+  if (!layer) return;
+  layer.hue = hue; layer.sat = sat;
+  if (layer.tintBtn) layer.tintBtn.classList.toggle('active', hue !== 0 || sat !== 100);
   applyLayerTransform(layer);
 }
 
@@ -1770,6 +1880,8 @@ function applyElTransform() {
   document.addEventListener('touchstart', onDown, {passive:false});
 
   function onDown(e) {
+    // Let native UI (sliders, dropdown buttons) work without interference
+    if (e.target.closest('.tint-panel, .blend-dropdown')) return;
     const p  = xy(e);
     const area_ = $id('playAreaInner');
     const ar_   = area_ ? area_.getBoundingClientRect() : null;
@@ -2013,7 +2125,7 @@ function applyElTransform() {
     const td2 = $id('titleDraggable');
     const isLogoArea  = ld2 && ld2.style.display !== 'none' && ld2.contains(e.target);
     const isTitleArea = td2 && td2.style.display !== 'none' && td2.contains(e.target);
-    if (area && area.contains(e.target) && e.target.tagName !== 'BUTTON' && !isLogoArea && !isTitleArea) {
+    if (area && area.contains(e.target) && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT' && !e.target.closest('.tint-panel') && !isLogoArea && !isTitleArea) {
       deselect();
       deselectAllLayers();
       genSelected = false;
@@ -2887,6 +2999,7 @@ async function generateImage() {
       const cx = (layer.x - fOX) * scX, cy = (layer.y - fOY) * scY;
       ctx.save();
       ctx.globalCompositeOperation = layer.blendMode === 'normal' ? 'source-over' : layer.blendMode;
+      ctx.filter = (layer.hue || layer.sat !== 100) ? `hue-rotate(${layer.hue}deg) saturate(${layer.sat}%)` : 'none';
       ctx.translate(cx, cy); ctx.rotate(layer.rot * Math.PI / 180);
       if (layer.flipX) ctx.scale(-1, 1);
       ctx.drawImage(lImg, -dw/2, -dh/2, dw, dh);
@@ -3111,6 +3224,7 @@ async function doExport() {
         const cx = (layer.x - fOX3) * scX3, cy = (layer.y - fOY3) * scY3;
         ctx.save();
         ctx.globalCompositeOperation = layer.blendMode === 'normal' ? 'source-over' : layer.blendMode;
+        ctx.filter = (layer.hue || layer.sat !== 100) ? `hue-rotate(${layer.hue}deg) saturate(${layer.sat}%)` : 'none';
         ctx.translate(cx, cy); ctx.rotate(layer.rot * Math.PI / 180);
         if (layer.flipX) ctx.scale(-1, 1);
         ctx.drawImage(lImg, -dw/2, -dh/2, dw, dh);
