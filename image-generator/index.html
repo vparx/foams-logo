@@ -477,6 +477,9 @@
       border-style: dashed; border-color: #2a2a2a; flex-direction: column; gap: 4px;
     }
     .logo-tile.upload-tile:hover { border-color: #666; }
+    .upload-img-tile:hover { border-color: #888 !important; background: #1c1c1c !important; }
+    .upload-img-tile:hover svg { stroke: #aaa; }
+    .upload-img-tile:hover span { color: #aaa; }
     .up-icon { color: #3a3a3a; transition: color 0.15s; display: block; }
     .logo-tile.upload-tile:hover .up-icon { color: #999; }
     .up-lbl {
@@ -773,7 +776,7 @@
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
-  <div class="version" id="versionTag">FOAMS Brand Image Generator · v11.2</div>
+  <div class="version" id="versionTag">FOAMS Brand Image Generator · v11.3</div>
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
 
@@ -914,6 +917,8 @@
 
 <input type="file" id="uploadInput" accept="image/png,image/jpeg,image/svg+xml,image/webp"
   onchange="handleUpload(this)">
+<input type="file" id="canvasUploadInput" accept="image/png,image/jpeg,image/webp"
+  onchange="handleCanvasUpload(this)" style="display:none">
 
 <div style="padding: 0 1rem;">
 <!-- ══════════════════════════════════════════
@@ -2456,6 +2461,20 @@ function buildBaseGrid(cat) {
     t.onclick = () => selectBaseImg(i+1);
     grid.appendChild(t);
   }
+  // Upload tile — add a custom image directly to the canvas
+  const upT = document.createElement('div');
+  upT.className = 'img-tile upload-img-tile';
+  upT.style.cssText = 'position:relative;overflow:hidden;display:flex;flex-direction:column;'+
+    'align-items:center;justify-content:center;border:1.5px dashed #444;background:#161616;';
+  upT.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2">
+      <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span style="font-size:7px;font-weight:800;letter-spacing:0.08em;color:#666;margin-top:3px;
+      text-transform:uppercase;font-family:'Trebuchet MS',sans-serif;">Upload</span>
+  `;
+  upT.onclick = () => openCanvasUpload('bg');
+  grid.appendChild(upT);
 }
 
 function selectBaseImg(n) {
@@ -2544,6 +2563,20 @@ function makeElGrid(type) {
     t.onclick = () => selectEl(type,i,t);
     g.appendChild(t);
   }
+  // Upload tile — add a custom graphical element directly to the canvas
+  const upT = document.createElement('div');
+  upT.className = 'img-tile upload-img-tile';
+  upT.style.cssText = 'position:relative;overflow:hidden;display:flex;flex-direction:column;'+
+    'align-items:center;justify-content:center;border:1.5px dashed #444;background:#161616;';
+  upT.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2">
+      <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <span style="font-size:7px;font-weight:800;letter-spacing:0.08em;color:#666;margin-top:3px;
+      text-transform:uppercase;font-family:'Trebuchet MS',sans-serif;">Upload</span>
+  `;
+  upT.onclick = () => openCanvasUpload('el');
+  g.appendChild(upT);
   return g;
 }
 function selectEl(type, n, tile) {
@@ -2653,6 +2686,28 @@ function updateLogoTileColors() {
     else if (logoColor==='pink') t.classList.add('bg-pnk','c-p');
     else                          t.classList.add('c-w');
   });
+}
+
+let _canvasUploadType = 'bg';  // set before opening the file picker
+
+function openCanvasUpload(type) {
+  _canvasUploadType = type;
+  $id('canvasUploadInput').click();
+}
+
+function handleCanvasUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    createLayer(_canvasUploadType, e.target.result);
+    if (_canvasUploadType === 'bg') {
+      updateExportBtn();
+    }
+    updateGenBtn();
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
 }
 
 function handleUpload(input) {
