@@ -43,8 +43,8 @@
     }
     .play-area-outer.portrait {
       aspect-ratio: 1080 / 1920;
-      /* Fill viewport height, derive width from aspect ratio */
-      height: min(72vh, 520px);
+      /* Fill most of the viewport height, derive width from aspect ratio */
+      height: min(88vh, 860px);
       width: auto;
       margin: 0 auto;
     }
@@ -727,7 +727,7 @@
       body { padding: 0 0.5rem 4rem; }
 
       /* Play area: portrait narrower on small screens */
-      .play-area-outer.portrait { height: min(55vh, 360px); width: auto; }
+      .play-area-outer.portrait { height: min(75vh, 620px); width: auto; }
 
       /* Controls bar: wrap to two lines gracefully */
       .play-controls-bar { flex-wrap: wrap; gap: 5px; }
@@ -776,7 +776,7 @@
      STICKY PLAY AREA
 ═══════════════════════════════════════════ -->
 <div class="sticky-top">
-  <div class="version" id="versionTag">FOAMS Brand Image Generator · v11.3</div>
+  <div class="version" id="versionTag">FOAMS Brand Image Generator · v11.4</div>
   <div class="play-area-outer landscape" id="playAreaOuter">
     <div class="play-area-inner" id="playAreaInner">
 
@@ -963,7 +963,7 @@
 <!-- ══════════════════════════════════════════
      STEP 2
 ═══════════════════════════════════════════ -->
-<div class="section locked" id="step2Section">
+<div class="section" id="step2Section">
   <div class="section-header" onclick="toggleSection('step2Section')">
     <span class="step-badge" id="badge2">STEP 2</span>
     <span class="section-title" id="title2">Choose a Graphical Element</span>
@@ -2406,7 +2406,7 @@ function lockSection(id, n) {
 function selectCat(cat) {
   selCat = cat; selBaseImg = null; selEl = null;
   imgGenerated = false;
-  lockSection('step2Section',2);  // step3 always accessible
+  // step2 and step3 always accessible
   // Do NOT clear logo — user keeps their logo/title when switching base image
   // Reset play area completely when starting over
   const _bg = $id('bgImage');
@@ -3403,6 +3403,7 @@ updateExportBtn();  // always show export
 updateGenBtn();     // set initial remix state
 updateUndoRedoBtns(); // initial undo/redo state
 buildStep3();        // step 3 always visible from start
+if (!selCat) { selCat = 'tropical'; buildStep2('tropical'); }  // step 2 always visible from start
 sendHeight();
 const _ro = new ResizeObserver(sendHeight);
 _ro.observe(document.body);
